@@ -255,6 +255,15 @@ test("plataforma: Neeko gerencia escritórios sem ver dados deles", async () => 
   const interna = lista.find((o: any) => o.internal); assert.equal((await ana.post(`/platform/offices/${interna.id}/status`, { status: "SUSPENDED" })).status, 400);
   assert.equal((await ana.post(`/platform/offices/${es.corpo.id}/reset-manager`, { senhaProvisoria: "Provisoria555" })).status, 200);
   assert.equal((await new Sessao().post("/auth/login", { email: "gestora@beta.test", senha: "Provisoria555" })).corpo.mustChangePassword, true);
+  assert.equal((await ana.pedir("DELETE", `/platform/offices/${interna.id}`, { nome: interna.name })).status, 400, "interna não é excluída");
+  assert.equal((await ana.pedir("DELETE", `/platform/offices/${es.corpo.id}`, { nome: "Outro" })).status, 400, "nome precisa conferir");
+  const g4 = await logar("gestora@beta.test", "Provisoria555"); await prisma.user.updateMany({ where: { email: "gestora@beta.test" }, data: { mustChangePassword: false } });
+  const nega = await g4.pedir("DELETE", `/platform/offices/${es.corpo.id}`, { nome: "Escritório Beta" }); assert.equal(nega.status, 403, "gestor não exclui"); assert.equal(nega.corpo.code, "FORBIDDEN");
+  assert.equal((await prisma.organization.count({ where: { id: es.corpo.id } })), 1);
+  assert.equal((await ana.pedir("DELETE", `/platform/offices/${es.corpo.id}`, { nome: "Escritório Beta" })).status, 200);
+  assert.equal(await prisma.company.count({ where: { organizationId: es.corpo.id } }), 0); assert.equal(await prisma.user.count({ where: { email: { endsWith: "@beta.test" } } }), 0);
+  assert.equal((await new Sessao().post("/auth/login", { email: "gestora@beta.test", senha: "Provisoria555" })).status, 401);
+  assert.equal((await ana.get("/me")).status, 200, "a conta Neeko segue ativa");
 });
 test("isolamento entre organizações", async () => {
   const { hashSenha } = await import("../common/passwords");

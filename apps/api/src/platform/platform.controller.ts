@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Patch, Post, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Req } from "@nestjs/common";
 import type { Request } from "express";
 import { z } from "zod";
 import { AuditoriaService } from "../common/audit.service";
@@ -71,6 +71,23 @@ export class PlataformaController {
     if (o.internal) throw invalido("A organização interna da Neeko não é suspensa.");
     await this.prisma.$transaction([this.prisma.organization.update({ where: { id: o.id }, data: { status } }), this.prisma.session.deleteMany({ where: { organizationId: o.id } })]);
     await this.auditoria.registrar(null, r.sessao.userId, "platform.office.status", id, { status }); return { ok: true };
+  }
+  /** Apaga o escritório e tudo dele. Exige repetir o nome; quem só pertence a ele perde o login. */
+  @Plataforma() @Delete("offices/:id")
+  async excluir(@Req() r: Req2, @Param("id") id: string, @Body() c: unknown) {
+    const { nome } = validar(z.object({ nome: z.string().trim() }), c);
+    const o = await this.prisma.organization.findUnique({ where: { id: this.id(id) }, include: { memberships: { select: { userId: true } } } });
+    if (!o) throw naoEncontrado("Escritório não encontrado.");
+    if (o.internal) throw invalido("A organização interna da Neeko não pode ser excluída.");
+    if (nome !== o.name.trim()) throw invalido("O nome digitado não confere com o do escritório.");
+    const ids = o.memberships.map((m) => m.userId);
+    await this.prisma.$transaction([
+      this.prisma.session.deleteMany({ where: { organizationId: o.id } }),
+      this.prisma.organization.delete({ where: { id: o.id } }),
+      this.prisma.user.deleteMany({ where: { id: { in: ids }, globalRole: { not: "NEEKO_SUPERADMIN" }, memberships: { none: {} } } }),
+    ]);
+    await this.auditoria.registrar(null, r.sessao.userId, "platform.office.deleted", id, { name: o.name, cnpj: o.cnpj });
+    return { ok: true };
   }
   /** Gestor perdeu o acesso: nova senha provisória e nova ativação das duas etapas. */
   @Plataforma() @Post("offices/:id/reset-manager") @HttpCode(200)

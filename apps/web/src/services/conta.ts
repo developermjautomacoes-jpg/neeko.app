@@ -24,4 +24,5 @@ export const listarEscritorios = async () => (await api<{ escritorios: Escritori
 export const criarEscritorio = (e: unknown) => api("POST", "platform/offices", e);
 export const alterarEscritorio = (id: string, e: unknown) => api("PATCH", `platform/offices/${id}`, e);
 export const situacaoEscritorio = (id: string, status: string) => api("POST", `platform/offices/${id}/status`, { status });
+export const excluirEscritorio = (id: string, nome: string) => api("DELETE", `platform/offices/${id}`, { nome });
 export const redefinirGestor = (id: string, senhaProvisoria: string) => api("POST", `platform/offices/${id}/reset-manager`, { senhaProvisoria });
