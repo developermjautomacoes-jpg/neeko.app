@@ -289,7 +289,7 @@ test("administração faz tudo, menos excluir a proprietária", async () => {
 });
 test("assistente responde só com as bases cadastradas", async () => {
   assert.equal((await new Sessao().get("/assistant/topics")).status, 401, "exige login");
-  const t = (await ana.get("/assistant/topics")).corpo.assuntos; assert.equal(t.length, 7); assert.equal(t[0].area, "Fiscal");
+  const t = (await ana.get("/assistant/topics")).corpo.assuntos; assert.equal(t.length, 8); assert.equal(t[0].area, "Fiscal");
   const r = (await ana.post("/assistant/ask", { pergunta: "fator r anexo III" })).corpo.resultados; assert.ok(r.length > 0); assert.equal(r[0].assunto, "Simples Nacional");
   const f = (await ana.post("/assistant/ask", { pergunta: "fator r", assunto: "especialista-invest-es" })).corpo.resultados; assert.ok(f.every((x: any) => x.assunto === "INVEST-ES e FUNDAP"));
   assert.deepEqual((await ana.post("/assistant/ask", { pergunta: "qual a receita de bolo de cenoura" })).corpo.resultados, [], "fora das bases não responde");

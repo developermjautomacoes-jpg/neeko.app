@@ -14,6 +14,13 @@
     "icone": "nota"
   },
   {
+    "id": "especialista-nfse-nacional",
+    "nome": "NFS-e Nacional",
+    "descricao": "DPS, eventos, retenções de ISS, regimes especiais e parametrização municipal",
+    "area": "Fiscal",
+    "icone": "servico"
+  },
+  {
     "id": "simples-nacional-cgsn140",
     "nome": "Simples Nacional",
     "descricao": "Anexos, fator r, sublimite, MEI e Resolução CGSN 140",

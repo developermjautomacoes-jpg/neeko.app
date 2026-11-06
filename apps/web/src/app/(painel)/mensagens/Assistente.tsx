@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Calculator, Factory, FileSpreadsheet, FileText, Landmark, Percent, Repeat, Search, type LucideIcon } from "lucide-react";
+import { BriefcaseBusiness, Calculator, Factory, FileSpreadsheet, FileText, Landmark, Percent, Repeat, Search, type LucideIcon } from "lucide-react";
 import { Button, Input, Select, useToast } from "@neeko/ui";
 import { lerAssuntos, perguntarAssistente, solicitarAssunto, type AssuntoAssistente, type ResultadoAssistente } from "@/services/conta";
 import styles from "./mensagens.module.css";
 
 interface Troca { pergunta: string; assunto: string; resultados: ResultadoAssistente[] | null }
-const ICONES: Record<string, LucideIcon> = { arquivo: FileSpreadsheet, nota: FileText, calculo: Calculator, balanca: Landmark, transicao: Repeat, fabrica: Factory, percentual: Percent };
+const ICONES: Record<string, LucideIcon> = { servico: BriefcaseBusiness, arquivo: FileSpreadsheet, nota: FileText, calculo: Calculator, balanca: Landmark, transicao: Repeat, fabrica: Factory, percentual: Percent };
 
 export function Assistente() {
   const avisar = useToast();
