@@ -209,6 +209,7 @@ test("duas etapas: exige código e aceita recuperação uma vez", async () => {
 test("plataforma: Neeko gerencia escritórios sem ver dados deles", async () => {
   const u = await prisma.user.findUnique({ where: { email: "ana@a.test" } });
   assert.equal(u.globalRole, "NEEKO_SUPERADMIN"); assert.equal((await prisma.organization.findFirst({ orderBy: { createdAt: "asc" } })).internal, true);
+  assert.deepEqual((await ana.get("/platform/plans")).corpo.planos.map((x: any) => [x.name, x.maxCompanies, x.maxUsers, x.monthlyPrice]), [["Piloto", null, null, "0.00"], ["Neeko Essencial", 15, 3, "149.90"], ["Neeko Profissional", 50, 10, "299.90"], ["Neeko Premium", 150, 30, "599.90"]]);
   const p = await ana.post("/platform/plans", { name: "Básico", maxCompanies: 1, maxUsers: 2, monthlyPrice: "199.90" }); assert.equal(p.status, 201);
   const es = await ana.post("/platform/offices", { name: "Escritório Beta", cnpj: "11.444.777/0001-61", planId: p.corpo.id, paidUntil: "2026-12-10", gestorNome: "Gestora Beta", gestorEmail: "gestora@beta.test", senhaProvisoria: "Provisoria789" });
   assert.equal(es.status, 201);

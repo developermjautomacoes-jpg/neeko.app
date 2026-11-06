@@ -10,6 +10,7 @@ const vazio: F = { name: "", cnpj: "", contactEmail: "", contactPhone: "", planI
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const cents = (v: string) => Math.round(Number(v) * 100);
 const dataBr = (d: string) => d.split("-").reverse().join("/");
+const semCobranca = (e: Escritorio) => e.billingExempt || (!!e.planId && cents(e.mensalidade) === 0);
 const hoje = () => new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
 
 export default function Escritorios() {
@@ -25,7 +26,7 @@ export default function Escritorios() {
   const carregar = useCallback(async () => { try { const [e, p] = await Promise.all([listarEscritorios(), listarPlanos()]); setLista(e); setPlanos(p); } catch (x) { setErro(x instanceof Error ? x.message : "Não foi possível carregar."); } finally { setCarregando(false); } }, []);
   useEffect(() => { void carregar(); }, [carregar]);
   const clientes = useMemo(() => lista.filter((e) => !e.internal), [lista]);
-  const ativos = clientes.filter((e) => e.status === "ACTIVE"), cobrados = ativos.filter((e) => !e.billingExempt), mrr = cobrados.reduce((t, e) => t + cents(e.mensalidade), 0), vencidos = cobrados.filter((e) => e.paidUntil && e.paidUntil < hoje()).length;
+  const ativos = clientes.filter((e) => e.status === "ACTIVE"), cobrados = ativos.filter((e) => !semCobranca(e)), mrr = cobrados.reduce((t, e) => t + cents(e.mensalidade), 0), vencidos = cobrados.filter((e) => e.paidUntil && e.paidUntil < hoje()).length;
   async function salvar() {
     if (!f) return;
     const base = { name: f.name, cnpj: f.cnpj, contactEmail: f.contactEmail, contactPhone: f.contactPhone, planId: f.planId || null, billingExempt: f.billingExempt, paidUntil: f.paidUntil, notes: f.notes };
@@ -40,11 +41,11 @@ export default function Escritorios() {
     <div className={styles.kpis}><KpiCard rotulo="Escritórios ativos" valor={ativos.length} /><KpiCard rotulo="Suspensos" valor={clientes.length - ativos.length} /><KpiCard rotulo="Mensalidades ativas" valor={brl(mrr)} /><KpiCard rotulo="Pagamento vencido" valor={vencidos} /></div>
     <Card semPadding titulo="Lista de escritórios">{carregando ? <Loading /> : <DataTable linhas={lista} chaveLinha={(e) => e.id} vazio="Nenhum escritório."
       colunas={[
-        { chave: "n", titulo: "Escritório", render: (e) => <><b>{e.name}</b>{e.internal && <> <Badge>Neeko</Badge></>}{e.billingExempt && <> <Badge tom="sucesso">Piloto · sem cobrança</Badge></>}<br /><small>{formatarCnpj(e.cnpj)}</small></> },
+        { chave: "n", titulo: "Escritório", render: (e) => <><b>{e.name}</b>{e.internal && <> <Badge>Neeko</Badge></>}{semCobranca(e) && <> <Badge tom="sucesso">Piloto · sem cobrança</Badge></>}<br /><small>{formatarCnpj(e.cnpj)}</small></> },
         { chave: "g", titulo: "Gestor", render: (e) => <>{e.gestor}<br /><small>{e.gestorEmail}</small></> },
         { chave: "p", titulo: "Plano", render: (e) => e.plano || "—" },
         { chave: "u", titulo: "Uso", render: (e) => <small>{e.empresas}{e.maxCompanies !== null ? ` de ${e.maxCompanies}` : ""} empresas<br />{e.usuarios} usuários<br />{e.emUso}{e.maxUsers !== null ? ` de ${e.maxUsers}` : ""} em uso agora</small> },
-        { chave: "v", titulo: "Pago até", render: (e) => (e.paidUntil ? (e.paidUntil < hoje() && !e.internal && !e.billingExempt ? <Badge tom="perigo">{dataBr(e.paidUntil)}</Badge> : dataBr(e.paidUntil)) : "—") },
+        { chave: "v", titulo: "Pago até", render: (e) => (e.paidUntil ? (e.paidUntil < hoje() && !e.internal && !semCobranca(e) ? <Badge tom="perigo">{dataBr(e.paidUntil)}</Badge> : dataBr(e.paidUntil)) : "—") },
         { chave: "s", titulo: "Situação", render: (e) => <Badge tom={e.status === "ACTIVE" ? "sucesso" : "perigo"}>{e.status === "ACTIVE" ? "ativo" : "suspenso"}</Badge> },
         { chave: "a", titulo: "", alinhar: "direita", render: (e) => <div className={styles.acoes}><Button tamanho="sm" onClick={() => setF({ ...vazio, id: e.id, name: e.name, cnpj: e.cnpj, contactEmail: e.contactEmail, contactPhone: e.contactPhone, planId: e.planId ?? "", billingExempt: e.billingExempt, paidUntil: e.paidUntil, notes: e.notes })}>Editar</Button>
           {!e.internal && <Button tamanho="sm" onClick={() => setReset(e)}>Acesso do gestor</Button>}

@@ -22,7 +22,7 @@ export class PlataformaController {
   private id(v: string) { if (!/^[0-9a-f-]{36}$/i.test(v)) throw naoEncontrado("Não encontrado."); return v; }
 
   @Plataforma() @Get("plans")
-  async planos() { return { planos: (await this.prisma.plan.findMany({ orderBy: { name: "asc" }, include: { _count: { select: { organizations: true } } } })).map((p) => ({ id: p.id, name: p.name, maxCompanies: p.maxCompanies, maxUsers: p.maxUsers, monthlyPrice: p.monthlyPrice.toFixed(2), active: p.active, escritorios: p._count.organizations })) }; }
+  async planos() { return { planos: (await this.prisma.plan.findMany({ orderBy: [{ monthlyPrice: "asc" }, { name: "asc" }], include: { _count: { select: { organizations: true } } } })).map((p) => ({ id: p.id, name: p.name, maxCompanies: p.maxCompanies, maxUsers: p.maxUsers, monthlyPrice: p.monthlyPrice.toFixed(2), active: p.active, escritorios: p._count.organizations })) }; }
   @Plataforma() @Post("plans")
   async criarPlano(@Req() r: Req2, @Body() c: unknown) {
     const d = validar(plano, c);

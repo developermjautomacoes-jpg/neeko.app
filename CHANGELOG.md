@@ -14,7 +14,7 @@ Mudanças relevantes da Neeko Platform serão registradas aqui.
 - Criados monorepo, API NestJS, web Next.js, PostgreSQL com Prisma e testes.
 - Login e senha individuais, RBAC por organização e empresa, auditoria e gestão de usuários.
 - Gerencial de escritórios, planos e limites, com verificação em duas etapas opcional (ADR-007).
-- Três planos iniciais (CNPJs e usuários simultâneos), cliente piloto sem cobrança e perfil do escritório com logo no menu e nos relatórios.
+- Planos Piloto, Neeko Essencial, Neeko Profissional e Neeko Premium (CNPJs e usuários simultâneos), cliente piloto sem cobrança e perfil do escritório com logo no menu e nos relatórios.
 - Memorando como cadastro único das empresas, com PDF, Word e histórico.
 - Captura de NFS-e, NF-e e CT-e, certificados cifrados, Ciência da Operação, agendamento, Excel, XML e DANFSe (ADR-006).
 
