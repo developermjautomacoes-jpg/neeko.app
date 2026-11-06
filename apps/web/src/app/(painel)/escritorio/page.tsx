@@ -59,7 +59,7 @@ export default function PerfilEscritorio() {
   }
   if (carregando) return <Loading />;
   return <>
-    <PageHeader titulo="Perfil do escritório" descricao="A logo aparece no menu e nos relatórios, memorandos e planilhas do escritório." />
+    <PageHeader titulo="Perfil do escritório" descricao="A logo aparece no menu e nos relatórios. As cores valem para todas as telas do escritório." />
     {erro && <Notice tom="erro">{erro}</Notice>}
     <Card titulo={nome}><div className={pagina.form}>
       {logo ? <img src={logo} alt="Logo do escritório" style={{ maxWidth: 280, maxHeight: 100, objectFit: "contain", alignSelf: "flex-start" }} /> : <Notice>Sem logo cadastrada. Por enquanto, os relatórios saem com a logo da Neeko.</Notice>}

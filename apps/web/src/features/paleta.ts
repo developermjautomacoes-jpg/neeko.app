@@ -1,6 +1,6 @@
 /** Deriva do par de cores do escritório os tokens usados pelos componentes, mantendo o texto legível. */
 type Rgb = [number, number, number];
-const CHAVES = ["--color-brand", "--color-brand-hover", "--color-brand-text", "--color-brand-soft", "--color-on-brand", "--color-dark", "--color-dark-2", "--color-dark-brand", "--focus-ring", "--shadow-glow"];
+const CHAVES = ["--color-brand", "--color-brand-hover", "--color-brand-text", "--color-brand-soft", "--color-on-brand", "--color-dark", "--color-dark-2", "--color-dark-brand", "--focus-ring", "--shadow-glow", "--color-bg", "--color-bg-from", "--color-bg-to", "--color-surface-2", "--color-border", "--color-heading", "--color-info", "--color-info-bg", "--color-side-from", "--color-side-to", "--color-glow", "--color-brand-tint", "--color-hero-1", "--color-hero-2", "--color-hero-3", "--color-accent", "--color-chart", "--color-chart-soft", "--tom-1", "--tom-1-fundo", "--tom-2", "--tom-2-fundo", "--tom-3", "--tom-3-fundo", "--color-toast"];
 const rgb = (h: string): Rgb => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)) as Rgb;
 const hex = (c: Rgb) => `#${c.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
 const mistura = (a: Rgb, b: Rgb, p: number): Rgb => a.map((v, i) => v + (b[i] - v) * p) as Rgb;
@@ -22,12 +22,34 @@ export function aplicarPaleta(principal?: string | null, escuro?: string | null)
     s.setProperty("--color-dark-brand", hex(mistura(p, BRANCO, contraste(p, PRETO) < 6 ? 0.45 : 0)));
     s.setProperty("--focus-ring", `0 0 0 3px rgba(${p.join(", ")}, 0.45)`);
     s.setProperty("--shadow-glow", `0 0 18px rgba(${p.join(", ")}, 0.35)`);
+    const forte = hex(escurecerAte(p, 4.5)), suave = hex(mistura(p, BRANCO, 0.85));
+    s.setProperty("--color-bg", hex(mistura(p, BRANCO, 0.9)));
+    s.setProperty("--color-bg-from", hex(mistura(p, BRANCO, 0.82)));
+    s.setProperty("--color-bg-to", hex(mistura(p, BRANCO, 0.94)));
+    s.setProperty("--color-surface-2", hex(mistura(p, BRANCO, 0.93)));
+    s.setProperty("--color-border", hex(mistura(p, BRANCO, 0.78)));
+    s.setProperty("--color-info", forte);
+    s.setProperty("--color-info-bg", suave);
+    s.setProperty("--color-accent", forte);
+    s.setProperty("--color-brand-tint", `rgba(${p.join(", ")}, 0.14)`);
+    s.setProperty("--color-glow", `rgba(${p.join(", ")}, 0.35)`);
+    s.setProperty("--color-chart", forte);
+    s.setProperty("--color-chart-soft", principal);
+    ["--tom-1", "--tom-2", "--tom-3"].forEach((t) => { s.setProperty(t, forte); s.setProperty(`${t}-fundo`, suave); });
   }
   const base = escuro ? rgb(escuro) : principal ? mistura(rgb(principal), PRETO, 0.8) : null;
   if (base) {
     const d = escurecerAte(base, 10);
     s.setProperty("--color-dark", hex(d));
-    s.setProperty("--color-dark-2", hex(principal ? mistura(d, rgb(principal), 0.22) : mistura(d, BRANCO, 0.1)));
+    const realce = principal ? rgb(principal) : BRANCO, d2 = mistura(d, realce, principal ? 0.22 : 0.1);
+    s.setProperty("--color-dark-2", hex(d2));
+    s.setProperty("--color-heading", hex(d));
+    s.setProperty("--color-toast", hex(d));
+    s.setProperty("--color-side-from", hex(mistura(d, realce, 0.1)));
+    s.setProperty("--color-side-to", hex(mistura(d, PRETO, 0.25)));
+    s.setProperty("--color-hero-1", hex(mistura(d, realce, 0.45)));
+    s.setProperty("--color-hero-2", hex(mistura(d, PRETO, 0.15)));
+    s.setProperty("--color-hero-3", hex(d2));
   }
 }
 

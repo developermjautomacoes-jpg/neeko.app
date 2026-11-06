@@ -1,5 +1,5 @@
-.painel { display: flex; min-height: 100vh; background: linear-gradient(120deg, #E8ECF8 0%, var(--color-bg) 40%, #F4F5FD 100%); }
-.lateral { width: var(--sidebar-width); flex: none; color: var(--color-dark-text); padding: var(--space-5) var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); position: sticky; top: 0; height: 100vh; overflow-y: auto; background: radial-gradient(120% 40% at 100% 62%, rgba(5, 110, 85, 0.35), transparent), linear-gradient(180deg, #101B24 0%, var(--color-dark) 60%, #041017 100%); }
+.painel { display: flex; min-height: 100vh; background: linear-gradient(120deg, var(--color-bg-from) 0%, var(--color-bg) 40%, var(--color-bg-to) 100%); }
+.lateral { width: var(--sidebar-width); flex: none; color: var(--color-dark-text); padding: var(--space-5) var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); position: sticky; top: 0; height: 100vh; overflow-y: auto; background: radial-gradient(120% 40% at 100% 62%, var(--color-glow), transparent), linear-gradient(180deg, var(--color-side-from) 0%, var(--color-dark) 60%, var(--color-side-to) 100%); }
 .marca { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-1) var(--space-3); }
 .marca div { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
 .marca b { font-size: 1.6rem; letter-spacing: -0.02em; }
@@ -8,10 +8,10 @@
 .item, .ativo, .embreve { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px var(--space-3); border: 0; border-radius: var(--radius-sm); background: none; color: var(--color-dark-text); font-size: var(--text-sm); font-weight: 500; text-decoration: none; text-align: left; cursor: pointer; }
 .item > span, .ativo > span, .embreve > span { flex: 1; }
 .item:hover { background: rgba(255, 255, 255, 0.06); }
-.ativo { background: var(--color-dark-2); color: var(--color-dark-brand); font-weight: 600; box-shadow: inset 0 0 0 1px rgba(61, 235, 159, 0.12); }
-.embreve { color: #7F93A0; cursor: default; }
+.ativo { background: var(--color-dark-2); color: var(--color-dark-brand); font-weight: 600; box-shadow: inset 0 0 0 1px var(--color-brand-tint); }
+.embreve { color: var(--color-dark-muted); cursor: default; }
 .embreve span { white-space: nowrap; }
-.embreve small { color: #7F93A0; font-size: 0.6rem; }
+.embreve small { color: var(--color-dark-muted); font-size: 0.6rem; }
 .virado { transform: rotate(180deg); }
 .sub { display: flex; flex-direction: column; gap: 2px; margin: 2px 0 var(--space-1) 42px; }
 .sub a { padding: 7px var(--space-3); border-radius: var(--radius-sm); color: var(--color-dark-muted); font-size: var(--text-sm); text-decoration: none; }

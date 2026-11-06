@@ -66,9 +66,9 @@ export default function Inicio() {
       </section>
 
       <section className={styles.indicadores} aria-label="Indicadores">
-        <Indicador icone={Building2} cor="#0BA56C" fundo="#DDF9EC" rotulo="Empresas Atendidas" valor={String(d.empresas)} />
-        <Indicador icone={FileText} cor="#7C3AED" fundo="#EDE5FE" rotulo="Notas Capturadas (Mês)" valor={d.notasMes.toLocaleString("pt-BR")} variacao={d.notasVariacao} serie={d.serie.map((p) => p.notas)} />
-        <Indicador icone={CircleDollarSign} cor="#1D73E8" fundo="#DDE9FD" rotulo="Serviços Prestados (Mês)" valor={brl(centavos(d.servicosMes))} variacao={d.servicosVariacao} serie={pontos.map((p) => p.centavos)} />
+        <Indicador icone={Building2} cor="var(--tom-1)" fundo="var(--tom-1-fundo)" rotulo="Empresas Atendidas" valor={String(d.empresas)} />
+        <Indicador icone={FileText} cor="var(--tom-2)" fundo="var(--tom-2-fundo)" rotulo="Notas Capturadas (Mês)" valor={d.notasMes.toLocaleString("pt-BR")} variacao={d.notasVariacao} serie={d.serie.map((p) => p.notas)} />
+        <Indicador icone={CircleDollarSign} cor="var(--tom-3)" fundo="var(--tom-3-fundo)" rotulo="Serviços Prestados (Mês)" valor={brl(centavos(d.servicosMes))} variacao={d.servicosVariacao} serie={pontos.map((p) => p.centavos)} />
         <Indicador icone={TriangleAlert} cor="#F2780C" fundo="#FFE9D6" rotulo="Pendências Fiscais" valor={String(d.pendencias)} />
       </section>
 
