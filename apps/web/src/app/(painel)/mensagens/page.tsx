@@ -1,9 +1,10 @@
 "use client";
+import type React from "react";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { Forward, Lock, LogOut, Pencil, Smile, Trash2, Unlock, UserPlus, Users, X } from "lucide-react";
 import { Button, ConfirmDialog, IconButton, Input, Loading, Modal, Notice, PageHeader, Select, useToast } from "@neeko/ui";
-import { apagarMensagem, editarMensagem, criarGrupo, encaminharMensagem, enviarMensagem, incluirNoGrupo, lerMensagens, marcarLida, privacidadeGrupo, resumoMensagens, sairDoGrupo, type Mensagem, type ResumoMensagens } from "@/services/conta";
+import { fotosEquipe, apagarMensagem, editarMensagem, criarGrupo, encaminharMensagem, enviarMensagem, incluirNoGrupo, lerMensagens, marcarLida, privacidadeGrupo, resumoMensagens, sairDoGrupo, type Mensagem, type ResumoMensagens } from "@/services/conta";
 import { Assistente } from "./Assistente";
 import styles from "./mensagens.module.css";
 
@@ -19,6 +20,9 @@ function Conversas() {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
   const [emojis, setEmojis] = useState(false);
+  const [fotos, setFotos] = useState<Record<string, string>>({});
+  useEffect(() => { fotosEquipe().then(setFotos).catch(() => undefined); }, []);
+  const avatar = (id: string, nome: string) => <span className={styles.comStatus}>{fotos[id] ? <img className={styles.foto} src={fotos[id]} alt="" /> : <span className={styles.foto}>{nome.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase()}</span>}{resumo?.pessoas.find((p) => p.id === id)?.online && <i className={styles.online} aria-label="online" />}</span>;
   const [modal, setModal] = useState<{ tipo: "novo" | "incluir"; nome: string; privado: boolean; pessoas: string[] } | null>(null);
   const [encaminhar, setEncaminhar] = useState<Mensagem | null>(null);
   const [editando, setEditando] = useState<Mensagem | null>(null);
@@ -69,7 +73,7 @@ function Conversas() {
   const nome = conversa === "geral" ? "Geral" : grupo?.nome ?? direta?.nome ?? "Conversa";
   const candidatos = (resumo?.pessoas ?? []).filter((p) => !grupo?.pessoasIds.includes(p.id) || modal?.tipo === "novo");
   const destinos = [{ id: "geral", nome: "Geral" }, ...(resumo?.grupos ?? []).filter((g) => g.participa).map((g) => ({ id: g.id, nome: `Grupo: ${g.nome}` })), ...(resumo?.pessoas ?? [])].filter((d) => d.id !== conversa);
-  const item = (id: string, titulo: string, sub: string, n: number) => <button type="button" key={id} className={`${styles.item} ${conversa === id ? styles.atual : ""}`} onClick={() => setConversa(id)}><span><b>{titulo}</b><small>{sub}</small></span>{n > 0 && <i>{n}</i>}</button>;
+  const item = (id: string, titulo: string, sub: string, n: number, foto?: React.ReactNode) => <button type="button" key={id} className={`${styles.item} ${conversa === id ? styles.atual : ""}`} onClick={() => setConversa(id)}>{foto}<span><b>{titulo}</b><small>{sub}</small></span>{n > 0 && <i className={styles.badge}>{n}</i>}</button>;
   const destacar = (t: string) => { const nomes = (resumo?.pessoas ?? []).map((p) => p.nome.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")); return nomes.length ? t.split(new RegExp(`(@(?:${nomes.join("|")}))`, "gi")).map((p, i) => (i % 2 ? <mark key={i}>{p}</mark> : p)) : t; };
   return <>
     <PageHeader titulo="Mensagens" descricao="Converse com a equipe ou tire dúvidas com o Assistente Neeko." />
@@ -81,11 +85,11 @@ function Conversas() {
         <div className={styles.secao}><span>Grupos</span><IconButton dica="Novo grupo" icone={<Users size={15} />} onClick={() => setModal({ tipo: "novo", nome: "", privado: true, pessoas: [] })} /></div>
         {resumo?.grupos.map((g) => item(g.id, `${g.privado ? "🔒 " : ""}${g.nome}`, g.ultima?.texto ?? `${g.participantes.length} participante(s)`, g.participa ? g.naoLidas : 0))}
         <div className={styles.secao}><span>Pessoas</span></div>
-        {resumo?.pessoas.map((p) => item(p.id, p.nome, p.ultima?.texto ?? p.cargo, p.naoLidas))}
+        {resumo?.pessoas.map((p) => item(p.id, p.nome, p.online ? (p.ultima?.texto ?? "Online agora") : (p.ultima?.texto ?? p.cargo), p.naoLidas, avatar(p.id, p.nome)))}
       </aside>
       {conversa === "assistente" ? <Assistente /> : <section className={styles.conversa}>
         <div className={styles.cabeca}>
-          <div><h2>{nome}</h2>{grupo && <small>{grupo.privado ? "Privado" : "Aberto à equipe"} · {grupo.participantes.join(", ")}</small>}</div>
+          <div><h2>{nome}</h2>{direta && <small>{direta.online ? "Online agora" : "Offline"}</small>}{grupo && <small>{grupo.privado ? "Privado" : "Aberto à equipe"} · {grupo.participantes.join(", ")}</small>}</div>
           <div className={styles.botoes}>
             {direta && <IconButton dica="Incluir pessoas (cria um grupo)" icone={<UserPlus size={16} />} onClick={() => setModal({ tipo: "novo", nome: "", privado: true, pessoas: [direta.id] })} />}
             {grupo?.participa && <IconButton dica="Incluir pessoas" icone={<UserPlus size={16} />} onClick={() => setModal({ tipo: "incluir", nome: "", privado: true, pessoas: [] })} />}
@@ -95,7 +99,7 @@ function Conversas() {
         </div>
         <div className={styles.mensagens}>
           {!lista.length && <p className={styles.vazio}>Nenhuma mensagem ainda.</p>}
-          {lista.map((m) => <div key={m.id} className={`${styles.balao} ${m.minha ? styles.minha : ""} ${m.mencionou ? styles.mencao : ""}`}><small>{m.minha ? "Você" : m.de} · {hora(m.em)}</small>{m.encaminhadaDe && <small className={styles.encaminhada}>Encaminhada de {m.encaminhadaDe}</small>}<p>{m.apagada ? <i className={styles.apagada}>Mensagem apagada</i> : destacar(m.texto)}{m.editada && !m.apagada && <small className={styles.editada}> (editada)</small>}</p>{!m.apagada && <span className={styles.acaoMsg}><IconButton dica="Encaminhar" icone={<Forward size={14} />} onClick={() => setEncaminhar(m)} />{m.minha && !m.encaminhadaDe && <IconButton dica="Editar" icone={<Pencil size={14} />} onClick={() => { setEditando(m); setTexto(m.texto); campo.current?.focus(); }} />}{m.minha && <IconButton dica="Apagar" variante="danger" icone={<Trash2 size={14} />} onClick={() => setApagando(m)} />}</span>}</div>)}
+          {lista.map((m) => <div key={m.id} className={`${styles.linhaMsg} ${m.minha ? styles.linhaMinha : ""}`}>{!m.minha && avatar(m.deId, m.de)}<div className={`${styles.balao} ${m.minha ? styles.minha : ""} ${m.mencionou ? styles.mencao : ""}`}><small>{m.minha ? "Você" : m.de} · {hora(m.em)}</small>{m.encaminhadaDe && <small className={styles.encaminhada}>Encaminhada de {m.encaminhadaDe}</small>}<p>{m.apagada ? <i className={styles.apagada}>Mensagem apagada</i> : destacar(m.texto)}{m.editada && !m.apagada && <small className={styles.editada}> (editada)</small>}</p>{!m.apagada && <span className={styles.acaoMsg}><IconButton dica="Encaminhar" icone={<Forward size={14} />} onClick={() => setEncaminhar(m)} />{m.minha && !m.encaminhadaDe && <IconButton dica="Editar" icone={<Pencil size={14} />} onClick={() => { setEditando(m); setTexto(m.texto); campo.current?.focus(); }} />}{m.minha && <IconButton dica="Apagar" variante="danger" icone={<Trash2 size={14} />} onClick={() => setApagando(m)} />}</span>}</div></div>)}
           <div ref={fim} />
         </div>
         <div className={styles.escrever}>

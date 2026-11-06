@@ -35,10 +35,10 @@ export const redefinirComCodigo = (email: string, codigo: string, nova: string) 
 export interface ResultadoImportacao { memorandos: { importados: number; pulados: { numero: string; motivo: string }[] }; certificados: { importados: number; pulados: { nome: string; motivo: string }[] } }
 export const importarPacote = (pacote: string, frase: string) => api<ResultadoImportacao>("POST", "office/import", { pacote, frase });
 export interface AvisoMensagem { conversa: string; de: string; texto: string; em: string; mencao: boolean }
-export interface PessoaChat { id: string; nome: string; cargo: string; naoLidas: number; ultima: { texto: string; em: string } | null }
+export interface PessoaChat { online: boolean; id: string; nome: string; cargo: string; naoLidas: number; ultima: { texto: string; em: string } | null }
 export interface GrupoChat { id: string; nome: string; privado: boolean; participa: boolean; participantes: string[]; pessoasIds: string[]; naoLidas: number; ultima: { texto: string; em: string } | null }
 export interface ResumoMensagens { total: number; avisos: AvisoMensagem[]; geral: { naoLidas: number; ultima: { texto: string; em: string } | null }; pessoas: PessoaChat[]; grupos: GrupoChat[] }
-export interface Mensagem { id: string; de: string; minha: boolean; texto: string; em: string; mencionou: boolean; encaminhadaDe: string; editada: boolean; apagada: boolean }
+export interface Mensagem { id: string; deId: string; de: string; minha: boolean; texto: string; em: string; mencionou: boolean; encaminhadaDe: string; editada: boolean; apagada: boolean }
 export const resumoMensagens = () => api<ResumoMensagens>("GET", "messages");
 export const lerMensagens = async (c: string) => (await api<{ mensagens: Mensagem[] }>("GET", `messages/${c}`)).mensagens;
 export const enviarMensagem = (c: string, texto: string) => api("POST", `messages/${c}`, { texto });
@@ -58,3 +58,4 @@ export const lerAtividades = (f: { pessoa?: string; de?: string; ate?: string })
 export const lerSolicitacoes = async () => (await api<{ solicitacoes: { id: string; escritorio: string; texto: string; em: string }[] }>("GET", "platform/topic-requests")).solicitacoes;
 export const editarMensagem = (conversa: string, id: string, texto: string) => api("PATCH", `messages/${conversa}/${id}`, { texto });
 export const apagarMensagem = (conversa: string, id: string) => api("DELETE", `messages/${conversa}/${id}`);
+export const fotosEquipe = async () => (await api<{ fotos: Record<string, string> }>("GET", "messages/avatars")).fotos;

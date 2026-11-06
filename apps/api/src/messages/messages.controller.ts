@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from "@nestjs/common";
 import { z } from "zod";
-import { Contexto, Ctx, Membro } from "../common/auth";
+import { Contexto, Ctx, Membro, inicioJanela } from "../common/auth";
 import { Erro, invalido, naoEncontrado } from "../common/errors";
 import { validar } from "../common/validation";
 import { PrismaService } from "../prisma.service";
@@ -92,6 +92,7 @@ export class MensagensController {
       this.prisma.chat.findMany({ where: { organizationId: org, OR: [{ private: false }, { members: { some: { userId: c.userId } } }] }, include: { members: true }, orderBy: { name: "asc" } }),
     ]);
     const ultimas = await this.prisma.message.findMany({ where: { organizationId: org, OR: [{ recipientId: null, chatId: null }, { recipientId: c.userId }, { senderId: c.userId, recipientId: { not: null } }, { chatId: { in: grupos.map((g) => g.id) } }] }, orderBy: { createdAt: "desc" }, take: 1000 });
+    const ativos = new Set((await this.prisma.session.findMany({ where: { organizationId: org, expiresAt: { gt: new Date() }, lastSeenAt: { gte: inicioJanela() } }, distinct: ["userId"], select: { userId: true } })).map((x) => x.userId));
     const lido = new Map(lidas.map((l) => [l.conversation, l.readAt.getTime()])), nome = new Map(pessoas.map((p) => [p.id, p.nome]));
     const fora = new Set(grupos.filter((g) => !g.members.some((m) => m.userId === c.userId)).map((g) => g.id));
     const chave = (m: { recipientId: string | null; senderId: string; chatId: string | null }) => (m.chatId ? `${G}${m.chatId}` : m.recipientId === null ? GERAL : m.senderId === c.userId ? m.recipientId : m.senderId);
@@ -107,8 +108,15 @@ export class MensagensController {
       conversas.set(k, x);
     }
     const dados = (k: string) => conversas.get(k) ?? { naoLidas: 0, ultima: null };
-    return { total: [...conversas.values()].reduce((t, x) => t + x.naoLidas, 0), avisos, geral: dados(GERAL), pessoas: pessoas.filter((p) => p.id !== c.userId).map((p) => ({ ...p, ...dados(p.id) })),
+    return { total: [...conversas.values()].reduce((t, x) => t + x.naoLidas, 0), avisos, geral: dados(GERAL), pessoas: pessoas.filter((p) => p.id !== c.userId).map((p) => ({ ...p, online: ativos.has(p.id), ...dados(p.id) })),
       grupos: grupos.map((g) => ({ id: `${G}${g.id}`, nome: g.name, privado: g.private, participa: !fora.has(g.id), participantes: g.members.map((m) => nome.get(m.userId)).filter(Boolean), pessoasIds: g.members.map((m) => m.userId), ...dados(`${G}${g.id}`) })) };
+  }
+
+  /** Fotos da equipe, lidas uma vez pela tela (fora do resumo que roda a cada 20 segundos). */
+  @Membro() @Get("avatars")
+  async fotos(@Ctx() c: Contexto) {
+    const m = await this.prisma.organizationMembership.findMany({ where: { organizationId: c.organizationId, status: "ACTIVE", user: { avatar: { not: null } } }, select: { userId: true, user: { select: { avatar: true } } } });
+    return { fotos: Object.fromEntries(m.map((x) => [x.userId, x.user.avatar])) };
   }
 
   @Membro() @Get(":conversa")
@@ -116,7 +124,7 @@ export class MensagensController {
     await this.conferir(c, conversa);
     const [l, pessoas] = await Promise.all([this.prisma.message.findMany({ where: this.onde(c, conversa), orderBy: { createdAt: "desc" }, take: 200 }), this.pessoas(c)]);
     const nome = new Map(pessoas.map((p) => [p.id, p.nome]));
-    return { mensagens: l.reverse().map((m) => ({ id: m.id, de: nome.get(m.senderId) ?? "Ex-integrante", minha: m.senderId === c.userId, texto: m.deletedAt ? "" : m.text, em: m.createdAt, mencionou: !m.deletedAt && m.mentions.includes(c.userId), encaminhadaDe: m.forwardedFrom, editada: !!m.editedAt, apagada: !!m.deletedAt })) };
+    return { mensagens: l.reverse().map((m) => ({ id: m.id, deId: m.senderId, de: nome.get(m.senderId) ?? "Ex-integrante", minha: m.senderId === c.userId, texto: m.deletedAt ? "" : m.text, em: m.createdAt, mencionou: !m.deletedAt && m.mentions.includes(c.userId), encaminhadaDe: m.forwardedFrom, editada: !!m.editedAt, apagada: !!m.deletedAt })) };
   }
 
   /** Só vale como menção o @Nome de quem pode ver a conversa: a lista nunca vem do navegador. */

@@ -3,9 +3,9 @@
 .item { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); width: 100%; padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-sm); background: none; color: var(--color-text); text-align: left; cursor: pointer; }
 .item:hover { background: var(--color-surface-2); }
 .atual { background: var(--color-brand-soft); }
-.item span { min-width: 0; display: flex; flex-direction: column; }
+.item > span:not(.comStatus) { min-width: 0; display: flex; flex-direction: column; }
 .item small { overflow: hidden; color: var(--color-text-muted); text-overflow: ellipsis; white-space: nowrap; }
-.item i { flex: none; min-width: 20px; padding: 0 5px; border-radius: 10px; background: var(--color-danger); color: #fff; font: 600 11px/20px var(--font-body); text-align: center; }
+.item .badge { flex: none; min-width: 20px; padding: 0 5px; border-radius: 10px; background: var(--color-danger); color: #fff; font: 600 11px/20px var(--font-body); text-align: center; }
 .conversa { display: flex; flex-direction: column; min-height: 0; background: var(--color-surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
 .conversa h2 { margin: 0; padding: var(--space-3) var(--space-4); border-bottom: var(--border-width) solid var(--color-border); font-size: var(--text-md); }
 .mensagens { flex: 1; display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); overflow-y: auto; }
@@ -74,3 +74,15 @@
 .minha .acaoMsg { left: -112px; }
 .apagada { color: var(--color-text-muted); }
 .editada { color: var(--color-text-muted); font-size: 0.7rem; }
+
+.foto { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--color-brand-soft); color: var(--color-brand-text); font-size: 0.7rem; font-weight: 700; }
+.item .foto { margin-right: var(--space-2); }
+.item { justify-content: flex-start; }
+.item > span:not(.comStatus) { flex: 1; }
+.linhaMsg { display: flex; align-items: flex-end; gap: var(--space-2); max-width: 100%; }
+.linhaMinha { justify-content: flex-end; }
+.linhaMsg .balao { max-width: 70%; }
+.comStatus { position: relative; flex: none; display: inline-flex; }
+.item .comStatus { margin-right: var(--space-2); }
+.item .comStatus .foto { margin-right: 0; }
+.online { position: absolute; right: -1px; bottom: -1px; width: 11px; height: 11px; border: 2px solid var(--color-surface); border-radius: 50%; background: #22C55E; }

@@ -219,6 +219,8 @@ test("mensagens: direta, geral, menção e isolamento", async () => {
   assert.equal((await bia.post(`/messages/${iCaio}`, { texto: "Oi Caio" })).status, 201);
   assert.equal((await caio.get("/messages")).corpo.total, 1); assert.equal((await ana.get("/messages")).corpo.total, 0, "terceiro não recebe");
   assert.equal((await ana.get(`/messages/${iCaio}`)).corpo.mensagens.length, 0, "terceiro não lê conversa alheia");
+  assert.equal((await caio.get("/messages")).corpo.pessoas.find((p: any) => p.id === iBia).online, true, "bia está online");
+  assert.equal(typeof (await caio.get("/messages/avatars")).corpo.fotos, "object");
   const aviso = (await caio.get("/messages")).corpo.avisos[0]; assert.equal(aviso.de, "Bia Souza"); assert.equal(aviso.conversa, iBia);
   assert.equal((await caio.post(`/messages/${iBia}/read`)).status, 200); assert.equal((await caio.get("/messages")).corpo.total, 0);
   assert.equal((await bia.post("/messages/geral", { texto: "Bom dia @Caio Lima, veja o memorando" })).status, 201);
