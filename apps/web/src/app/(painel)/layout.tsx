@@ -67,7 +67,7 @@ export default function Painel({ children }: { children: ReactNode }) {
   return (
     <div className={styles.painel}>
       <aside className={[styles.lateral, menu ? styles.aberta : ""].join(" ")}>
-        {pessoa.organization?.internal ? <div className={styles.marcaEscritorio}><img src="/logo-neeko.png" alt="Neeko Automação Inteligente" /></div> : pessoa.organization?.logo ? <div className={styles.marcaEscritorio}><img src={pessoa.organization.logo} alt={pessoa.organization.name} /></div> : <div className={styles.marca}><img src="/neeko-marca.png" alt="" width={54} height={38} /><div><b>Neeko</b><small>Tecnologia que impulsiona sua contabilidade</small></div></div>}
+        {!pessoa.organization?.internal && pessoa.organization?.logo ? <div className={styles.marcaEscritorio}><img src={pessoa.organization.logo} alt={pessoa.organization.name} /></div> : <div className={styles.marca}><img src="/neeko-marca.png" alt="" width={76} height={54} /><div><b>Neeko</b><small>Tecnologia que impulsiona sua contabilidade</small></div></div>}
         <nav aria-label="Menu principal" className={styles.nav}>
           {(pessoa?.organization && !pessoa.organization.internal ? MENU.filter((m) => LIBERADOS.includes(m.nome)).map(doEscritorio) : MENU).map((m) => {
             if (m.plataforma && !pessoa.platformAdmin) return null;
