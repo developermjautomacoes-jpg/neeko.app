@@ -24,3 +24,8 @@ textarea.controle { min-height: 80px; resize: vertical; }
 .chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .chipOn { border-color: var(--color-brand); background: var(--color-brand-soft); color: var(--color-brand); font-weight: var(--weight-semibold); }
 .chip:focus-within { box-shadow: var(--focus-ring); }
+
+.senha { position: relative; }
+.senha .controle { padding-right: 40px; }
+.olho { position: absolute; top: 50%; right: 6px; display: inline-flex; padding: 6px; border: 0; border-radius: 6px; background: none; color: var(--color-text-muted); cursor: pointer; transform: translateY(-50%); }
+.olho:hover, .olho[aria-pressed="true"] { color: var(--color-brand-text); }

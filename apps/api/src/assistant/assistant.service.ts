@@ -8,7 +8,7 @@ interface Bloco { assunto: string; titulo: string; texto: string; arquivo: strin
 const RAIZ = join(process.cwd(), "knowledge");
 /** Trechos com orientação de uso da skill, e não conteúdo para quem pergunta. */
 const INTERNO = /^(quando a usu|formato da resposta|como responder|checagens|cuidados|fonte|fontes|fluxo|modo de uso|como usar|instru|regras? de resposta|exemplos? de uso|sa[ií]da)/i;
-const VAZIAS = new Set("a o as os um uma uns umas de do da dos das em no na nos nas por para pra com sem sobre que qual quais quando como onde quem e ou se eu tu ele ela nos me meu minha ao aos à às é são ser estar tem ter há isso esse essa este esta preciso quero posso pode devo deve fazer faz saber ver".split(" ").map(dobrar));
+const VAZIAS = new Set("a o as os um uma uns umas de do da dos das em no na nos nas por para pra com sem sobre que qual quais quando como onde quem e ou se eu tu ele ela nos me meu minha ao aos à às é são ser estar tem ter há isso esse essa este esta preciso quero posso pode devo deve fazer faz saber ver orientacao orientacoes duvida duvidas ajuda quanto relacao tem empresa empresas".split(" ").map(dobrar));
 /** Palavras que já indicam o assunto: a busca fica só nele. */
 const ALIAS: Record<string, string> = { efd: "especialista-efd-icms-ipi", sped: "especialista-efd-icms-ipi", nfe: "especialista-nfe", nfce: "especialista-nfe", danfe: "especialista-nfe", cstat: "especialista-nfe", rejeicao: "especialista-nfe", mei: "simples-nacional-cgsn140", da: "simples-nacional-cgsn140", pgdas: "simples-nacional-cgsn140", ibs: "especialista-reforma-tributaria", cbs: "especialista-reforma-tributaria", invest: "especialista-invest-es", fundap: "especialista-invest-es" };
 const SINONIMOS: Record<string, string[]> = { item: ["produto"], produto: ["item"], mercadoria: ["item", "produto"], nota: ["nfe", "documento"], rejeicao: ["cstat"], imposto: ["tributo"], aliquota: ["percentual"], alterar: ["alteracao", "corrigir"], alteracao: ["alterar"], corrigir: ["correcao", "alterar"], excluir: ["exclusao"], cancelar: ["cancelamento"], cancelamento: ["cancelar"] };
@@ -68,7 +68,7 @@ export class AssistenteService {
     const pesos = new Map<string, number>(); q.forEach((t) => pesos.set(t, 1));
     q.forEach((t) => (SINONIMOS[t] ?? []).forEach((s) => { if (!pesos.has(s)) pesos.set(s, 0.5); }));
     const conhecidos = q.filter((t) => this.df.has(t) || (SINONIMOS[t] ?? []).some((s) => this.df.has(s)));
-    if (conhecidos.length / q.length < (q.length <= 2 ? 1 : 0.6)) return [];
+    if (conhecidos.length / q.length < (q.length <= 2 ? 1 : q.length >= 5 ? 0.45 : 0.6)) return [];
     const r: { b: Bloco; nota: number; achados: number }[] = [];
     for (const b of this.blocos) {
       if (indicado && b.assunto !== indicado) continue;
@@ -78,7 +78,7 @@ export class AssistenteService {
         nota += p * idf(t) * ((f * 2.2) / (f + 1.2 * (0.25 + (0.75 * b.tamanho) / this.media))) * (b.tituloTermos.has(t) ? 2.5 : 1);
       }
       achados = q.filter((t) => b.termos.has(t) || (SINONIMOS[t] ?? []).some((x) => b.termos.has(x))).length;
-      if (achados && achados / q.length >= (q.length <= 2 ? 1 : 0.6)) r.push({ b, nota, achados });
+      if (achados && achados / q.length >= (q.length <= 2 ? 1 : q.length >= 5 ? 0.45 : 0.6)) r.push({ b, nota, achados });
     }
     const nomes = new Map(this.assuntos.map((a) => [a.id, a.nome])), vistos = new Set<string>();
     return r.sort((a, c) => c.achados - a.achados || c.nota - a.nota).filter((x) => { const k = `${x.b.assunto}|${x.b.titulo}`; if (vistos.has(k)) return false; vistos.add(k); return true; }).slice(0, 4)

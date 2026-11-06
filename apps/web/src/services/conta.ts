@@ -38,7 +38,7 @@ export interface AvisoMensagem { conversa: string; de: string; texto: string; em
 export interface PessoaChat { id: string; nome: string; cargo: string; naoLidas: number; ultima: { texto: string; em: string } | null }
 export interface GrupoChat { id: string; nome: string; privado: boolean; participa: boolean; participantes: string[]; pessoasIds: string[]; naoLidas: number; ultima: { texto: string; em: string } | null }
 export interface ResumoMensagens { total: number; avisos: AvisoMensagem[]; geral: { naoLidas: number; ultima: { texto: string; em: string } | null }; pessoas: PessoaChat[]; grupos: GrupoChat[] }
-export interface Mensagem { id: string; de: string; minha: boolean; texto: string; em: string; mencionou: boolean; encaminhadaDe: string }
+export interface Mensagem { id: string; de: string; minha: boolean; texto: string; em: string; mencionou: boolean; encaminhadaDe: string; editada: boolean; apagada: boolean }
 export const resumoMensagens = () => api<ResumoMensagens>("GET", "messages");
 export const lerMensagens = async (c: string) => (await api<{ mensagens: Mensagem[] }>("GET", `messages/${c}`)).mensagens;
 export const enviarMensagem = (c: string, texto: string) => api("POST", `messages/${c}`, { texto });
@@ -56,3 +56,5 @@ export const solicitarAssunto = (texto: string) => api("POST", "assistant/reques
 export interface Atividade { id: string; em: string; pessoa: string; acao: string }
 export const lerAtividades = (f: { pessoa?: string; de?: string; ate?: string }) => api<{ pessoas: { id: string; nome: string }[]; atividades: Atividade[] }>("GET", `office/activity?${new URLSearchParams(Object.entries(f).filter(([, v]) => v) as [string, string][])}`);
 export const lerSolicitacoes = async () => (await api<{ solicitacoes: { id: string; escritorio: string; texto: string; em: string }[] }>("GET", "platform/topic-requests")).solicitacoes;
+export const editarMensagem = (conversa: string, id: string, texto: string) => api("PATCH", `messages/${conversa}/${id}`, { texto });
+export const apagarMensagem = (conversa: string, id: string) => api("DELETE", `messages/${conversa}/${id}`);

@@ -260,6 +260,14 @@ test("mensagens: direta, geral, menção e isolamento", async () => {
   assert.equal((await ana.pedir("DELETE", `/users/${dono.id}`)).status, 403, "proprietária não é excluída");
   assert.equal((await bia.pedir("DELETE", `/users/${mc.id}`)).status, 403, "exige users.manage");
   assert.equal((await ana.pedir("DELETE", `/users/${mc.id}`)).status, 200); assert.equal(await prisma.user.count({ where: { email: "caio@a.test" } }), 0); assert.equal((await caio.get("/me")).status, 401, "quem foi excluído perde o acesso");
+  const mb = await bia.post(`/messages/${iAna}`, { texto: "Oi Ana" }); assert.equal(mb.status, 201);
+  assert.equal((await ana.pedir("PATCH", `/messages/${iBia}/${mb.corpo.id}`, { texto: "trocado" })).status, 403, "só quem escreveu edita");
+  assert.equal((await ana.pedir("DELETE", `/messages/${iBia}/${mb.corpo.id}`)).status, 403, "só quem escreveu apaga");
+  assert.equal((await bia.pedir("PATCH", `/messages/${iAna}/${mb.corpo.id}`, { texto: "Oi Ana, tudo bem?" })).status, 200);
+  let ult = (await ana.get(`/messages/${iBia}`)).corpo.mensagens.at(-1); assert.equal(ult.texto, "Oi Ana, tudo bem?"); assert.equal(ult.editada, true);
+  assert.equal((await bia.pedir("DELETE", `/messages/${iAna}/${mb.corpo.id}`)).status, 200);
+  ult = (await ana.get(`/messages/${iBia}`)).corpo.mensagens.at(-1); assert.equal(ult.apagada, true); assert.equal(ult.texto, "", "texto some para todos");
+  assert.equal((await bia.post(`/messages/${iAna}/${mb.corpo.id}/forward`, { destino: "geral" })).status, 404, "apagada não é encaminhada");
   await prisma.chat.deleteMany({}); await prisma.message.deleteMany({}); await prisma.user.delete({ where: { email: "bia@a.test" } });
 });
 test("administração faz tudo, menos excluir a proprietária", async () => {

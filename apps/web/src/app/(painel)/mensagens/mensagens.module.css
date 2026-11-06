@@ -67,3 +67,8 @@
 .pedido { display: flex; align-items: flex-end; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px dashed var(--color-border); }
 .pedido > :first-child { flex: 1; }
 .seletor { width: 170px; flex: none; }
+
+.acaoMsg { display: flex; gap: 4px; }
+.minha .acaoMsg { left: -112px; }
+.apagada { color: var(--color-text-muted); }
+.editada { color: var(--color-text-muted); font-size: 0.7rem; }

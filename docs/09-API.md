@@ -47,7 +47,7 @@ Base `/api/v1`. Sessão por cookie httpOnly; a organização vem da sessão, nun
 - `GET /assistant/topics` e `POST /assistant/ask` (busca local nas bases de `apps/api/knowledge`; a pergunta não é guardada)
 - `PUT /office/theme` (`verde`, `azul`, `roxo`, `dourado` ou `marinho`)
 - `GET /messages`, `GET|POST /messages/:conversa`, `POST /messages/:conversa/read` (`geral` ou id da pessoa; só dentro do escritório)
-- `POST /messages/groups`, `PATCH /messages/groups/:id`, `POST /messages/groups/:id/members`, `POST /messages/groups/:id/leave` e `POST /messages/:conversa/:id/forward`
+- `POST /messages/groups`, `PATCH /messages/groups/:id`, `POST /messages/groups/:id/members`, `POST /messages/groups/:id/leave` e `POST /messages/:conversa/:id/forward`, `PATCH` e `DELETE /messages/:conversa/:id` (só quem escreveu)
 - `PUT /users/:id/details` (nome, e-mail e cargo) e `DELETE /users/:id`, com `users.manage`; `PATCH /me` não altera o cargo
 - `GET /certificates` devolve também as empresas de cada certificado e `semCertificado`
 - `POST /office/import` (pacote cifrado de migração do app Facilitar, sempre para o escritório logado; desligada até `OFFICE_IMPORT_ENABLED=true`)

@@ -1,9 +1,9 @@
 "use client";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useSearchParams } from "next/navigation";
-import { Forward, Lock, LogOut, Smile, Unlock, UserPlus, Users } from "lucide-react";
-import { Button, IconButton, Input, Loading, Modal, Notice, PageHeader, Select, useToast } from "@neeko/ui";
-import { criarGrupo, encaminharMensagem, enviarMensagem, incluirNoGrupo, lerMensagens, marcarLida, privacidadeGrupo, resumoMensagens, sairDoGrupo, type Mensagem, type ResumoMensagens } from "@/services/conta";
+import { Forward, Lock, LogOut, Pencil, Smile, Trash2, Unlock, UserPlus, Users, X } from "lucide-react";
+import { Button, ConfirmDialog, IconButton, Input, Loading, Modal, Notice, PageHeader, Select, useToast } from "@neeko/ui";
+import { apagarMensagem, editarMensagem, criarGrupo, encaminharMensagem, enviarMensagem, incluirNoGrupo, lerMensagens, marcarLida, privacidadeGrupo, resumoMensagens, sairDoGrupo, type Mensagem, type ResumoMensagens } from "@/services/conta";
 import { Assistente } from "./Assistente";
 import styles from "./mensagens.module.css";
 
@@ -21,6 +21,8 @@ function Conversas() {
   const [emojis, setEmojis] = useState(false);
   const [modal, setModal] = useState<{ tipo: "novo" | "incluir"; nome: string; privado: boolean; pessoas: string[] } | null>(null);
   const [encaminhar, setEncaminhar] = useState<Mensagem | null>(null);
+  const [editando, setEditando] = useState<Mensagem | null>(null);
+  const [apagando, setApagando] = useState<Mensagem | null>(null);
   const [destino, setDestino] = useState("");
   const fim = useRef<HTMLDivElement>(null), campo = useRef<HTMLTextAreaElement>(null);
   useEffect(() => { if (pedido) setConversa(pedido); }, [pedido]);
@@ -58,7 +60,7 @@ function Conversas() {
   async function enviar() {
     if (!texto.trim() || enviando) return;
     setEnviando(true);
-    try { await enviarMensagem(conversa, texto); setTexto(""); await atualizar(); }
+    try { if (editando) { await editarMensagem(conversa, editando.id, texto); setEditando(null); } else await enviarMensagem(conversa, texto); setTexto(""); await atualizar(); }
     catch (x) { avisar(x instanceof Error ? x.message : "Não foi possível enviar.", "erro"); } finally { setEnviando(false); }
   }
   function tecla(e: KeyboardEvent) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void enviar(); } }
@@ -93,7 +95,7 @@ function Conversas() {
         </div>
         <div className={styles.mensagens}>
           {!lista.length && <p className={styles.vazio}>Nenhuma mensagem ainda.</p>}
-          {lista.map((m) => <div key={m.id} className={`${styles.balao} ${m.minha ? styles.minha : ""} ${m.mencionou ? styles.mencao : ""}`}><small>{m.minha ? "Você" : m.de} · {hora(m.em)}</small>{m.encaminhadaDe && <small className={styles.encaminhada}>Encaminhada de {m.encaminhadaDe}</small>}<p>{destacar(m.texto)}</p><span className={styles.acaoMsg}><IconButton dica="Encaminhar" icone={<Forward size={14} />} onClick={() => setEncaminhar(m)} /></span></div>)}
+          {lista.map((m) => <div key={m.id} className={`${styles.balao} ${m.minha ? styles.minha : ""} ${m.mencionou ? styles.mencao : ""}`}><small>{m.minha ? "Você" : m.de} · {hora(m.em)}</small>{m.encaminhadaDe && <small className={styles.encaminhada}>Encaminhada de {m.encaminhadaDe}</small>}<p>{m.apagada ? <i className={styles.apagada}>Mensagem apagada</i> : destacar(m.texto)}{m.editada && !m.apagada && <small className={styles.editada}> (editada)</small>}</p>{!m.apagada && <span className={styles.acaoMsg}><IconButton dica="Encaminhar" icone={<Forward size={14} />} onClick={() => setEncaminhar(m)} />{m.minha && !m.encaminhadaDe && <IconButton dica="Editar" icone={<Pencil size={14} />} onClick={() => { setEditando(m); setTexto(m.texto); campo.current?.focus(); }} />}{m.minha && <IconButton dica="Apagar" variante="danger" icone={<Trash2 size={14} />} onClick={() => setApagando(m)} />}</span>}</div>)}
           <div ref={fim} />
         </div>
         <div className={styles.escrever}>
@@ -101,7 +103,8 @@ function Conversas() {
           {emojis && <div className={styles.emojis}>{EMOJIS.map((e) => <button type="button" key={e} onClick={() => emoji(e)}>{e}</button>)}</div>}
           <IconButton dica="Emoticons" icone={<Smile size={18} />} onClick={() => setEmojis(!emojis)} />
           <textarea ref={campo} aria-label="Mensagem" rows={2} maxLength={2000} placeholder="Escreva uma mensagem" value={texto} onChange={(e) => setTexto(e.target.value)} onKeyDown={tecla} />
-          <Button variante="primary" carregando={enviando} onClick={() => void enviar()}>Enviar</Button>
+          {editando && <IconButton dica="Cancelar edição" icone={<X size={16} />} onClick={() => { setEditando(null); setTexto(""); }} />}
+          <Button variante="primary" carregando={enviando} onClick={() => void enviar()}>{editando ? "Salvar" : "Enviar"}</Button>
         </div>
       </section>}
     </div>
@@ -114,6 +117,9 @@ function Conversas() {
         {!candidatos.length && <small>Todos já participam.</small>}
       </div>}
     </Modal>
+    <ConfirmDialog aberto={!!apagando} titulo="Apagar mensagem" confirmar="Apagar" perigo onCancelar={() => setApagando(null)} onConfirmar={() => { const m = apagando; setApagando(null); if (m) void tentar(() => apagarMensagem(conversa, m.id)); }}>
+      <p>A mensagem some para todos da conversa, e no lugar aparece "Mensagem apagada".</p>
+    </ConfirmDialog>
     <Modal aberto={!!encaminhar} largura="sm" titulo="Encaminhar mensagem" onFechar={() => setEncaminhar(null)} rodape={<><Button onClick={() => setEncaminhar(null)}>Voltar</Button><Button variante="primary" disabled={!destino} onClick={() => void confirmarEncaminhar()}>Encaminhar</Button></>}>
       <Select rotulo="Para" value={destino} onChange={(e) => setDestino(e.target.value)}><option value="">Escolha</option>{destinos.map((d) => <option key={d.id} value={d.id}>{d.nome}</option>)}</Select>
     </Modal>

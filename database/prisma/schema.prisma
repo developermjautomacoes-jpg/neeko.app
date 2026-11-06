@@ -466,6 +466,8 @@ model Message {
   mentions       String[] @db.Uuid
   chatId         String?  @db.Uuid
   forwardedFrom  String   @default("")
+  editedAt       DateTime?
+  deletedAt      DateTime?
   createdAt      DateTime @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)

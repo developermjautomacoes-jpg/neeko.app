@@ -1,7 +1,7 @@
-import { Body, Controller, Get, HttpCode, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from "@nestjs/common";
 import { z } from "zod";
 import { Contexto, Ctx, Membro } from "../common/auth";
-import { invalido, naoEncontrado } from "../common/errors";
+import { Erro, invalido, naoEncontrado } from "../common/errors";
 import { validar } from "../common/validation";
 import { PrismaService } from "../prisma.service";
 
@@ -99,8 +99,8 @@ export class MensagensController {
     const avisos: { conversa: string; de: string; texto: string; em: Date; mencao: boolean }[] = [];
     for (const m of ultimas) {
       const k = chave(m), x = conversas.get(k) ?? { naoLidas: 0, ultima: null };
-      x.ultima ??= { texto: m.text, em: m.createdAt };
-      if (m.senderId !== c.userId && m.createdAt.getTime() > (lido.get(k) ?? 0) && !(m.chatId && fora.has(m.chatId))) {
+      x.ultima ??= { texto: m.deletedAt ? "Mensagem apagada" : m.text, em: m.createdAt };
+      if (!m.deletedAt && m.senderId !== c.userId && m.createdAt.getTime() > (lido.get(k) ?? 0) && !(m.chatId && fora.has(m.chatId))) {
         x.naoLidas++;
         if (avisos.length < 8) avisos.push({ conversa: k, de: nome.get(m.senderId) ?? "Ex-integrante", texto: m.text.slice(0, 120), em: m.createdAt, mencao: m.mentions.includes(c.userId) });
       }
@@ -116,7 +116,7 @@ export class MensagensController {
     await this.conferir(c, conversa);
     const [l, pessoas] = await Promise.all([this.prisma.message.findMany({ where: this.onde(c, conversa), orderBy: { createdAt: "desc" }, take: 200 }), this.pessoas(c)]);
     const nome = new Map(pessoas.map((p) => [p.id, p.nome]));
-    return { mensagens: l.reverse().map((m) => ({ id: m.id, de: nome.get(m.senderId) ?? "Ex-integrante", minha: m.senderId === c.userId, texto: m.text, em: m.createdAt, mencionou: m.mentions.includes(c.userId), encaminhadaDe: m.forwardedFrom })) };
+    return { mensagens: l.reverse().map((m) => ({ id: m.id, de: nome.get(m.senderId) ?? "Ex-integrante", minha: m.senderId === c.userId, texto: m.deletedAt ? "" : m.text, em: m.createdAt, mencionou: !m.deletedAt && m.mentions.includes(c.userId), encaminhadaDe: m.forwardedFrom, editada: !!m.editedAt, apagada: !!m.deletedAt })) };
   }
 
   /** Só vale como menção o @Nome de quem pode ver a conversa: a lista nunca vem do navegador. */
@@ -133,10 +133,37 @@ export class MensagensController {
     await this.conferir(c, conversa);
     const { destino } = validar(z.object({ destino: z.string().min(1).max(60) }), corpo);
     if (!/^[0-9a-f-]{36}$/i.test(id)) throw naoEncontrado("Mensagem não encontrada.");
-    const m = await this.prisma.message.findFirst({ where: { ...this.onde(c, conversa), id } });
+    const m = await this.prisma.message.findFirst({ where: { ...this.onde(c, conversa), id, deletedAt: null } });
     if (!m) throw naoEncontrado("Mensagem não encontrada.");
     const de = await this.prisma.user.findUnique({ where: { id: m.senderId }, select: { name: true } });
     return { id: (await this.gravar(c, destino, m.text, m.forwardedFrom || de?.name || "Ex-integrante")).id };
+  }
+
+  /** Só quem escreveu edita ou apaga; o texto apagado some para todos. */
+  private async propria(c: Contexto, conversa: string, id: string) {
+    await this.conferir(c, conversa);
+    if (!/^[0-9a-f-]{36}$/i.test(id)) throw naoEncontrado("Mensagem não encontrada.");
+    const m = await this.prisma.message.findFirst({ where: { ...this.onde(c, conversa), id, deletedAt: null } });
+    if (!m) throw naoEncontrado("Mensagem não encontrada.");
+    if (m.senderId !== c.userId) throw new Erro(403, "FORBIDDEN", "Só quem escreveu pode alterar a mensagem.");
+    if (m.forwardedFrom) throw invalido("Mensagem encaminhada não pode ser editada.");
+    return m;
+  }
+  @Membro() @Patch(":conversa/:id")
+  async editar(@Ctx() c: Contexto, @Param("conversa") conversa: string, @Param("id") id: string, @Body() corpo: unknown) {
+    const m = await this.propria(c, conversa, id), text = validar(texto, corpo).texto;
+    const g = conversa.startsWith(G) ? await this.grupo(c, conversa.slice(G.length)) : null, validos = g?.private ? new Set(g.members.map((x) => x.userId)) : null;
+    const mentions = (await this.pessoas(c)).filter((p) => p.id !== c.userId && (!validos || validos.has(p.id)) && text.toLowerCase().includes(`@${p.nome.toLowerCase()}`)).map((p) => p.id);
+    await this.prisma.message.update({ where: { id: m.id }, data: { text, mentions, editedAt: new Date() } });
+    return { ok: true };
+  }
+  @Membro() @Delete(":conversa/:id")
+  async apagar(@Ctx() c: Contexto, @Param("conversa") conversa: string, @Param("id") id: string) {
+    const m = await this.propria(c, conversa, id).catch((x) => { if (x instanceof Erro && x.message.includes("encaminhada")) return null; throw x; });
+    const alvo = m ?? (await this.prisma.message.findFirst({ where: { ...this.onde(c, conversa), id, senderId: c.userId, deletedAt: null } }));
+    if (!alvo) throw naoEncontrado("Mensagem não encontrada.");
+    await this.prisma.message.update({ where: { id: alvo.id }, data: { text: "", mentions: [], deletedAt: new Date() } });
+    return { ok: true };
   }
 
   @Membro() @Post(":conversa/read") @HttpCode(200)
