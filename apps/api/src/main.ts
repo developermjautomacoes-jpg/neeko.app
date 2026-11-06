@@ -11,6 +11,7 @@ import { PrismaService } from "./prisma.service";
 export async function criarApp() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: ["log", "warn", "error"] });
   app.use("/api/v1/office/import", json({ limit: "60mb" })); // pacote cifrado de migração
+  app.use("/api/v1/finance", json({ limit: "9mb" })); // anexos e extratos OFX
   app.useBodyParser("json", { limit: "2mb" });
   app.setGlobalPrefix("api/v1");
   app.disable("x-powered-by");

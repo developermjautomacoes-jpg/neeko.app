@@ -24,11 +24,14 @@ import { MigracaoService } from "./identity/migration.service";
 import { AssistenteController } from "./assistant/assistant.controller";
 import { AssistenteService } from "./assistant/assistant.service";
 import { MensagensController } from "./messages/messages.controller";
+import { FinanceiroController, FinanceiroEmpresasController } from "./finance/finance.controller";
+import { FinanceiroService } from "./finance/finance.service";
+import { EstoqueController } from "./finance/stock.controller";
 import { PrismaService } from "./prisma.service";
 
 @Module({
-  controllers: [HealthController, AuthController, MeController, UsersController, CertificatesController, FiscalController, PainelController, MemorandosController, MfaController, PlataformaController, EscritorioController, EscritorioPublicoController, MensagensController, AssistenteController],
-  providers: [PrismaService, AuditoriaService, EscopoService, CertificadosService, NfseService, DfeService, AgendadorService, MemorandosService, AssistenteService, CorreioService, MigracaoService,
+  controllers: [HealthController, AuthController, MeController, UsersController, CertificatesController, FiscalController, PainelController, MemorandosController, MfaController, PlataformaController, EscritorioController, EscritorioPublicoController, MensagensController, AssistenteController, FinanceiroController, FinanceiroEmpresasController, EstoqueController],
+  providers: [PrismaService, AuditoriaService, EscopoService, CertificadosService, NfseService, DfeService, AgendadorService, MemorandosService, AssistenteService, CorreioService, MigracaoService, FinanceiroService,
     { provide: APP_GUARD, useClass: GuardaAcesso }, { provide: APP_FILTER, useClass: FiltroErros }],
 })
 export class AppModule {}
