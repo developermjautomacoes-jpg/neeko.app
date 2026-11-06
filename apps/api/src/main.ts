@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
+import { json } from "express";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { AppModule } from "./app.module";
 import { primeiraPessoa } from "./bootstrap";
@@ -9,6 +10,7 @@ import { PrismaService } from "./prisma.service";
 
 export async function criarApp() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: ["log", "warn", "error"] });
+  app.use("/api/v1/office/import", json({ limit: "60mb" })); // pacote cifrado de migração
   app.useBodyParser("json", { limit: "2mb" });
   app.setGlobalPrefix("api/v1");
   app.disable("x-powered-by");

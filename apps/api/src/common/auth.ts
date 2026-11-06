@@ -5,11 +5,13 @@ import type { Request } from "express";
 import { PrismaService } from "../prisma.service";
 import { Erro } from "./errors";
 
-export const PERMISSOES = ["companies.read", "companies.manage", "fiscal.documents.read", "fiscal.capture", "fiscal.credentials.manage", "fiscal.ciencia.send", "fiscal.schedule.manage", "users.manage", "audit.read", "memoranda.read", "memoranda.manage", "office.manage"] as const;
+export const PERMISSOES = ["companies.read", "companies.manage", "fiscal.documents.read", "fiscal.capture", "fiscal.credentials.manage", "fiscal.ciencia.send", "fiscal.schedule.manage", "users.manage", "audit.read", "memoranda.read", "memoranda.manage", "office.manage", "companies.restricted"] as const;
 export type Permissao = (typeof PERMISSOES)[number];
 
 export interface Contexto {
   userId: string; sessionId: string; organizationId: string; membershipId: string; role: string; allCompanies: boolean; permissions: Set<string>;
+  /** Raízes de CNPJ que esta pessoa não pode ver nem cadastrar. */
+  restritas: string[];
 }
 const PUBLICO = "publico", EXIGE = "exige", SO_LOGADO = "soLogado", SEM_MFA = "semMfa", PLATAFORMA = "plataforma";
 /** Rota sem contexto de organização. */
@@ -33,6 +35,12 @@ export async function conferirSimultaneos(prisma: PrismaService, organizationId:
   if (max === null) return;
   const ativos = await prisma.session.findMany({ where: { organizationId, userId: { not: userId }, expiresAt: { gt: new Date() }, lastSeenAt: { gte: inicioJanela() } }, distinct: ["userId"], select: { userId: true } });
   if (ativos.length >= max) throw new Erro(403, "LIMIT_SIMULTANEOUS", `Os ${max} acessos simultâneos do plano estão em uso. Aguarde alguém sair ou tente em alguns minutos.`);
+}
+
+/** A raiz do próprio escritório é sempre restrita. */
+export function raizesRestritas(o: { cnpj: string; restrictedRoots: string[] }) {
+  const propria = o.cnpj.replace(/[^0-9A-Za-z]/g, "").toUpperCase().slice(0, 8);
+  return [...new Set([...(propria.length === 8 ? [propria] : []), ...o.restrictedRoots])];
 }
 
 export const COOKIE = "neeko_session";
@@ -72,12 +80,13 @@ export class GuardaAcesso implements CanActivate {
     }
     const exige = this.reflector.getAllAndOverride<Permissao[]>(EXIGE, alvo);
     if (!exige?.length || !s.organizationId) throw new Erro(403, "FORBIDDEN", "Você não tem permissão para esta ação.");
-    const m = await this.prisma.organizationMembership.findFirst({ where: { userId: s.userId, organizationId: s.organizationId, status: "ACTIVE" }, include: { permissions: true, organization: { select: { status: true } } } });
+    const m = await this.prisma.organizationMembership.findFirst({ where: { userId: s.userId, organizationId: s.organizationId, status: "ACTIVE" }, include: { permissions: true, organization: { select: { status: true, internal: true, cnpj: true, restrictedRoots: true } } } });
     if (!m) throw new Erro(403, "FORBIDDEN", "Você não tem acesso a esta organização.");
     if (m.organization.status !== "ACTIVE") throw new Erro(403, "OFFICE_SUSPENDED", "O acesso deste escritório está suspenso. Fale com a Neeko.");
+    if (!m.organization.internal && req.path.includes("/fiscal/dfe/")) throw new Erro(403, "MODULE_DISABLED", "Este módulo ainda não está liberado para o escritório.");
     const permissions = new Set(m.permissions.map((p) => p.permission));
     if (!exige.every((p) => permissions.has(p))) throw new Erro(403, "FORBIDDEN", "Você não tem permissão para esta ação.");
-    req.contexto = { userId: s.userId, sessionId: s.id, organizationId: s.organizationId, membershipId: m.id, role: m.role, allCompanies: m.allCompanies, permissions } satisfies Contexto;
+    req.contexto = { userId: s.userId, sessionId: s.id, organizationId: s.organizationId, membershipId: m.id, role: m.role, allCompanies: m.allCompanies, permissions, restritas: m.role === "ORG_OWNER" || permissions.has("companies.restricted") ? [] : raizesRestritas(m.organization) } satisfies Contexto;
     return true;
   }
 }

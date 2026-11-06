@@ -60,6 +60,11 @@ model Organization {
   billingExempt Boolean  @default(false)
   /// Identifica o link de acesso do escritório: /e/<slug>.
   slug         String    @unique @default(dbgenerated("gen_random_uuid()::text"))
+  /// Raízes de CNPJ restritas, além da do próprio escritório.
+  restrictedRoots String[] @default([])
+  /// Paleta do escritório, sempre #rrggbb.
+  colorPrimary String?
+  colorDark    String?
   /// Logo PNG do escritório, usada no menu e nos relatórios.
   logo         String?
   paidUntil    String    @default("")
@@ -97,6 +102,7 @@ model User {
   createdAt          DateTime   @default(now())
 
   memberships OrganizationMembership[]
+  passwordResets PasswordReset[]
   sessions    Session[]
 }
 
@@ -431,6 +437,20 @@ model Memorandum {
 
   @@unique([organizationId, ano, seq])
   @@index([organizationId, companyId])
+}
+
+/// Código de redefinição de senha enviado por e-mail; só o hash fica guardado.
+model PasswordReset {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  codeHash  String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 /// Registro imutável de ações sensíveis.

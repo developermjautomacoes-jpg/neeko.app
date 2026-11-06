@@ -13,6 +13,7 @@ Mudanças relevantes da Neeko Platform serão registradas aqui.
 
 - Criados monorepo, API NestJS, web Next.js, PostgreSQL com Prisma e testes.
 - Login e senha individuais, RBAC por organização e empresa, auditoria e gestão de usuários.
+- Paleta de cores por escritório, redefinição de senha por código no e-mail e importação de memorandos e certificados do app Facilitar.
 - Links de acesso separados: `/login` para a Neeko e `/e/<slug>` personalizado para cada escritório.
 - Exclusão de escritório com confirmação pelo nome e reinício da senha provisória do gestor.
 - Gerencial de escritórios, planos e limites, com verificação em duas etapas opcional (ADR-007).

@@ -31,6 +31,7 @@ export class UsersController {
   }
   /** Ninguém concede a si ou a outra pessoa o que não tem: impede escalada de privilégio. */
   private conferirConcessao(c: Contexto, p: string[]) {
+    if (p.includes("companies.restricted") && c.role !== "ORG_OWNER") throw new Erro(403, "FORBIDDEN", "Só a proprietária libera a empresa do escritório.");
     if (p.some((x) => !c.permissions.has(x))) throw new Erro(403, "FORBIDDEN", "Você só pode conceder permissões que já tem.");
   }
 

@@ -8,6 +8,7 @@ import { formatarCnpj } from "@/lib/format";
 import { destinoApos, eu, sair, type Eu } from "@/services/conta";
 import { lerPainel, type Painel as DadosPainel } from "@/services/fiscal";
 import { telaEntrada } from "@/services/http";
+import { aplicarPaleta } from "@/features/paleta";
 import styles from "./painel.module.css";
 
 interface Item { plataforma?: boolean; nome: string; icone: ComponentType<{ size?: number }>; href?: string; exige?: string; filhos?: { href: string; nome: string; exige: string }[] }
@@ -23,10 +24,14 @@ const MENU: Item[] = [
   { nome: "Neeko Gerencial", icone: Building2, plataforma: true, filhos: [{ href: "/plataforma/escritorios", nome: "Escritórios", exige: "" }, { href: "/plataforma/planos", nome: "Planos", exige: "" }] },
   { nome: "Administração", icone: Settings, filhos: [{ href: "/escritorio", nome: "Perfil do escritório", exige: "office.manage" }, { href: "/certificados", nome: "Certificados", exige: "fiscal.credentials.manage" }, { href: "/usuarios", nome: "Usuários", exige: "users.manage" }] },
 ];
+/** Por enquanto, escritórios usam só NFS-e, memorandos, usuários e administração. */
+const LIBERADOS = ["Início", "Documentos Fiscais", "Memorandos", "Administração"];
+const doEscritorio = (m: Item): Item => ({ ...m, filhos: m.filhos?.filter((f) => f.href !== "/notas/nfe-cte") });
 const iniciais = (n: string) => { const p = n.trim().split(/\s+/); return ((p[0]?.[0] ?? "") + (p.length > 1 ? p[p.length - 1][0] : "")).toUpperCase(); };
 
 export default function Painel({ children }: { children: ReactNode }) {
   const [pessoa, setPessoa] = useState<Eu | null>(null);
+  useEffect(() => { aplicarPaleta(pessoa?.organization?.colorPrimary, pessoa?.organization?.colorDark); }, [pessoa]);
   const [dados, setDados] = useState<DadosPainel | null>(null);
   const [menu, setMenu] = useState(false);
   const [abertos, setAbertos] = useState<string[]>(["Documentos Fiscais"]);
@@ -55,7 +60,7 @@ export default function Painel({ children }: { children: ReactNode }) {
       <aside className={[styles.lateral, menu ? styles.aberta : ""].join(" ")}>
         {pessoa.organization?.logo ? <div className={styles.marcaEscritorio}><img src={pessoa.organization.logo} alt={pessoa.organization.name} /></div> : <div className={styles.marca}><img src="/neeko-marca.png" alt="" width={54} height={38} /><div><b>Neeko</b><small>Tecnologia que impulsiona sua contabilidade</small></div></div>}
         <nav aria-label="Menu principal" className={styles.nav}>
-          {MENU.map((m) => {
+          {(pessoa?.organization && !pessoa.organization.internal ? MENU.filter((m) => LIBERADOS.includes(m.nome)).map(doEscritorio) : MENU).map((m) => {
             if (m.plataforma && !pessoa.platformAdmin) return null;
             const I = m.icone;
             const filhos = m.filhos?.filter((f) => pode(f.exige));
@@ -96,7 +101,7 @@ export default function Painel({ children }: { children: ReactNode }) {
           <Link href="/perfil" aria-label="Meu perfil">{pessoa.avatar ? <img src={pessoa.avatar} alt="" className={styles.avatarTopo} /> : <span className={styles.avatarTopo}>{iniciais(pessoa.name)}</span>}</Link>
         </header>
         <main className={styles.conteudo}>{children}</main>
-        <footer className={styles.rodape}><img src="/neeko-marca.png" alt="" width={24} height={17} /><span>Neeko · Tecnologia que impulsiona sua contabilidade</span></footer>
+        <footer className={styles.rodape}><img src="/logo-neeko.png" alt="Neeko" width={73} height={20} /></footer>
       </div>
     </div>
   );

@@ -1,10 +1,10 @@
 import { api } from "./http";
 
-export interface Eu { id: string; name: string; email: string; platformAdmin: boolean; mfaEnabled: boolean; mfaPending: boolean; mfaSetupRequired: boolean; avatar: string | null; jobTitle: string; phone: string; mustChangePassword: boolean; organization: { slug: string; logo: string | null; contactEmail: string; contactPhone: string; id: string; name: string; role: string } | null; permissions: string[]; availablePermissions: string[] }
+export interface Eu { id: string; name: string; email: string; platformAdmin: boolean; mfaEnabled: boolean; mfaPending: boolean; mfaSetupRequired: boolean; avatar: string | null; jobTitle: string; phone: string; mustChangePassword: boolean; organization: { slug: string; internal: boolean; colorPrimary: string | null; colorDark: string | null; logo: string | null; contactEmail: string; contactPhone: string; id: string; name: string; role: string } | null; permissions: string[]; availablePermissions: string[] }
 export interface Usuario { id: string; name: string; email: string; role: string; status: "ACTIVE" | "SUSPENDED"; allCompanies: boolean; permissions: string[]; companyIds: string[]; mustChangePassword: boolean }
 export const eu = () => api<Eu>("GET", "me");
 export const entrar = (email: string, senha: string, escritorio?: string) => api<{ mustChangePassword: boolean; mfaRequired: boolean }>("POST", "auth/login", { email, senha, escritorio });
-export const lerEscritorioPublico = (slug: string) => api<{ name: string; logo: string | null }>("GET", `public/offices/${encodeURIComponent(slug)}`);
+export const lerEscritorioPublico = (slug: string) => api<{ name: string; logo: string | null; colorPrimary: string | null; colorDark: string | null }>("GET", `public/offices/${encodeURIComponent(slug)}`);
 export const sair = () => api("POST", "auth/logout", {});
 export const trocarSenha = (atual: string, nova: string) => api("POST", "auth/password", { atual, nova });
 export async function listarUsuarios() { return (await api<{ usuarios: Usuario[] }>("GET", "users")).usuarios; }
@@ -12,7 +12,7 @@ export const criarUsuario = (u: { name: string; email: string; senhaProvisoria: 
 export const alterarUsuario = (id: string, u: { role: string; status: string; permissions: string[]; allCompanies: boolean; companyIds: string[] }) => api("PATCH", `users/${id}`, u);
 export const redefinirSenha = (id: string, senhaProvisoria: string) => api("POST", `users/${id}/reset-password`, { senhaProvisoria });
 export const salvarPerfil = (p: { name: string; jobTitle: string; phone: string; avatar: string | null }) => api("PATCH", "me", p);
-export const salvarEscritorio = (p: { logo: string | null; contactEmail: string; contactPhone: string }) => api("PUT", "office", p);
+export const salvarEscritorio = (p: { colorPrimary: string | null; colorDark: string | null; logo: string | null; contactEmail: string; contactPhone: string }) => api("PUT", "office", p);
 export const iniciarMfa = () => api<{ chave: string; uri: string }>("POST", "auth/mfa/setup", {});
 export const ativarMfa = (codigo: string) => api<{ codigos: string[] }>("POST", "auth/mfa/enable", { codigo });
 export const verificarMfa = (codigo: string) => api("POST", "auth/mfa/verify", { codigo });
@@ -27,3 +27,7 @@ export const alterarEscritorio = (id: string, e: unknown) => api("PATCH", `platf
 export const situacaoEscritorio = (id: string, status: string) => api("POST", `platform/offices/${id}/status`, { status });
 export const excluirEscritorio = (id: string, nome: string) => api("DELETE", `platform/offices/${id}`, { nome });
 export const redefinirGestor = (id: string, senhaProvisoria: string) => api("POST", `platform/offices/${id}/reset-manager`, { senhaProvisoria });
+export const esqueciSenha = (email: string, escritorio?: string) => api("POST", "auth/forgot-password", { email, escritorio });
+export const redefinirComCodigo = (email: string, codigo: string, nova: string) => api("POST", "auth/reset-password", { email, codigo, nova });
+export interface ResultadoImportacao { memorandos: { importados: number; pulados: { numero: string; motivo: string }[] }; certificados: { importados: number; pulados: { nome: string; motivo: string }[] } }
+export const importarPacote = (pacote: string, frase: string) => api<ResultadoImportacao>("POST", "office/import", { pacote, frase });

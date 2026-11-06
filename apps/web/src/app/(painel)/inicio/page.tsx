@@ -55,11 +55,11 @@ export default function Inicio() {
           <Link href="/notas/nfse" className={styles.botaoVazado}>Ver minhas notas <ArrowRight size={16} /></Link>
         </div>
         <svg className={styles.ondas} viewBox="0 0 600 220" preserveAspectRatio="none" aria-hidden>
-          {Array.from({ length: 16 }, (_, i) => <path key={i} d={`M0 ${190 - i * 2} C150 ${180 - i * 5}, 250 ${170 + i * 3}, 340 ${100 + i * 4} S520 ${10 + i * 7}, 600 ${50 + i * 6}`} fill="none" stroke="#3DEB9F" strokeOpacity={0.05 + i * 0.022} />)}
+          {Array.from({ length: 16 }, (_, i) => <path key={i} d={`M0 ${190 - i * 2} C150 ${180 - i * 5}, 250 ${170 + i * 3}, 340 ${100 + i * 4} S520 ${10 + i * 7}, 600 ${50 + i * 6}`} fill="none" stroke="var(--color-brand)" strokeOpacity={0.05 + i * 0.022} />)}
         </svg>
         <div className={styles.novidade}>
           <span className={styles.selo}>★ Captura</span>
-          <h2>NFS-e, NF-e e CT-e direto do certificado</h2>
+          <h2>{pessoa?.organization?.internal ? "NFS-e, NF-e e CT-e direto do certificado" : "NFS-e direto do certificado"}</h2>
           <p>Em lote, com histórico e XML guardados.</p>
           <Link href="/notas/nfse" className={styles.botaoCheio}>Capturar agora <ArrowRight size={16} /></Link>
         </div>
@@ -82,13 +82,13 @@ export default function Inicio() {
         <article className={styles.escuro}>
           <header className={styles.cab}><h2>Saúde da Captura</h2><Link href="/notas/nfse">Ver todas <ArrowRight size={14} /></Link></header>
           <div className={styles.saude}>
-            <svg viewBox="0 0 110 110" className={styles.anel} role="img" aria-label={`${d.saude.percentual}% das empresas aptas`}><circle cx="55" cy="55" r={r} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="9" /><circle cx="55" cy="55" r={r} fill="none" stroke="#3DEB9F" strokeWidth="9" strokeLinecap="round" strokeDasharray={`${(d.saude.percentual / 100) * volta} ${volta}`} transform="rotate(-90 55 55)" /><text x="55" y="55" textAnchor="middle" className={styles.anelValor}>{d.saude.percentual}%</text><text x="55" y="71" textAnchor="middle" className={styles.anelRotulo}>aptas</text></svg>
+            <svg viewBox="0 0 110 110" className={styles.anel} role="img" aria-label={`${d.saude.percentual}% das empresas aptas`}><circle cx="55" cy="55" r={r} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="9" /><circle cx="55" cy="55" r={r} fill="none" stroke="var(--color-brand)" strokeWidth="9" strokeLinecap="round" strokeDasharray={`${(d.saude.percentual / 100) * volta} ${volta}`} transform="rotate(-90 55 55)" /><text x="55" y="55" textAnchor="middle" className={styles.anelValor}>{d.saude.percentual}%</text><text x="55" y="71" textAnchor="middle" className={styles.anelRotulo}>aptas</text></svg>
             <ul>{d.saude.itens.map((i) => { const I = i.ok ? CheckCircle2 : CircleAlert; return <li key={i.nome}><I size={18} className={i.ok ? styles.okIcone : styles.alertaIcone} aria-hidden /><span>{i.nome}</span><em className={i.ok ? styles.ok : styles.alerta}>{i.detalhe}</em></li>; })}</ul>
           </div>
         </article>
         <article className={styles.cartao}>
           <header className={styles.cab}><h2><Zap size={20} className={styles.raio} aria-hidden /> Acesso Rápido</h2></header>
-          <div className={styles.atalhos}>{ATALHOS.filter((a) => pessoa?.permissions.includes(a.exige)).map((a) => { const I = a.icone; return <Link key={a.href + a.nome} href={a.href}><I size={26} aria-hidden /><span>{a.nome}</span></Link>; })}</div>
+          <div className={styles.atalhos}>{ATALHOS.filter((a) => pessoa?.permissions.includes(a.exige) && (pessoa.organization?.internal || a.href !== "/notas/nfe-cte")).map((a) => { const I = a.icone; return <Link key={a.href + a.nome} href={a.href}><I size={26} aria-hidden /><span>{a.nome}</span></Link>; })}</div>
         </article>
       </section>
 

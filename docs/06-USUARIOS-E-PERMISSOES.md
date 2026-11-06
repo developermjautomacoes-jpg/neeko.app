@@ -25,6 +25,8 @@ Exemplos de ações: `companies.read`, `companies.manage`, `fiscal.documents.rea
 - Menor privilégio.
 - Negar por padrão.
 - Validar autorização em cada endpoint e job.
+- A raiz do CNPJ do próprio escritório e as raízes importadas ficam restritas: só `ORG_OWNER` e quem ela autorizar (`companies.restricted`) veem ou cadastram.
+- Por enquanto, escritórios acessam apenas NFS-e, memorandos, usuários e administração; a API responde `MODULE_DISABLED` nas rotas de NF-e/CT-e.
 - O limite de usuários do plano conta acessos simultâneos: pessoas distintas com atividade nos últimos 15 minutos; cadastros não têm limite.
 - Há dois links de entrada: `/login` (administração da Neeko) e `/e/<slug>` (cada escritório, com a logo dele). O acesso ao Gerencial só vale em sessão aberta por `/login`.
 - MFA opcional para todos os perfis, por decisão da responsável pelo produto (2026-11-06); quem já ativou continua informando o código.

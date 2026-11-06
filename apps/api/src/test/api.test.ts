@@ -8,7 +8,9 @@ import type { AddressInfo } from "node:net";
 import { readFileSync } from "node:fs";
 import { Client } from "pg";
 import { aplicarMigracoes } from "../migrate";
+import { CorreioService } from "../common/mail.service";
 import { limparConfig } from "../config";
+import { createCipheriv, pbkdf2Sync, randomBytes } from "node:crypto";
 
 const A = "11222333000181", B = "99888777000166";
 const CH1 = "1".repeat(50), CH2 = "2".repeat(50);
@@ -18,6 +20,7 @@ let fila: ((path: string) => { status: number; body: unknown; headers?: Record<s
 let soap: ((body: string) => string)[] = [];
 const pedidos: string[] = [], corpos: string[] = [];
 let app: { close(): Promise<void> };
+let correio: CorreioService;
 let prisma: any;
 
 class Sessao {
@@ -48,7 +51,7 @@ before(async () => {
   Object.assign(process.env, { NFSE_ADN_URL: `http://127.0.0.1:${(adn.address() as AddressInfo).port}/contribuintes`, DFE_URL_NFE: uS, DFE_URL_CTE: uS, DFE_URL_EVENTO: uS, BOOTSTRAP_ORG_NAME: "Org A", BOOTSTRAP_ADMIN_EMAIL: "ana@a.test", BOOTSTRAP_ADMIN_PASSWORD: "Provisoria123", BOOTSTRAP_ADMIN_NAME: "Ana" });
   limparConfig();
   const { criarApp } = await import("../main"); const { PrismaService } = await import("../prisma.service"); const { primeiraPessoa } = await import("../bootstrap");
-  const a = await criarApp(); await a.listen(0); app = a;
+  const a = await criarApp(); await a.listen(0); app = a; correio = a.get(CorreioService);
   prisma = a.get(PrismaService); await primeiraPessoa(prisma); await primeiraPessoa(prisma);
   base = `http://127.0.0.1:${(a.getHttpServer().address() as AddressInfo).port}`;
 });
@@ -207,6 +210,75 @@ test("duas etapas: exige código e aceita recuperação uma vez", async () => {
   const s3 = await logar("ana@a.test", "NovaSenha123");
   assert.equal((await s3.post("/auth/mfa/verify", { codigo: totp(mfaAna.seg, passo) })).status, 400, "código usado não vale de novo");
 });
+test("redefinir senha por código enviado no e-mail", async () => {
+  const c = new Sessao(), { hashSenha } = await import("../common/passwords");
+  assert.equal((await c.post("/auth/forgot-password", { email: "ana@a.test" })).status, 503, "sem SMTP avisa");
+  const caixa: { assunto: string }[] = [];
+  correio.configurado = () => true; correio.enviar = async (_p, assunto) => { caixa.push({ assunto }); };
+  const email = "esqueceu@a.test";
+  await prisma.user.create({ data: { email, name: "Esqueceu", passwordHash: await hashSenha("Provisoria456") } });
+  assert.equal((await c.post("/auth/forgot-password", { email: "ninguem@a.test" })).status, 200, "não revela quem existe"); assert.equal(caixa.length, 0);
+  assert.equal((await c.post("/auth/forgot-password", { email })).status, 200); assert.equal(caixa.length, 1);
+  const codigo = /(\d{6})/.exec(caixa[0].assunto)![1], errado = codigo === "000000" ? "000001" : "000000";
+  assert.equal((await prisma.passwordReset.findFirst({ where: { user: { email } } })).codeHash.includes(codigo), false, "código não fica aberto");
+  assert.equal((await c.post("/auth/reset-password", { email, codigo: errado, nova: "NovaSenhaBoa123" })).corpo.code, "CODE_INVALID");
+  assert.equal((await c.post("/auth/reset-password", { email, codigo, nova: "curta" })).status, 400);
+  assert.equal((await c.post("/auth/reset-password", { email, codigo, nova: "NovaSenhaBoa123" })).status, 200);
+  assert.equal((await c.post("/auth/reset-password", { email, codigo, nova: "OutraSenhaBoa123" })).corpo.code, "CODE_INVALID", "código vale uma vez");
+  await c.post("/auth/forgot-password", { email }); const novo = /(\d{6})/.exec(caixa[1].assunto)![1], ruim = novo === "000000" ? "000001" : "000000";
+  for (let i = 0; i < 5; i++) await c.post("/auth/reset-password", { email, codigo: ruim, nova: "NovaSenhaBoa123" });
+  assert.equal((await c.post("/auth/reset-password", { email, codigo: novo, nova: "OutraSenhaBoa123" })).corpo.code, "CODE_INVALID", "5 erros invalidam o código");
+  for (let i = 0; i < 3; i++) await c.post("/auth/forgot-password", { email }); assert.equal(caixa.length, 4, "no máximo 3 pedidos em 15 minutos");
+  await prisma.user.delete({ where: { email } });
+});
+test("CNPJ do escritório fica só com a proprietária e quem ela liberar", async () => {
+  const org = (await prisma.organization.findFirst({ where: { internal: true } })).id, senha = "Provisoria456";
+  await prisma.organization.update({ where: { id: org }, data: { cnpj: "11.222.333/0001-81" } });
+  const perms = ["companies.read", "fiscal.documents.read", "fiscal.credentials.manage", "memoranda.read", "memoranda.manage"];
+  const nova = await ana.post("/users", { name: "Equipe", email: "equipe@a.test", senhaProvisoria: senha, role: "STAFF", permissions: perms, allCompanies: true, companyIds: [] }); assert.equal(nova.status, 201, JSON.stringify(nova.corpo));
+  await prisma.user.update({ where: { email: "equipe@a.test" }, data: { mustChangePassword: false } });
+  const eq = await logar("equipe@a.test", senha);
+  const veA = async (s: Sessao) => JSON.stringify([(await s.get("/fiscal/companies")).corpo, (await s.get("/memoranda")).corpo, (await s.get("/fiscal/dashboard")).corpo, (await s.get("/certificates")).corpo]).includes(A.slice(0, 8));
+  assert.equal(await veA(ana), true, "proprietária vê"); assert.equal(await veA(eq), false, "equipe com carteira toda não vê");
+  assert.equal((await eq.post("/memoranda", { numero: null, memo: { e_cnpj: A, e_razao: "Própria", m_data: "2026-11-06" } })).corpo.code, "RESTRICTED_CNPJ", "nem cadastra");
+  assert.equal((await eq.get(`/fiscal/nfse/${empresa}/documents?ambiente=2`)).status, 404, "nem por id");
+  assert.equal((await eq.post("/users", { name: "Outro", email: "x2@a.test", senhaProvisoria: senha, role: "STAFF", permissions: ["companies.read"], allCompanies: false, companyIds: [] })).status, 403);
+  const id = (await prisma.organizationMembership.findFirst({ where: { user: { email: "equipe@a.test" } } })).id;
+  assert.equal((await ana.pedir("PATCH", `/users/${id}`, { role: "STAFF", status: "ACTIVE", permissions: [...perms, "companies.restricted"], allCompanies: true, companyIds: [] })).status, 200);
+  assert.equal(await veA(await logar("equipe@a.test", senha)), true, "quem ela libera passa a ver");
+  await prisma.organization.update({ where: { id: org }, data: { cnpj: "" } }); await prisma.user.delete({ where: { email: "equipe@a.test" } });
+});
+test("escritório acessa só os módulos liberados", async () => {
+  const org = await prisma.organization.findFirst({ where: { internal: true } });
+  await prisma.organization.update({ where: { id: org.id }, data: { internal: false } });
+  assert.equal((await ana.get("/fiscal/dfe/companies")).corpo.code, "MODULE_DISABLED"); assert.equal((await ana.get("/fiscal/companies")).status, 200); assert.equal((await ana.get("/memoranda")).status, 200); assert.equal((await ana.get("/users")).status, 200);
+  await prisma.organization.update({ where: { id: org.id }, data: { internal: true } });
+});
+test("importa pacote da Facilitar só para o próprio escritório", async () => {
+  const empacotar = (dados: unknown, frase: string) => { const salt = randomBytes(16), iv = randomBytes(12), k = pbkdf2Sync(frase, salt, 210000, 32, "sha256"), c = createCipheriv("aes-256-gcm", k, iv), data = Buffer.concat([c.update(JSON.stringify(dados), "utf8"), c.final()]); return JSON.stringify({ formato: "neeko-migracao", versao: 1, iter: 210000, salt: salt.toString("base64"), iv: iv.toString("base64"), tag: c.getAuthTag().toString("base64"), data: data.toString("base64") }); };
+  const raiz = "55443322", cnpj = `${raiz}000170`, p = gerarPfx(`IMPORTADA LTDA:${cnpj}`, "senhacert");
+  const pacote = empacotar({ memorandos: [
+    { seq: 71, ano: 2024, status: "ativo", situacaoCliente: "ativa", e_cnpj: "55.443.322/0001-70", e_razao: "Importada Ltda", m_data: "2024-03-01", criadoPorNome: "Equipe", criadoEm: "2024-03-01T10:00:00-03:00", historico: [{ acao: "Criou o memorando", por: "Equipe", em: "2024-03-01T10:00:00-03:00" }] },
+    { seq: 72, ano: 2024, status: "cancelado", situacaoCliente: "inativa", dataSaida: "2024-06-01", motivoSaida: "Encerrou", e_cnpj: "22.333.444/0001-81", e_razao: "Saiu Ltda" },
+    { seq: 73, ano: 2024, status: "ativo", e_cnpj: "123", e_razao: "Sem CNPJ" },
+    { seq: 74, ano: 2024, status: "ativo", e_cnpj: "55.443.322/0001-70", e_razao: "Importada Ltda" },
+  ], certificados: [{ id: "abc", apelido: "Matriz", pfx: p.pfx.toString("base64"), senha: "senhacert" }, { id: "ruim", pfx: "AAAA", senha: "x" }], nfse: { procurador: "abc", modos: { [cnpj]: "procuracao" } }, restritas: ["77665544"] }, "frase bem longa 123");
+  assert.equal((await ana.post("/office/import", { pacote, frase: "frase errada 12345" })).status, 400);
+  const r = await ana.post("/office/import", { pacote, frase: "frase bem longa 123" }); assert.equal(r.status, 200, JSON.stringify(r.corpo));
+  assert.equal(r.corpo.memorandos.importados, 2); assert.equal(r.corpo.memorandos.pulados.length, 2); assert.equal(r.corpo.certificados.importados, 1); assert.equal(r.corpo.certificados.pulados.length, 1);
+  const o = await prisma.organization.findFirst({ where: { internal: true } }), org = o.id; assert.deepEqual(o.restrictedRoots, ["77665544"]);
+  const m = await prisma.memorandum.findFirst({ where: { organizationId: org, seq: 71, ano: 2024 }, include: { company: true } });
+  assert.equal(m.company.cnpj, cnpj); assert.equal(m.company.nfseMode, "procuracao"); assert.equal(m.createdByName, "Equipe"); assert.equal(m.data.e_razao, "Importada Ltda"); assert.equal(m.data.seq, undefined);
+  assert.equal(m.createdAt.toISOString(), "2024-03-01T13:00:00.000Z");
+  const s = await prisma.memorandum.findFirst({ where: { organizationId: org, seq: 72 }, include: { company: true } }); assert.equal(s.status, "cancelado"); assert.equal(s.clientStatus, "inativa"); assert.equal(s.exitReason, "Encerrou"); assert.equal(s.company.active, false);
+  const cert = await prisma.fiscalCertificate.findFirst({ where: { organizationId: org, document: cnpj } }); assert.equal(cert.nickname, "Matriz"); assert.equal(Buffer.from(cert.pfxEncrypted).includes(p.pfx.subarray(0, 40)), false, "guarda cifrado");
+  assert.equal((await prisma.fiscalSettings.findUnique({ where: { organizationId: org } })).procuratorCertificateId, cert.id);
+  assert.equal((await ana.post("/office/import", { pacote, frase: "frase bem longa 123" })).corpo.memorandos.importados, 0, "repetir não duplica");
+  await prisma.organization.update({ where: { id: org }, data: { restrictedRoots: [] } });
+  assert.equal((await ana.pedir("PUT", "/office", { logo: null, colorPrimary: "vermelho", colorDark: null })).status, 400);
+  assert.equal((await ana.pedir("PUT", "/office", { logo: null, colorPrimary: "#1144aa", colorDark: "#102030" })).status, 200);
+  assert.equal((await ana.get("/me")).corpo.organization.colorPrimary, "#1144aa");
+});
 test("plataforma: Neeko gerencia escritórios sem ver dados deles", async () => {
   const u = await prisma.user.findUnique({ where: { email: "ana@a.test" } });
   assert.equal(u.globalRole, "NEEKO_SUPERADMIN"); assert.equal((await prisma.organization.findFirst({ orderBy: { createdAt: "asc" } })).internal, true);
@@ -257,7 +329,7 @@ test("plataforma: Neeko gerencia escritórios sem ver dados deles", async () => 
   assert.equal((await ana.post(`/platform/offices/${es.corpo.id}/reset-manager`, { senhaProvisoria: "Provisoria555" })).status, 200);
   assert.equal((await new Sessao().post("/auth/login", await corpoLogin("gestora@beta.test", "Provisoria555"))).corpo.mustChangePassword, true);
   const slug = (await ana.get("/platform/offices")).corpo.escritorios.find((o: any) => o.id === es.corpo.id).slug; assert.equal(slug, "escritorio-beta");
-  assert.deepEqual(Object.keys((await new Sessao().get(`/public/offices/${slug}`)).corpo).sort(), ["logo", "name"]);
+  assert.deepEqual(Object.keys((await new Sessao().get(`/public/offices/${slug}`)).corpo).sort(), ["colorDark", "colorPrimary", "logo", "name"]);
   assert.equal((await new Sessao().get(`/public/offices/${interna.slug}`)).status, 404, "a organização interna não tem link público");
   assert.equal((await new Sessao().post("/auth/login", { email: "gestora@beta.test", senha: "Provisoria555" })).corpo.code, "USE_OFFICE_LINK", "gestor não entra pelo link da Neeko");
   assert.equal((await new Sessao().post("/auth/login", { email: "gestora@beta.test", senha: "Provisoria555", escritorio: "outro" })).status, 401);
@@ -284,6 +356,7 @@ test("isolamento entre organizações", async () => {
   const { hashSenha } = await import("../common/passwords");
   await prisma.user.create({ data: { email: "o@b.test", name: "O", passwordHash: await hashSenha("SenhaOutra123"), mustChangePassword: false, memberships: { create: { role: "STAFF", allCompanies: true, organization: { create: { name: "Org B" } }, permissions: { create: ["companies.read", "companies.manage", "fiscal.documents.read", "fiscal.capture", "fiscal.credentials.manage", "fiscal.ciencia.send", "users.manage", "memoranda.read", "memoranda.manage"].map((permission) => ({ permission })) } } } } });
   outra = await logar("o@b.test", "SenhaOutra123");
+  await prisma.organization.updateMany({ where: { memberships: { some: { user: { email: "o@b.test" } } } }, data: { internal: true } }); // libera NF-e/CT-e para testar o isolamento
   assert.deepEqual((await outra.get("/fiscal/companies")).corpo.empresas, []);
   assert.deepEqual((await outra.get("/certificates")).corpo.certificados, []);
   assert.equal((await outra.get(`/fiscal/nfse/${empresa}/documents`)).status, 404);

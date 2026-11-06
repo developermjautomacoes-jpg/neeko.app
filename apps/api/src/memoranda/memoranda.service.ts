@@ -64,11 +64,13 @@ export class MemorandosService {
     const { maxCompanies } = await this.escopo.limites(c.organizationId);
     if (maxCompanies !== null && (await this.prisma.company.count({ where: { organizationId: c.organizationId, active: true } })) >= maxCompanies) throw new Erro(403, "LIMIT_COMPANIES", `O plano deste escritório permite ${maxCompanies} empresa(s). Fale com a Neeko para ampliar.`);
   }
+  private conferirRestrita(c: Contexto, cnpj: string) { if (this.escopo.restrita(c, cnpj)) throw new Erro(403, "RESTRICTED_CNPJ", "Este CNPJ é restrito à proprietária do escritório."); }
   private ativa(status: string, clientStatus: string) { return status === "ativo" && clientStatus === "ativa"; }
 
   /** O número é editável; sem número, usa o próximo do ano. */
   async criar(c: Contexto, d: Record<string, unknown>, numero: { seq: number; ano: number } | null) {
     const { cnpj, legalName } = this.dadosEmpresa(d), org = c.organizationId, por = await this.nome(c);
+    this.conferirRestrita(c, cnpj);
     const ano = numero?.ano ?? +String(d.m_data || hoje()).slice(0, 4);
     const { maxCompanies } = await this.escopo.limites(org);
     if (maxCompanies !== null && !(await this.prisma.company.findFirst({ where: { organizationId: org, cnpj, active: true } })) && (await this.prisma.company.count({ where: { organizationId: org, active: true } })) >= maxCompanies) throw new Erro(403, "LIMIT_COMPANIES", `O plano deste escritório permite ${maxCompanies} empresa(s). Fale com a Neeko para ampliar.`);
@@ -86,6 +88,7 @@ export class MemorandosService {
   }
   async alterar(c: Contexto, id: string, d: Record<string, unknown>, numero: { seq: number; ano: number } | null) {
     const m = await this.um(c, id), { cnpj, legalName } = this.dadosEmpresa(d), por = await this.nome(c), em = new Date().toISOString();
+    this.conferirRestrita(c, cnpj);
     const e = await this.prisma.company.findFirstOrThrow({ where: { id: m.companyId, organizationId: c.organizationId } });
     if (e.cnpj !== cnpj) throw invalido("O CNPJ do memorando não muda. Para outra empresa, crie um novo memorando.");
     const seq = numero?.seq ?? m.seq, ano = numero?.ano ?? m.ano, campos = alteracoes(m.data as Record<string, unknown>, d);

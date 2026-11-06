@@ -69,7 +69,12 @@ export class FiscalController {
     return { ativo: s.scheduleActive, hora: s.scheduleTime, status: s.runStatus, inicio: s.runStartedAt, fim: s.runFinishedAt, linhas: lista(s.runLines as string[]) };
   }
   @Exige("fiscal.documents.read") @Get("fiscal/schedule")
-  lerAgenda(@Ctx() c: Contexto) { return this.agenda(c.organizationId); }
+  async lerAgenda(@Ctx() c: Contexto) {
+    const a = await this.agenda(c.organizationId);
+    if (!c.restritas.length) return a;
+    const ocultas = await this.prisma.company.findMany({ where: { organizationId: c.organizationId, OR: c.restritas.map((r) => ({ cnpj: { startsWith: r } })) }, select: { cnpj: true, legalName: true } });
+    return { ...a, linhas: a.linhas.filter((l: string) => !ocultas.some((e) => l.includes(e.cnpj) || l.includes(e.legalName))) };
+  }
   @Exige("fiscal.schedule.manage") @Put("fiscal/schedule")
   async salvarAgenda(@Ctx() c: Contexto, @Body() corpo: unknown) {
     const d = validar(z.object({ ativo: z.boolean(), hora: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Horário inválido.") }), corpo);

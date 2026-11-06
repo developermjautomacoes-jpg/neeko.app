@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, Patch, Post, Req, Res } from "@nestjs/common";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomInt } from "node:crypto";
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { COOKIE, PERMISSOES, Publico, SemMfa, SoLogado, hashToken, lerCookie, conferirSimultaneos } from "../common/auth";
@@ -8,6 +8,7 @@ import { Erro, invalido } from "../common/errors";
 import { HASH_FALSO, conferirSenha, hashSenha, senhaFraca } from "../common/passwords";
 import { validar } from "../common/validation";
 import { config } from "../config";
+import { CorreioService } from "../common/mail.service";
 import { PrismaService } from "../prisma.service";
 
 const DURACAO_MS = 12 * 3600 * 1000, BLOQUEIO_MS = 15 * 60 * 1000, TENTATIVAS = 5;
@@ -16,7 +17,7 @@ export const limparTentativas = () => falhas.clear();
 
 @Controller("auth")
 export class AuthController {
-  constructor(private prisma: PrismaService, private auditoria: AuditoriaService) {}
+  constructor(private prisma: PrismaService, private auditoria: AuditoriaService, private correio: CorreioService) {}
 
   @Publico() @Post("login") @HttpCode(200)
   async login(@Body() corpo: unknown, @Res({ passthrough: true }) res: Response) {
@@ -44,6 +45,41 @@ export class AuthController {
     res.cookie(COOKIE, token, { httpOnly: true, sameSite: "strict", secure: config().NODE_ENV === "production", maxAge: DURACAO_MS, path: "/" });
     await this.auditoria.registrar(u.memberships[0]?.organizationId ?? null, u.id, "auth.login");
     return { ok: true, mustChangePassword: u.mustChangePassword, mfaRequired: u.mfaEnabled };
+  }
+
+  /** A resposta é igual exista ou não a conta, para não revelar quem tem cadastro. */
+  @Publico() @Post("forgot-password") @HttpCode(200)
+  async esqueci(@Body() corpo: unknown) {
+    const { email, escritorio } = validar(z.object({ email: z.string().email("Informe um e-mail válido.").transform((e) => e.trim().toLowerCase()), escritorio: z.string().max(60).optional() }), corpo);
+    if (!this.correio.configurado()) throw new Erro(503, "MAIL_NOT_CONFIGURED", "O envio por e-mail ainda não está disponível. Peça uma senha provisória a quem administra sua organização.");
+    const u = await this.prisma.user.findUnique({ where: { email }, include: { memberships: { where: { status: "ACTIVE" }, include: { organization: { select: { name: true, slug: true } } } } } });
+    if (!u?.active) return { ok: true };
+    if ((await this.prisma.passwordReset.count({ where: { userId: u.id, createdAt: { gte: new Date(Date.now() - BLOQUEIO_MS) } } })) >= 3) return { ok: true };
+    const codigo = String(randomInt(0, 1000000)).padStart(6, "0");
+    await this.prisma.passwordReset.create({ data: { userId: u.id, codeHash: hashToken(`${u.id}:${codigo}`), expiresAt: new Date(Date.now() + BLOQUEIO_MS) } });
+    const nome = u.memberships.find((m) => m.organization.slug === escritorio)?.organization.name ?? "Neeko";
+    await this.auditoria.registrar(null, u.id, "auth.password.reset.requested");
+    this.correio.enviar(email, `Código de segurança: ${codigo}`, `Olá, ${u.name}.\n\nSeu código para redefinir a senha em ${nome} é ${codigo}.\nEle vale por 15 minutos. Se você não pediu, ignore este e-mail.`).catch((x: Error) => console.error("Falha ao enviar e-mail:", x.message));
+    return { ok: true };
+  }
+
+  @Publico() @Post("reset-password") @HttpCode(200)
+  async redefinir(@Body() corpo: unknown) {
+    const { email, codigo, nova } = validar(z.object({ email: z.string().email("Informe um e-mail válido.").transform((e) => e.trim().toLowerCase()), codigo: z.string().regex(/^\d{6}$/, "Informe os 6 números do código."), nova: z.string().max(200) }), corpo);
+    const fraca = senhaFraca(nova); if (fraca) throw invalido(fraca);
+    const erro = new Erro(400, "CODE_INVALID", "Código inválido ou vencido. Peça um novo.");
+    const u = await this.prisma.user.findUnique({ where: { email } });
+    const r = u?.active ? await this.prisma.passwordReset.findFirst({ where: { userId: u.id, expiresAt: { gt: new Date() } }, orderBy: { createdAt: "desc" } }) : null;
+    if (!u || !r || r.attempts >= TENTATIVAS) throw erro;
+    if (r.codeHash !== hashToken(`${u.id}:${codigo}`)) { await this.prisma.passwordReset.update({ where: { id: r.id }, data: { attempts: { increment: 1 } } }); throw erro; }
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: u.id }, data: { passwordHash: await hashSenha(nova), mustChangePassword: false } }),
+      this.prisma.passwordReset.deleteMany({ where: { userId: u.id } }),
+      this.prisma.session.deleteMany({ where: { userId: u.id } }),
+    ]);
+    falhas.delete(email);
+    await this.auditoria.registrar(null, u.id, "auth.password.reset");
+    return { ok: true };
   }
 
   @SemMfa() @Post("logout") @HttpCode(200)
@@ -76,7 +112,7 @@ export class MeController {
     const u = await this.prisma.user.findUniqueOrThrow({ where: { id: req.sessao.userId }, include: { memberships: { where: { status: "ACTIVE" }, include: { organization: true, permissions: true } } } });
     const atual = u.memberships.find((m) => m.organizationId === req.sessao.organizationId && m.organization.status === "ACTIVE");
     return { id: u.id, name: u.name, email: u.email, platformAdmin: u.globalRole === "NEEKO_SUPERADMIN" && req.sessao.portal === "neeko", portal: req.sessao.portal, mfaEnabled: u.mfaEnabled, mfaPending: u.mfaEnabled && !req.sessao.mfaVerified, mfaSetupRequired: false, avatar: u.avatar, jobTitle: u.jobTitle, phone: u.phone, mustChangePassword: u.mustChangePassword,
-      organization: atual ? { id: atual.organizationId, name: atual.organization.name, role: atual.role, slug: atual.organization.slug, logo: atual.organization.logo, contactEmail: atual.organization.contactEmail, contactPhone: atual.organization.contactPhone } : null,
+      organization: atual ? { id: atual.organizationId, name: atual.organization.name, role: atual.role, slug: atual.organization.slug, internal: atual.organization.internal, logo: atual.organization.logo, colorPrimary: atual.organization.colorPrimary, colorDark: atual.organization.colorDark, contactEmail: atual.organization.contactEmail, contactPhone: atual.organization.contactPhone } : null,
       permissions: atual?.permissions.map((p) => p.permission) ?? [], availablePermissions: PERMISSOES };
   }
 

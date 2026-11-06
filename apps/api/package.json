@@ -2,7 +2,9 @@
   "name": "@neeko/api",
   "version": "0.2.0",
   "private": true,
-  "prisma": { "schema": "../../database/prisma/schema.prisma" },
+  "prisma": {
+    "schema": "../../database/prisma/schema.prisma"
+  },
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -16,10 +18,12 @@
     "@nestjs/platform-express": "11.0.20",
     "@prisma/adapter-pg": "6.19.0",
     "@prisma/client": "6.19.0",
-    "pg": "8.13.3",
     "@xmldom/xmldom": "0.9.8",
+    "express": "^5.3.0",
     "jszip": "3.10.1",
     "node-forge": "1.3.1",
+    "nodemailer": "^10.3.1",
+    "pg": "8.13.3",
     "prisma": "6.19.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
@@ -29,6 +33,7 @@
     "@types/express": "5.0.1",
     "@types/node": "22.13.10",
     "@types/node-forge": "1.3.11",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "8.11.11",
     "typescript": "5.7.3"
   }

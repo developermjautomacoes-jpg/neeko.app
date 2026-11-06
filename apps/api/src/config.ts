@@ -13,6 +13,12 @@ const esquema = z.object({
   BOOTSTRAP_ADMIN_PASSWORD: z.string().min(10).optional(),
   /** Emergência: limpa a verificação em duas etapas desse e-mail ao iniciar. Remova depois de usar. */
   MFA_RESET_EMAIL: z.string().email().optional(),
+  /** Envio de e-mail (redefinição de senha). Sem SMTP_HOST, a redefinição por e-mail fica indisponível. */
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
   RUN_MIGRATIONS: z.enum(["true", "false"]).default("false"),
   MIGRATIONS_DIR: z.string().default("../../database/prisma/migrations"),
   SCHEDULER_ENABLED: z.enum(["true", "false"]).default("true"),
