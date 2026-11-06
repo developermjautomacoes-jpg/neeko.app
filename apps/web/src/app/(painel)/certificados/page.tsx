@@ -22,18 +22,19 @@ export default function Certificados() {
   const [senha, setSenha] = useState("");
   const [apelido, setApelido] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [erroImport, setErroImport] = useState("");
   const [removendo, setRemovendo] = useState<Certificado | null>(null);
   const [chave, setChave] = useState(0);
   const carregar = useCallback(() => lerCertificados().then((r) => { setLista(r.certificados); setSem(r.semCertificado); }).catch((e: Error) => setErro(e.message)).finally(() => setCarregando(false)), []);
   useEffect(() => { void carregar(); }, [carregar]);
   async function importar() {
     if (!arquivo) { avisar("Escolha o arquivo .pfx ou .p12.", "erro"); return; }
-    setEnviando(true);
+    setEnviando(true); setErroImport("");
     try {
       await enviarCertificado({ pfx: await arquivoParaBase64(arquivo), senha, apelido: apelido.trim() });
       setArquivo(null); setSenha(""); setApelido(""); setChave((k) => k + 1); await carregar();
       avisar("Certificado importado.", "sucesso");
-    } catch (e) { avisar(e instanceof Error ? e.message : "Não foi possível importar.", "erro"); }
+    } catch (e) { const m = e instanceof Error ? e.message : "Não foi possível importar."; setErroImport(m); avisar(m, "erro"); }
     finally { setEnviando(false); }
   }
   async function remover() {
@@ -73,6 +74,7 @@ export default function Certificados() {
           <Input rotulo="Apelido (opcional)" value={apelido} onChange={(e) => setApelido(e.target.value)} />
           <Button variante="primary" carregando={enviando} onClick={importar}>Importar</Button>
         </div>
+        {erroImport && <Notice tom="erro">{erroImport}</Notice>}
       </Card>
       <div className={styles.bloco}>
         <Card titulo="Controle de certificados" semPadding>
