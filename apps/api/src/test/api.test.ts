@@ -323,8 +323,8 @@ test("importa pacote da Facilitar só para o próprio escritório", async () => 
   delete process.env.OFFICE_IMPORT_ENABLED; limparConfig();
   assert.equal((await ana.get("/me")).corpo.organization.theme, "verde", "a Neeko começa no verde");
   assert.equal((await ana.pedir("PUT", "/office/theme", { tema: "rosa" })).status, 400);
-  assert.equal((await ana.pedir("PUT", "/office/theme", { tema: "azul" })).status, 200);
-  assert.equal((await ana.get("/me")).corpo.organization.theme, "azul");
+  assert.equal((await ana.pedir("PUT", "/office/theme", { tema: "marinho" })).status, 200);
+  assert.equal((await ana.get("/me")).corpo.organization.theme, "marinho");
 });
 test("plataforma: Neeko gerencia escritórios sem ver dados deles", async () => {
   const u = await prisma.user.findUnique({ where: { email: "ana@a.test" } });

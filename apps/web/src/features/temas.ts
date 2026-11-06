@@ -4,7 +4,10 @@ export const TEMAS = [
   { id: "azul", nome: "Azul Tech", frase: "Confiança e tecnologia", principal: "#1677E0", menu: "#0A2C63", topo: "#BFD9F9", fundo: "#F2F7FE", cores: ["#1677E0", "#0B5CC4", "#7DB9FA", "#0A2C63"] },
   { id: "roxo", nome: "Roxo Premium", frase: "Inovação e destaque", principal: "#7C3AED", menu: "#150B33", topo: "#4C1D95", fundo: "#F6F3FE", cores: ["#7C3AED", "#5B21B6", "#150B33", "#B794F6"] },
   { id: "dourado", nome: "Dourado Elegante", frase: "Sofisticação e equilíbrio", principal: "#E8A33D", menu: "#FBEBD2", topo: "#F7DDB4", fundo: "#FFFAF2", cores: ["#E8A33D", "#B97714", "#5B3410", "#FBEBD2"] },
+  { id: "marinho", nome: "Marinho Clássico", frase: "Solidez e clareza", principal: "#1F5480", menu: "#F4F7FB", topo: "#D3E1EE", fundo: "#F6F9FC", cores: ["#1F5480", "#163E5F", "#0B0F14", "#D3E1EE"] },
 ];
+/** Temas de menu claro: a logo mantém as cores originais. */
+export const menuClaro = (tema?: string | null) => tema === "dourado" || tema === "marinho";
 export function aplicarTema(tema?: string | null) {
   if (tema && tema !== "verde") document.documentElement.dataset.tema = tema;
   else delete document.documentElement.dataset.tema;

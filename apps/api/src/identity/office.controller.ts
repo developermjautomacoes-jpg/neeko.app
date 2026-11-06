@@ -37,7 +37,7 @@ export class EscritorioController {
   }
   @Exige("office.manage") @Put("theme")
   async tema(@Ctx() c: Contexto, @Body() corpo: unknown) {
-    const { tema } = validar(z.object({ tema: z.enum(["verde", "azul", "roxo", "dourado"], { message: "Tema inválido." }) }), corpo);
+    const { tema } = validar(z.object({ tema: z.enum(["verde", "azul", "roxo", "dourado", "marinho"], { message: "Tema inválido." }) }), corpo);
     await this.prisma.organization.update({ where: { id: c.organizationId }, data: { theme: tema } });
     await this.auditoria.registrar(c.organizationId, c.userId, "office.theme.changed", tema);
     return { ok: true };
