@@ -8,6 +8,7 @@ import { formatarCnpj } from "@/lib/format";
 import { destinoApos, eu, sair, type Eu, resumoMensagens, type ResumoMensagens } from "@/services/conta";
 import { lerPainel, type Painel as DadosPainel } from "@/services/fiscal";
 import { telaEntrada } from "@/services/http";
+import { logoParaMenu } from "@/features/logoMenu";
 import { aplicarTema } from "@/features/temas";
 import styles from "./painel.module.css";
 
@@ -32,6 +33,11 @@ const iniciais = (n: string) => { const p = n.trim().split(/\s+/); return ((p[0]
 export default function Painel({ children }: { children: ReactNode }) {
   const [pessoa, setPessoa] = useState<Eu | null>(null);
   useEffect(() => { aplicarTema(pessoa?.organization?.theme); }, [pessoa]);
+  const [logoMenu, setLogoMenu] = useState("");
+  useEffect(() => {
+    const o = pessoa?.organization; if (!o?.logo) return;
+    logoParaMenu(o.logo, o.theme === "dourado").then(setLogoMenu).catch(() => setLogoMenu(o.logo ?? ""));
+  }, [pessoa?.organization?.logo, pessoa?.organization?.theme]);
   const [dados, setDados] = useState<DadosPainel | null>(null);
   const [menu, setMenu] = useState(false);
   const [abertos, setAbertos] = useState<string[]>(["Documentos Fiscais"]);
@@ -67,7 +73,7 @@ export default function Painel({ children }: { children: ReactNode }) {
   return (
     <div className={styles.painel}>
       <aside className={[styles.lateral, menu ? styles.aberta : ""].join(" ")}>
-        {!pessoa.organization?.internal && pessoa.organization?.logo ? <div className={styles.marcaEscritorio}><img src={pessoa.organization.logo} alt={pessoa.organization.name} /></div> : <div className={styles.marcaNeeko}><img src={pessoa.organization?.theme === "dourado" ? "/logo-neeko.png" : "/logo-neeko-clara.png"} alt="Neeko Automação Inteligente" /></div>}
+        {!pessoa.organization?.internal && pessoa.organization?.logo ? <div className={styles.marcaEscritorio}>{logoMenu && <img src={logoMenu} alt={pessoa.organization.name} />}</div> : <div className={styles.marcaNeeko}><img src={pessoa.organization?.theme === "dourado" ? "/logo-neeko.png" : "/logo-neeko-clara.png"} alt="Neeko Automação Inteligente" /></div>}
         <nav aria-label="Menu principal" className={styles.nav}>
           {(pessoa?.organization && !pessoa.organization.internal ? MENU.filter((m) => LIBERADOS.includes(m.nome)).map(doEscritorio) : MENU).map((m) => {
             if (m.plataforma && !pessoa.platformAdmin) return null;
