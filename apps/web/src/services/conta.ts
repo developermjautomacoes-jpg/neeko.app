@@ -35,9 +35,15 @@ export interface ResultadoImportacao { memorandos: { importados: number; pulados
 export const importarPacote = (pacote: string, frase: string) => api<ResultadoImportacao>("POST", "office/import", { pacote, frase });
 export interface AvisoMensagem { conversa: string; de: string; texto: string; em: string; mencao: boolean }
 export interface PessoaChat { id: string; nome: string; cargo: string; naoLidas: number; ultima: { texto: string; em: string } | null }
-export interface ResumoMensagens { total: number; avisos: AvisoMensagem[]; geral: { naoLidas: number; ultima: { texto: string; em: string } | null }; pessoas: PessoaChat[] }
-export interface Mensagem { id: string; de: string; minha: boolean; texto: string; em: string; mencionou: boolean }
+export interface GrupoChat { id: string; nome: string; privado: boolean; participa: boolean; participantes: string[]; pessoasIds: string[]; naoLidas: number; ultima: { texto: string; em: string } | null }
+export interface ResumoMensagens { total: number; avisos: AvisoMensagem[]; geral: { naoLidas: number; ultima: { texto: string; em: string } | null }; pessoas: PessoaChat[]; grupos: GrupoChat[] }
+export interface Mensagem { id: string; de: string; minha: boolean; texto: string; em: string; mencionou: boolean; encaminhadaDe: string }
 export const resumoMensagens = () => api<ResumoMensagens>("GET", "messages");
 export const lerMensagens = async (c: string) => (await api<{ mensagens: Mensagem[] }>("GET", `messages/${c}`)).mensagens;
 export const enviarMensagem = (c: string, texto: string) => api("POST", `messages/${c}`, { texto });
 export const marcarLida = (c: string) => api("POST", `messages/${c}/read`, {});
+export const criarGrupo = (nome: string, privado: boolean, pessoas: string[]) => api<{ id: string }>("POST", "messages/groups", { nome, privado, pessoas });
+export const incluirNoGrupo = (id: string, pessoas: string[]) => api("POST", `messages/groups/${id.slice(2)}/members`, { pessoas });
+export const privacidadeGrupo = (id: string, privado: boolean) => api("PATCH", `messages/groups/${id.slice(2)}`, { privado });
+export const sairDoGrupo = (id: string) => api("POST", `messages/groups/${id.slice(2)}/leave`, {});
+export const encaminharMensagem = (conversa: string, id: string, destino: string) => api("POST", `messages/${conversa}/${id}/forward`, { destino });

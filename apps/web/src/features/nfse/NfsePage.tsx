@@ -219,7 +219,7 @@ export function NfsePage() {
       {erro && <Notice tom="erro">{erro}</Notice>}
       {ambiente === "restrita" && <Notice tom="alerta">Produção restrita: as notas deste ambiente não têm validade fiscal e ficam separadas das de produção.</Notice>}
 
-      <Card titulo="Empresas" descricao="Vêm dos memorandos ativos. Escolha em cada empresa a busca pelo certificado dela (mesma raiz do CNPJ) ou por procuração." semPadding>
+      <Card titulo="Empresas" descricao="Vêm do cadastro de empresas. Escolha em cada empresa a busca pelo certificado dela (mesma raiz do CNPJ) ou por procuração." semPadding>
         <div className={styles.barra}>
           <Button tamanho="sm" onClick={() => setMarcadas(new Set(aptas.map((e) => e.id)))} disabled={ocupado || !aptas.length}>Marcar todas aptas</Button>
           <Button tamanho="sm" onClick={() => setMarcadas(new Set())} disabled={ocupado}>Limpar</Button>
@@ -236,7 +236,7 @@ export function NfsePage() {
         )}
         {relatorio.length > 0 && <ul className={styles.relatorio}>{relatorio.map((l) => <li key={l}>{l}</li>)}</ul>}
         {carregando ? <Loading /> : (
-          <DataTable linhas={empresas} chaveLinha={(e) => e.id} vazio="Nenhuma empresa. Crie um memorando para cadastrar a primeira."
+          <DataTable linhas={empresas} chaveLinha={(e) => e.id} vazio="Nenhuma empresa. Cadastre a primeira em Administração > Empresas."
             colunas={[
               { chave: "sel", titulo: "", largura: "36px", render: (e) => <input type="checkbox" aria-label={`Selecionar ${e.razao}`} checked={marcadas.has(e.id)} disabled={ocupado || !e.certificado || certVencido(e)} onChange={() => marcar(e.id)} /> },
               { chave: "emp", titulo: "Empresa", render: (e) => <><b>{e.razao || "(sem nome)"}</b><br /><small>{formatarCnpj(e.cnpj)}</small></> },

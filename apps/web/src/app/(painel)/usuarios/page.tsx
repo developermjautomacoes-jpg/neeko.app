@@ -10,7 +10,7 @@ import styles from "../pagina.module.css";
 
 const NOMES: Record<string, string> = {
   "companies.read": "Ver empresas", "companies.manage": "Gerenciar empresas", "fiscal.documents.read": "Ver e baixar notas", "fiscal.capture": "Capturar notas", "fiscal.credentials.manage": "Gerenciar certificados",
-  "fiscal.ciencia.send": "Registrar ciência da operação", "fiscal.schedule.manage": "Configurar captura noturna", "users.manage": "Gerenciar usuários", "audit.read": "Ver auditoria", "memoranda.read": "Ver memorandos", "memoranda.manage": "Gerenciar memorandos", "office.manage": "Alterar perfil do escritório", "companies.restricted": "Ver a empresa do próprio escritório",
+  "fiscal.ciencia.send": "Registrar ciência da operação", "fiscal.schedule.manage": "Configurar captura noturna", "users.manage": "Gerenciar usuários", "audit.read": "Ver auditoria", "memoranda.read": "Ver cadastro de empresas", "memoranda.manage": "Cadastrar e alterar empresas", "office.manage": "Alterar perfil do escritório", "companies.restricted": "Ver a empresa do próprio escritório",
 };
 const PAPEIS: Record<string, string> = { ORG_OWNER: "Proprietária", ORG_ADMIN: "Administração", STAFF: "Colaborador", COMPANY_USER: "Usuário de empresa" };
 interface Form { id?: string; jobTitle: string; name: string; email: string; senhaProvisoria: string; role: string; status: string; permissions: string[]; allCompanies: boolean; companyIds: string[] }

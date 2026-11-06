@@ -13,7 +13,7 @@ import styles from "../pagina.module.css";
 type Filtro = "ativos" | "inativos" | "cancelado" | "";
 type Acao = { tipo: "cancelar" | "reativar" | "voltou"; m: MemorandoResumo };
 
-export default function Memorandos() {
+export default function Empresas() {
   const router = useRouter();
   const avisar = useToast();
   const [lista, setLista] = useState<MemorandoResumo[]>([]);
@@ -53,28 +53,28 @@ export default function Memorandos() {
   const textos = acao && { cancelar: ["Cancelar memorando", "Cancelar memorando", "O número continua reservado, e a empresa sai das capturas. As notas guardadas continuam."], reativar: ["Reativar memorando", "Reativar", "O memorando volta a valer, e a empresa volta às capturas."], voltou: ["Cliente voltou", "Reativar cliente", "A saída registrada é apagada, e a empresa volta às capturas."] }[acao.tipo];
   return (
     <>
-      <PageHeader titulo="Memorandos" descricao="Cadastro único das empresas. O memorando salvo coloca a empresa na carteira e libera a captura de notas."
-        acoes={pode && <Link href="/memorandos/novo" className={styles.botao}>Novo memorando</Link>} />
+      <PageHeader titulo="Empresas" descricao="Cadastro único: o preenchimento gera o memorando, coloca a empresa na carteira e libera a captura de notas."
+        acoes={pode && <Link href="/empresas/nova" className={styles.botao}>Nova empresa</Link>} />
       {erro && <Notice tom="erro">{erro}</Notice>}
-      {sem.length > 0 && <Notice tom="alerta">{sem.length} empresa(s) ainda sem memorando: {sem.slice(0, 5).map((e, i) => <span key={e.cnpj}>{i > 0 && ", "}{pode ? <Link href={`/memorandos/novo?cnpj=${e.cnpj}`}>{e.legalName || fmtCnpj(e.cnpj)}</Link> : e.legalName}</span>)}{sem.length > 5 ? "…" : ""}</Notice>}
+      {sem.length > 0 && <Notice tom="alerta">{sem.length} empresa(s) com cadastro incompleto: {sem.slice(0, 5).map((e, i) => <span key={e.cnpj}>{i > 0 && ", "}{pode ? <Link href={`/empresas/nova?cnpj=${e.cnpj}`}>{e.legalName || fmtCnpj(e.cnpj)}</Link> : e.legalName}</span>)}{sem.length > 5 ? "…" : ""}</Notice>}
       <div className={styles.filtros}>
         <Input rotulo="Pesquisar" type="search" placeholder="Número, empresa, CNPJ, regime ou responsável" value={busca} onChange={(e) => setBusca(e.target.value)} />
         <Select rotulo="Ano" value={ano} onChange={(e) => setAno(e.target.value)}><option value="">Todos</option>{anos.map((a) => <option key={a}>{a}</option>)}</Select>
-        <Select rotulo="Situação" value={filtro} onChange={(e) => setFiltro(e.target.value as Filtro)}><option value="ativos">Clientes ativos</option><option value="inativos">Clientes que saíram</option><option value="cancelado">Memorandos cancelados</option><option value="">Todos</option></Select>
+        <Select rotulo="Situação" value={filtro} onChange={(e) => setFiltro(e.target.value as Filtro)}><option value="ativos">Clientes ativos</option><option value="inativos">Clientes que saíram</option><option value="cancelado">Cadastros cancelados</option><option value="">Todos</option></Select>
       </div>
-      <Card semPadding titulo={`${vistos.length} de ${lista.length} memorandos`}>
-        {carregando ? <Loading /> : <DataTable linhas={vistos} chaveLinha={(m) => m.id} vazio={lista.length ? "Nenhum memorando para essa pesquisa." : "Crie o primeiro memorando para cadastrar uma empresa."}
+      <Card semPadding titulo={`${vistos.length} de ${lista.length} empresas`}>
+        {carregando ? <Loading /> : <DataTable linhas={vistos} chaveLinha={(m) => m.id} vazio={lista.length ? "Nenhuma empresa para essa pesquisa." : "Cadastre a primeira empresa."}
           colunas={[
             { chave: "n", titulo: "Nº", render: (m) => <><b>{m.numero}</b><br /><small>{br(m.data)}</small></> },
             { chave: "e", titulo: "Empresa", render: (m) => <><b>{m.razao}</b><br /><small>{fmtCnpj(m.cnpj)}</small></> },
             { chave: "r", titulo: "Regime", render: (m) => m.regime || "—" },
             { chave: "s", titulo: "Situação", render: (m) => m.status === "cancelado" ? <Badge tom="perigo">cancelado</Badge> : m.clientStatus === "inativa" ? <><Badge tom="alerta">saiu</Badge><br /><small>{br(m.exitDate)}</small></> : <Badge tom="sucesso">ativo</Badge> },
             { chave: "a", titulo: "", alinhar: "direita", render: (m) => <div className={styles.acoes}>
-              <IconButton dica={pode ? "Editar" : "Visualizar"} icone={pode ? <Pencil size={16} /> : <Eye size={16} />} onClick={() => router.push(`/memorandos/${m.id}`)} />
-              <IconButton dica="Baixar PDF" icone={<FileText size={16} />} carregando={salvando === `${m.id}pdf`} onClick={() => documento(m, "pdf")} />
-              <IconButton dica="Baixar Word" icone={<FileType size={16} />} carregando={salvando === `${m.id}docx`} onClick={() => documento(m, "docx")} />
+              <IconButton dica={pode ? "Editar" : "Visualizar"} icone={pode ? <Pencil size={16} /> : <Eye size={16} />} onClick={() => router.push(`/empresas/${m.id}`)} />
+              <IconButton dica="Exportar memorando em PDF" icone={<FileText size={16} />} carregando={salvando === `${m.id}pdf`} onClick={() => documento(m, "pdf")} />
+              <IconButton dica="Exportar memorando em Word" icone={<FileType size={16} />} carregando={salvando === `${m.id}docx`} onClick={() => documento(m, "docx")} />
               {pode && m.status === "ativo" && (m.clientStatus === "ativa" ? <IconButton dica="Registrar saída do cliente" icone={<LogOut size={16} />} onClick={() => { setForm({ dataSaida: hojeISO(), motivo: MOTIVOS_SAIDA[0], obs: "" }); setSaida(m); }} /> : <IconButton dica="Cliente voltou" icone={<Undo2 size={16} />} onClick={() => setAcao({ tipo: "voltou", m })} />)}
-              {pode && (m.status === "ativo" ? <IconButton dica="Cancelar memorando" variante="danger" icone={<Ban size={16} />} onClick={() => setAcao({ tipo: "cancelar", m })} /> : <IconButton dica="Reativar memorando" icone={<RotateCcw size={16} />} onClick={() => setAcao({ tipo: "reativar", m })} />)}
+              {pode && (m.status === "ativo" ? <IconButton dica="Cancelar cadastro" variante="danger" icone={<Ban size={16} />} onClick={() => setAcao({ tipo: "cancelar", m })} /> : <IconButton dica="Reativar cadastro" icone={<RotateCcw size={16} />} onClick={() => setAcao({ tipo: "reativar", m })} />)}
             </div> },
           ]} />}
       </Card>

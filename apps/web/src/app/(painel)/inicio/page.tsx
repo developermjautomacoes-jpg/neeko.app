@@ -11,7 +11,7 @@ import styles from "./inicio.module.css";
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const ATALHOS: { href: string; nome: string; icone: LucideIcon; exige: string }[] = [
-  { href: "/memorandos/novo", nome: "Novo memorando", icone: Mail, exige: "memoranda.manage" },
+  { href: "/empresas/nova", nome: "Nova empresa", icone: Mail, exige: "memoranda.manage" },
   { href: "/notas/nfse", nome: "Capturar NFS-e", icone: FileText, exige: "fiscal.capture" }, { href: "/notas/nfe-cte", nome: "NF-e e CT-e", icone: FileSearch, exige: "fiscal.documents.read" },
   { href: "/certificados", nome: "Certificados", icone: ShieldCheck, exige: "fiscal.credentials.manage" }, { href: "/usuarios", nome: "Usuários", icone: Users, exige: "users.manage" },
 ];

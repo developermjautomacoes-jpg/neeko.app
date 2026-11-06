@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Building2, ChevronDown, FileBadge, FileStack, Handshake, Home, Landmark, LogOut, Mails, Menu, MessageCircle, PieChart, Search, Settings, Wallet } from "lucide-react";
+import { Bell, Building2, ChevronDown, FileBadge, FileStack, Handshake, Home, Landmark, LogOut, Menu, MessageCircle, PieChart, Search, Settings, Wallet } from "lucide-react";
 import { Loading, Notice } from "@neeko/ui";
 import { formatarCnpj } from "@/lib/format";
 import { destinoApos, eu, sair, type Eu, resumoMensagens, type ResumoMensagens } from "@/services/conta";
@@ -19,14 +19,13 @@ const MENU: Item[] = [
   { nome: "Emissão de NFS-e", icone: FileBadge },
   { nome: "BPO Financeiro", icone: Wallet },
   { nome: "Contratos", icone: Handshake },
-  { nome: "Memorandos", icone: Mails, href: "/memorandos", exige: "memoranda.read" },
   { nome: "Mensagens", icone: MessageCircle, href: "/mensagens" },
   { nome: "Relatórios", icone: PieChart },
   { nome: "Neeko Gerencial", icone: Building2, plataforma: true, filhos: [{ href: "/plataforma/escritorios", nome: "Escritórios", exige: "" }, { href: "/plataforma/planos", nome: "Planos", exige: "" }] },
-  { nome: "Administração", icone: Settings, filhos: [{ href: "/escritorio", nome: "Perfil do escritório", exige: "office.manage" }, { href: "/certificados", nome: "Certificados", exige: "fiscal.credentials.manage" }, { href: "/usuarios", nome: "Usuários", exige: "users.manage" }] },
+  { nome: "Administração", icone: Settings, filhos: [{ href: "/escritorio", nome: "Perfil do escritório", exige: "office.manage" }, { href: "/empresas", nome: "Empresas", exige: "memoranda.read" }, { href: "/certificados", nome: "Certificados", exige: "fiscal.credentials.manage" }, { href: "/usuarios", nome: "Usuários", exige: "users.manage" }] },
 ];
 /** Por enquanto, escritórios usam só NFS-e, memorandos, usuários e administração. */
-const LIBERADOS = ["Início", "Documentos Fiscais", "Memorandos", "Mensagens", "Administração"];
+const LIBERADOS = ["Início", "Documentos Fiscais", "Mensagens", "Administração"];
 const doEscritorio = (m: Item): Item => ({ ...m, filhos: m.filhos?.filter((f) => f.href !== "/notas/nfe-cte") });
 const iniciais = (n: string) => { const p = n.trim().split(/\s+/); return ((p[0]?.[0] ?? "") + (p.length > 1 ? p[p.length - 1][0] : "")).toUpperCase(); };
 

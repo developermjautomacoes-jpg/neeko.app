@@ -74,8 +74,8 @@ export function EditorMemorando({ id }: { id?: string }) {
     setSalvando("salvar");
     try {
       const n = numeroValido();
-      if (id) { const m = await alterarMemorando(id, d, n); setRegistro(m); setNumero(numeroTxt(m.seq, m.ano)); avisar("Memorando salvo.", "sucesso"); }
-      else { const m = await criarMemorando(d, n); avisar(`Memorando Nº ${numeroTxt(m.seq, m.ano)} salvo. A empresa já está na carteira.`, "sucesso"); router.replace(`/memorandos/${m.id}`); }
+      if (id) { const m = await alterarMemorando(id, d, n); setRegistro(m); setNumero(numeroTxt(m.seq, m.ano)); avisar("Cadastro salvo.", "sucesso"); }
+      else { const m = await criarMemorando(d, n); avisar(`Empresa cadastrada no memorando Nº ${numeroTxt(m.seq, m.ano)}.`, "sucesso"); router.replace(`/empresas/${m.id}`); }
     } catch (x) { avisar(x instanceof Error ? x.message : "Não foi possível salvar.", "erro"); }
     finally { setSalvando(""); }
   }
@@ -107,7 +107,7 @@ export function EditorMemorando({ id }: { id?: string }) {
   const dep = (i: number, c: Partial<Memo["deps"][number]>) => set({ deps: d.deps.map((s, k) => (k === i ? { ...s, ...c } : s)) });
   return (
     <>
-      <PageHeader titulo={id ? `Memorando Nº ${registro ? numeroTxt(registro.seq, registro.ano) : ""}` : "Novo memorando"} descricao={id ? (d.e_razao ?? "") : "Cadastro da empresa. Ao salvar, ela entra na carteira e na captura de notas."} acoes={<Link href="/memorandos" className={styles.voltar}>Voltar à lista</Link>} />
+      <PageHeader titulo={id ? (d.e_razao || "Cadastro da empresa") : "Nova empresa"} descricao={id ? `Memorando Nº ${registro ? numeroTxt(registro.seq, registro.ano) : ""}` : "Cadastro da empresa. Ao salvar, ela entra na carteira e na captura de notas."} acoes={<Link href="/memorandos" className={styles.voltar}>Voltar à lista</Link>} />
       {registro?.status === "cancelado" && <Notice tom="alerta">Este memorando está cancelado.</Notice>}
       {registro?.clientStatus === "inativa" && <Notice tom="alerta">Este cliente saiu da carteira.</Notice>}
       <fieldset className={styles.corpo} disabled={!pode}>
@@ -177,10 +177,10 @@ export function EditorMemorando({ id }: { id?: string }) {
         {registro && registro.history.length > 0 && <Card titulo="Histórico do memorando"><ol className={styles.hist}>{[...registro.history].reverse().map((h, i) => <li key={i}><b>{h.acao}</b>{h.campos?.length ? `: ${h.campos.join(", ")}` : ""}<br /><small>{h.por} · {new Date(h.em).toLocaleString("pt-BR")}</small></li>)}</ol></Card>}
       </fieldset>
       <div className={styles.acoes}>
-        {pode && <Button variante="primary" carregando={salvando === "salvar"} onClick={salvar}>Salvar memorando</Button>}
-        <Button carregando={salvando === "previa"} onClick={visualizar}>Visualizar</Button>
-        <Button carregando={salvando === "pdf"} onClick={() => arquivo("pdf")}>Baixar PDF</Button>
-        <Button carregando={salvando === "docx"} onClick={() => arquivo("docx")}>Baixar Word</Button>
+        {pode && <Button variante="primary" carregando={salvando === "salvar"} onClick={salvar}>Salvar cadastro</Button>}
+        <Button carregando={salvando === "previa"} onClick={visualizar}>Visualizar memorando</Button>
+        <Button carregando={salvando === "pdf"} onClick={() => arquivo("pdf")}>Exportar memorando em PDF</Button>
+        <Button carregando={salvando === "docx"} onClick={() => arquivo("docx")}>Exportar memorando em Word</Button>
       </div>
       <Modal aberto={!!previa} titulo="Prévia do memorando" largura="lg" onFechar={() => setPrevia("")}><iframe title="Prévia do memorando" src={previa} className={styles.previa} /></Modal>
     </>
