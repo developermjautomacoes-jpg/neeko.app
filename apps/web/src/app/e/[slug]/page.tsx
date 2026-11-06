@@ -2,15 +2,15 @@
 import { use, useEffect, useState } from "react";
 import { Loading, Notice } from "@neeko/ui";
 import { TelaLogin } from "@/features/TelaLogin";
-import { aplicarPaleta } from "@/features/paleta";
+import { aplicarTema } from "@/features/temas";
 import { lerEscritorioPublico } from "@/services/conta";
 import styles from "../../auth.module.css";
 
 export default function EntradaEscritorio({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
-  const [o, setO] = useState<{ name: string; logo: string | null; colorPrimary: string | null; colorDark: string | null } | null>(null);
+  const [o, setO] = useState<{ name: string; logo: string | null; theme: string } | null>(null);
   const [erro, setErro] = useState(false);
-  useEffect(() => { lerEscritorioPublico(slug).then((x) => { aplicarPaleta(x.colorPrimary, x.colorDark); setO(x); }).catch(() => setErro(true)); }, [slug]);
+  useEffect(() => { lerEscritorioPublico(slug).then((x) => { aplicarTema(x.theme); setO(x); }).catch(() => setErro(true)); }, [slug]);
   if (erro) return <div className={styles.fundo}><div className={styles.caixa}><Notice tom="erro">Este link de acesso não está disponível. Fale com seu escritório.</Notice></div></div>;
   if (!o) return <div className={styles.fundo}><Loading /></div>;
   return <TelaLogin escritorio={slug}

@@ -8,7 +8,7 @@ import { formatarCnpj } from "@/lib/format";
 import { destinoApos, eu, sair, type Eu, resumoMensagens, type ResumoMensagens } from "@/services/conta";
 import { lerPainel, type Painel as DadosPainel } from "@/services/fiscal";
 import { telaEntrada } from "@/services/http";
-import { aplicarPaleta } from "@/features/paleta";
+import { aplicarTema } from "@/features/temas";
 import styles from "./painel.module.css";
 
 interface Item { plataforma?: boolean; nome: string; icone: ComponentType<{ size?: number }>; href?: string; exige?: string; filhos?: { href: string; nome: string; exige: string }[] }
@@ -32,7 +32,7 @@ const iniciais = (n: string) => { const p = n.trim().split(/\s+/); return ((p[0]
 
 export default function Painel({ children }: { children: ReactNode }) {
   const [pessoa, setPessoa] = useState<Eu | null>(null);
-  useEffect(() => { aplicarPaleta(pessoa?.organization?.colorPrimary, pessoa?.organization?.colorDark); }, [pessoa]);
+  useEffect(() => { aplicarTema(pessoa?.organization?.theme); }, [pessoa]);
   const [dados, setDados] = useState<DadosPainel | null>(null);
   const [menu, setMenu] = useState(false);
   const [abertos, setAbertos] = useState<string[]>(["Documentos Fiscais"]);

@@ -96,3 +96,53 @@ input[type="checkbox"] { accent-color: var(--color-brand); width: 16px; height: 
 a { color: var(--color-brand-text); }
 small { color: var(--color-text-muted); }
 :focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+
+/* Tema padrão da Neeko (Verde Corporativo). Os demais só trocam os tokens. */
+:root {
+  --color-brand: #22C98A; --color-brand-hover: #18B078; --color-brand-text: #067A4D; --color-brand-soft: #DDF9EC; --color-on-brand: #06241B;
+  --color-dark: #05211B; --color-dark-2: #0C3A2F; --color-dark-text: #FFFFFF; --color-dark-muted: #A7C2B9; --color-dark-line: rgba(255, 255, 255, 0.1); --color-dark-brand: #4BE3A8;
+  --color-side-from: #07291F; --color-side-to: #041510; --side-hover: rgba(255, 255, 255, 0.07); --color-glow: rgba(5, 110, 85, 0.35);
+  --color-bg: #F1F6F4; --color-bg-from: #E6F0EC; --color-bg-to: #F6FAF8; --color-brand-tint: rgba(34, 201, 138, 0.14);
+  --header-bg: #05211B; --header-text: #FFFFFF; --search-bg: rgba(255, 255, 255, 0.1); --search-text: #FFFFFF; --search-muted: #A7C2B9;
+  --hero-from: #05211B; --hero-to: #0A4A39; --hero-text: #FFFFFF; --hero-muted: #C9DDD6; --hero-wave: #4BE3A8;
+  --callout-bg: rgba(255, 255, 255, 0.08); --callout-text: #FFFFFF; --callout-line: rgba(255, 255, 255, 0.16);
+  --color-hero-3: #0C3A2F; --color-accent: #0E8C7A; --color-chart: #12B97B; --color-chart-soft: #1FCF8E;
+  --tom-1: #0BA56C; --tom-1-fundo: #DDF9EC; --tom-2: #7C3AED; --tom-2-fundo: #EDE5FE; --tom-3: #0E8C7A; --tom-3-fundo: #D9F3EF;
+  --focus-ring: 0 0 0 3px rgba(34, 201, 138, 0.45); --shadow-glow: 0 0 18px rgba(34, 201, 138, 0.35);
+}
+:root[data-tema="azul"] {
+  --color-brand: #1677E0; --color-brand-hover: #0F63C2; --color-brand-text: #0B5CC4; --color-brand-soft: #DCEBFD; --color-on-brand: #FFFFFF;
+  --color-dark: #0A2C63; --color-dark-2: #123B7E; --color-dark-muted: #A9BFDC; --color-dark-brand: #7DB9FA;
+  --color-side-from: #0C3271; --color-side-to: #061C45; --color-glow: rgba(22, 119, 224, 0.28);
+  --color-bg: #F2F7FE; --color-bg-from: #E8F1FC; --color-bg-to: #F7FAFF; --color-border: #DCE6F4; --color-surface-2: #F1F6FD; --color-brand-tint: rgba(22, 119, 224, 0.12);
+  --header-bg: #E6F0FC; --header-text: #0D1B2A; --search-bg: #FFFFFF; --search-text: #0D1B2A; --search-muted: #55657A;
+  --hero-from: #E6F0FC; --hero-to: #BFD9F9; --hero-text: #0D1B2A; --hero-muted: #3E5475; --hero-wave: #1677E0;
+  --callout-bg: linear-gradient(120deg, #0B3A82, #1677E0); --callout-text: #FFFFFF; --callout-line: transparent;
+  --color-hero-3: #123B7E; --color-accent: #1677E0; --color-chart: #1677E0; --color-chart-soft: #5AA6F5; --color-info: #0B5CC4; --color-info-bg: #DCEBFD;
+  --tom-1: #1677E0; --tom-1-fundo: #DCEBFD; --tom-2: #2563EB; --tom-2-fundo: #E0E8FD; --tom-3: #0EA5C6; --tom-3-fundo: #D8F3F9;
+  --focus-ring: 0 0 0 3px rgba(22, 119, 224, 0.4); --shadow-glow: 0 0 18px rgba(22, 119, 224, 0.3); --color-toast: #0A2C63;
+}
+:root[data-tema="roxo"] {
+  --color-brand: #7C3AED; --color-brand-hover: #6D28D9; --color-brand-text: #6D28D9; --color-brand-soft: #EDE5FE; --color-on-brand: #FFFFFF;
+  --color-dark: #150B33; --color-dark-2: #2A1766; --color-dark-muted: #B6A8DC; --color-dark-brand: #B794F6;
+  --color-side-from: #1B0F3F; --color-side-to: #0D0722; --color-glow: rgba(124, 58, 237, 0.3);
+  --color-bg: #F6F3FE; --color-bg-from: #EEE8FC; --color-bg-to: #FAF8FF; --color-border: #E6DFF6; --color-surface-2: #F5F1FD; --color-brand-tint: rgba(124, 58, 237, 0.12);
+  --header-bg: #150B33; --header-text: #FFFFFF; --search-bg: rgba(255, 255, 255, 0.1); --search-text: #FFFFFF; --search-muted: #B6A8DC;
+  --hero-from: #150B33; --hero-to: #4C1D95; --hero-text: #FFFFFF; --hero-muted: #D5CAF0; --hero-wave: #B794F6;
+  --callout-bg: rgba(255, 255, 255, 0.08); --callout-text: #FFFFFF; --callout-line: rgba(255, 255, 255, 0.16);
+  --color-hero-3: #2A1766; --color-accent: #7C3AED; --color-chart: #7C3AED; --color-chart-soft: #A78BFA; --color-info: #6D28D9; --color-info-bg: #EDE5FE;
+  --tom-1: #5B21B6; --tom-1-fundo: #E6DFFB; --tom-2: #7C3AED; --tom-2-fundo: #EDE5FE; --tom-3: #2563EB; --tom-3-fundo: #E0E8FD;
+  --focus-ring: 0 0 0 3px rgba(124, 58, 237, 0.4); --shadow-glow: 0 0 18px rgba(124, 58, 237, 0.35); --color-toast: #150B33;
+}
+:root[data-tema="dourado"] {
+  --color-brand: #E8A33D; --color-brand-hover: #D48F27; --color-brand-text: #8F5400; --color-brand-soft: #FDEFD8; --color-on-brand: #3B2A12;
+  --color-dark: #FBEBD2; --color-dark-2: #F6DDB3; --color-dark-text: #3B2A12; --color-dark-muted: #7A6244; --color-dark-line: rgba(59, 42, 18, 0.12); --color-dark-brand: #8F5400;
+  --color-side-from: #FDF1DF; --color-side-to: #F9E6C8; --side-hover: rgba(59, 42, 18, 0.06); --color-glow: rgba(232, 163, 61, 0.2);
+  --color-bg: #FFFAF2; --color-bg-from: #FDF3E3; --color-bg-to: #FFFCF7; --color-border: #F0E2CB; --color-surface-2: #FDF6EA; --color-brand-tint: rgba(232, 163, 61, 0.14);
+  --header-bg: #FDF1DF; --header-text: #2B1E0C; --search-bg: #FFFFFF; --search-text: #2B1E0C; --search-muted: #7A6244;
+  --hero-from: #FDF1DF; --hero-to: #F7DDB4; --hero-text: #2B1E0C; --hero-muted: #6A5233; --hero-wave: #E8A33D;
+  --callout-bg: linear-gradient(120deg, #5B3410, #8F5A1C); --callout-text: #FFFFFF; --callout-line: transparent;
+  --color-hero-3: #6B4215; --color-accent: #B97714; --color-chart: #D48F27; --color-chart-soft: #F0BC6B; --color-info: #8F5400; --color-info-bg: #FDEFD8;
+  --tom-1: #1677C8; --tom-1-fundo: #DCEBFD; --tom-2: #2563EB; --tom-2-fundo: #E0E8FD; --tom-3: #0E9488; --tom-3-fundo: #D9F3EF;
+  --focus-ring: 0 0 0 3px rgba(232, 163, 61, 0.45); --shadow-glow: 0 0 18px rgba(232, 163, 61, 0.35); --color-toast: #5B3410;
+}

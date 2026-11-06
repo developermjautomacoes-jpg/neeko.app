@@ -297,9 +297,10 @@ test("importa pacote da Facilitar só para o próprio escritório", async () => 
   assert.equal((await prisma.fiscalSettings.findUnique({ where: { organizationId: org } })).procuratorCertificateId, cert.id);
   assert.equal((await ana.post("/office/import", { pacote, frase: "frase bem longa 123" })).corpo.memorandos.importados, 0, "repetir não duplica");
   await prisma.organization.update({ where: { id: org }, data: { restrictedRoots: [] } });
-  assert.equal((await ana.pedir("PUT", "/office", { logo: null, colorPrimary: "vermelho", colorDark: null })).status, 400);
-  assert.equal((await ana.pedir("PUT", "/office", { logo: null, colorPrimary: "#1144aa", colorDark: "#102030" })).status, 200);
-  assert.equal((await ana.get("/me")).corpo.organization.colorPrimary, "#1144aa");
+  assert.equal((await ana.get("/me")).corpo.organization.theme, "verde", "a Neeko começa no verde");
+  assert.equal((await ana.pedir("PUT", "/office/theme", { tema: "rosa" })).status, 400);
+  assert.equal((await ana.pedir("PUT", "/office/theme", { tema: "azul" })).status, 200);
+  assert.equal((await ana.get("/me")).corpo.organization.theme, "azul");
 });
 test("plataforma: Neeko gerencia escritórios sem ver dados deles", async () => {
   const u = await prisma.user.findUnique({ where: { email: "ana@a.test" } });
@@ -351,7 +352,7 @@ test("plataforma: Neeko gerencia escritórios sem ver dados deles", async () => 
   assert.equal((await ana.post(`/platform/offices/${es.corpo.id}/reset-manager`, { senhaProvisoria: "Provisoria555" })).status, 200);
   assert.equal((await new Sessao().post("/auth/login", await corpoLogin("gestora@beta.test", "Provisoria555"))).corpo.mustChangePassword, true);
   const slug = (await ana.get("/platform/offices")).corpo.escritorios.find((o: any) => o.id === es.corpo.id).slug; assert.equal(slug, "escritorio-beta");
-  assert.deepEqual(Object.keys((await new Sessao().get(`/public/offices/${slug}`)).corpo).sort(), ["colorDark", "colorPrimary", "logo", "name"]);
+  assert.deepEqual(Object.keys((await new Sessao().get(`/public/offices/${slug}`)).corpo).sort(), ["logo", "name", "theme"]);
   assert.equal((await new Sessao().get(`/public/offices/${interna.slug}`)).status, 404, "a organização interna não tem link público");
   assert.equal((await new Sessao().post("/auth/login", { email: "gestora@beta.test", senha: "Provisoria555" })).corpo.code, "USE_OFFICE_LINK", "gestor não entra pelo link da Neeko");
   assert.equal((await new Sessao().post("/auth/login", { email: "gestora@beta.test", senha: "Provisoria555", escritorio: "outro" })).status, 401);

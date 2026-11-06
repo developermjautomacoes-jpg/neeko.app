@@ -43,6 +43,7 @@ Base `/api/v1`. Sessão por cookie httpOnly; a organização vem da sessão, nun
 - `GET /public/offices/:slug` (público: nome e logo do escritório ativo)
 - `POST /auth/login` aceita `escritorio` (slug): sem ele, só a equipe Neeko entra; com ele, só membros daquele escritório, e o Gerencial fica bloqueado.
 - `PUT /office` (logo e contatos do escritório; permissão `office.manage`)
+- `PUT /office/theme` (`verde`, `azul`, `roxo` ou `dourado`)
 - `GET /messages`, `GET|POST /messages/:conversa`, `POST /messages/:conversa/read` (`geral` ou id da pessoa; só dentro do escritório)
 - `PUT /users/:id/job-title` (cargo, com `users.manage`); `PATCH /me` não altera mais o cargo
 - `GET /certificates` devolve também as empresas de cada certificado e `semCertificado`

@@ -112,7 +112,7 @@ export class MeController {
     const u = await this.prisma.user.findUniqueOrThrow({ where: { id: req.sessao.userId }, include: { memberships: { where: { status: "ACTIVE" }, include: { organization: true, permissions: true } } } });
     const atual = u.memberships.find((m) => m.organizationId === req.sessao.organizationId && m.organization.status === "ACTIVE");
     return { id: u.id, name: u.name, email: u.email, platformAdmin: u.globalRole === "NEEKO_SUPERADMIN" && req.sessao.portal === "neeko", portal: req.sessao.portal, mfaEnabled: u.mfaEnabled, mfaPending: u.mfaEnabled && !req.sessao.mfaVerified, mfaSetupRequired: false, avatar: u.avatar, jobTitle: u.jobTitle, phone: u.phone, mustChangePassword: u.mustChangePassword,
-      organization: atual ? { id: atual.organizationId, name: atual.organization.name, role: atual.role, slug: atual.organization.slug, internal: atual.organization.internal, logo: atual.organization.logo, colorPrimary: atual.organization.colorPrimary, colorDark: atual.organization.colorDark, contactEmail: atual.organization.contactEmail, contactPhone: atual.organization.contactPhone } : null,
+      organization: atual ? { id: atual.organizationId, name: atual.organization.name, role: atual.role, slug: atual.organization.slug, internal: atual.organization.internal, logo: atual.organization.logo, theme: atual.organization.theme, contactEmail: atual.organization.contactEmail, contactPhone: atual.organization.contactPhone } : null,
       permissions: atual?.permissions.map((p) => p.permission) ?? [], availablePermissions: PERMISSOES };
   }
 

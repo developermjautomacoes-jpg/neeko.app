@@ -1,17 +1,19 @@
 .inicio { display: flex; flex-direction: column; gap: var(--space-4); }
-.hero { position: relative; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: var(--space-6); min-height: 200px; padding: var(--space-6) var(--space-8); border-radius: 20px; color: var(--color-dark-text); background: radial-gradient(70% 120% at 95% 50%, var(--color-hero-1), transparent), linear-gradient(90deg, var(--color-dark), var(--color-hero-2)); }
+.hero { position: relative; overflow: hidden; display: grid; grid-template-columns: 1fr minmax(260px, 380px); align-items: center; gap: var(--space-6); min-height: 200px; margin: calc(var(--espaco-conteudo) * -1) calc(var(--espaco-lateral) * -1) -36px; padding: var(--space-4) var(--espaco-lateral) 56px; border-radius: 0 0 32px 32px; color: var(--hero-text); background: linear-gradient(100deg, var(--hero-from) 25%, var(--hero-to)); }
 .ondas { position: absolute; inset: 0 auto 0 25%; width: 60%; height: 100%; }
 .saudacao, .novidade { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+.novidade { padding: var(--space-4) var(--space-5); border: 1px solid var(--callout-line); border-radius: 18px; background: var(--callout-bg); color: var(--callout-text); }
 .hero h1 { color: inherit; font-size: 2.3rem; }
-.hero h2 { color: inherit; font-size: 1.45rem; }
-.hero p { margin: 0; color: var(--color-dark-text); }
+.hero h2 { color: inherit; font-size: 1.15rem; }
+.hero p { margin: 0; color: var(--hero-muted); }
+.novidade p { color: inherit; opacity: 0.85; }
 .botaoVazado, .botaoCheio { display: inline-flex; align-items: center; gap: var(--space-2); padding: 8px 24px; border-radius: var(--radius-pill); font-size: var(--text-sm); font-weight: 600; text-decoration: none; }
-.botaoVazado { color: var(--color-dark-brand); border: 1.5px solid var(--color-dark-brand); }
+.botaoVazado { color: inherit; border: 1.5px solid currentColor; }
 .botaoVazado:hover { background: var(--color-brand-tint); }
 .botaoCheio { color: var(--color-on-brand); background: var(--color-brand); }
 .botaoCheio:hover { box-shadow: var(--shadow-glow); }
-.selo { padding: 3px 14px; border: 1px solid var(--color-dark-brand); border-radius: var(--radius-pill); color: var(--color-dark-brand); font-size: var(--text-xs); font-weight: 600; }
-.indicadores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
+.selo { padding: 3px 14px; border: 1px solid currentColor; border-radius: var(--radius-pill); color: inherit; font-size: var(--text-xs); font-weight: 600; }
+.indicadores { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
 .indicador { position: relative; overflow: hidden; display: flex; align-items: center; gap: var(--space-3); min-height: 104px; padding: var(--space-4); background: var(--color-surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
 .icone { display: inline-flex; flex: none; padding: 12px; border-radius: 14px; }
 .indTexto { position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--space-2); min-width: 0; }

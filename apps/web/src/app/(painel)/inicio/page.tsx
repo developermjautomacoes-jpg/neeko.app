@@ -55,7 +55,7 @@ export default function Inicio() {
           <Link href="/notas/nfse" className={styles.botaoVazado}>Ver minhas notas <ArrowRight size={16} /></Link>
         </div>
         <svg className={styles.ondas} viewBox="0 0 600 220" preserveAspectRatio="none" aria-hidden>
-          {Array.from({ length: 16 }, (_, i) => <path key={i} d={`M0 ${190 - i * 2} C150 ${180 - i * 5}, 250 ${170 + i * 3}, 340 ${100 + i * 4} S520 ${10 + i * 7}, 600 ${50 + i * 6}`} fill="none" stroke="var(--color-brand)" strokeOpacity={0.05 + i * 0.022} />)}
+          {Array.from({ length: 16 }, (_, i) => <path key={i} d={`M0 ${190 - i * 2} C150 ${180 - i * 5}, 250 ${170 + i * 3}, 340 ${100 + i * 4} S520 ${10 + i * 7}, 600 ${50 + i * 6}`} fill="none" stroke="var(--hero-wave)" strokeOpacity={0.05 + i * 0.022} />)}
         </svg>
         <div className={styles.novidade}>
           <span className={styles.selo}>★ Captura</span>

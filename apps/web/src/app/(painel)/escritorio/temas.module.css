@@ -1,0 +1,17 @@
+.grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.tema { overflow: hidden; border: 2px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.atual { border-color: var(--color-brand); }
+.previa { display: flex; height: 130px; }
+.menu { width: 24%; padding: 12px 8px; }
+.menu i { display: block; height: 14px; border-radius: 6px; }
+.corpo { flex: 1; display: flex; flex-direction: column; }
+.corpo b { display: block; height: 46%; }
+.corpo em { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; }
+.corpo u { display: block; height: 34px; border-radius: 6px; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+.corpo u:first-child { opacity: 0.85; }
+.rodape { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); }
+.rodape > div { display: flex; flex-direction: column; min-width: 0; }
+.rodape small { color: var(--color-text-muted); }
+.cores { display: flex; gap: 4px; margin-top: 6px; }
+.cores i { width: 16px; height: 16px; border-radius: 50%; }
+@media (max-width: 760px) { .grade { grid-template-columns: 1fr; } }

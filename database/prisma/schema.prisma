@@ -62,9 +62,8 @@ model Organization {
   slug         String    @unique @default(dbgenerated("gen_random_uuid()::text"))
   /// Raízes de CNPJ restritas, além da do próprio escritório.
   restrictedRoots String[] @default([])
-  /// Paleta do escritório, sempre #rrggbb.
-  colorPrimary String?
-  colorDark    String?
+  /// Tema visual: verde (padrão da Neeko), azul, roxo ou dourado.
+  theme        String    @default("verde")
   /// Logo PNG do escritório, usada no menu e nos relatórios.
   logo         String?
   paidUntil    String    @default("")
