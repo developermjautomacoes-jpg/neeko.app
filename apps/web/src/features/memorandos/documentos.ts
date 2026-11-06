@@ -1,22 +1,20 @@
 import JSZip from "jszip";
 import { carregarTabela, modeloMemo, nomeArquivo, type Cel, type Item, type Memo } from "./regras";
 
-const RODAPE = "Neeko Automações Inteligentes · (27) 98118-4118 · neeko.automacoes@gmail.com";
-const PROP = 900 / 247; // largura / altura do logo
-const logoBytes = async () => new Uint8Array(await (await fetch("/logo-relatorio.png")).arrayBuffer());
-const logoBase64 = async () => { const b = await logoBytes(); let s = ""; b.forEach((x) => { s += String.fromCharCode(x); }); return btoa(s); };
+import { logoRelatorio } from "@/features/logoRelatorio";
 const txtPdf = (s: unknown) => String(s ?? "").replace(/[–—]/g, "-").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, "...").replace(/•/g, "·").replace(/[^\x00-\xFF]/g, ""); // eslint-disable-line no-control-regex
 const COLS: Record<string, number[]> = { so: [0.38, 0.2, 0.28, 0.14], ct: [0.29, 0.17, 0.31, 0.23], at: [0.12, 0.6, 0.1, 0.18], sv: [0.1, 0.75, 0.15], dp: [0.32, 0.68] };
 
-/** PDF com texto selecionável, no papel timbrado da Neeko. */
+/** PDF com texto selecionável, no papel timbrado do escritório. */
 export async function memoPdf(d: Memo, seq: number, ano: number, cancelado: boolean): Promise<Blob> {
-  const [{ jsPDF }, T, logo] = await Promise.all([import("jspdf"), carregarTabela(), logoBase64()]);
+  const [{ jsPDF }, T, marca] = await Promise.all([import("jspdf"), carregarTabela(), logoRelatorio()]);
+  const logo = marca.base64, RODAPE = marca.rodape, largura = Math.min(44, 12 * marca.prop);
   const pdf = new jsPDF({ unit: "mm", format: "a4", compress: true });
   const X = 15, W = 180, TOP = 31, BOT = 276, PT = 0.3528, lh = (pt: number) => pt * PT * 1.32;
   type Cor = [number, number, number];
   const ESC: Cor = [13, 27, 42], VERDE: Cor = [6, 122, 77], MENTA: Cor = [61, 235, 159], INK: Cor = [20, 32, 45], LAB: Cor = [85, 101, 122], LINHA: Cor = [210, 216, 226], RED: Cor = [192, 38, 38];
   let y = TOP, primeira = true;
-  const fundo = () => { pdf.addImage(`data:image/png;base64,${logo}`, "PNG", X, 9, 44, 44 / PROP, "logo", "FAST"); pdf.setDrawColor(...MENTA); pdf.setLineWidth(0.9); pdf.line(X, 24, X + W, 24); };
+  const fundo = () => { pdf.addImage(`data:image/png;base64,${logo}`, "PNG", X, 9, largura, largura / marca.prop, "logo", "FAST"); pdf.setDrawColor(...MENTA); pdf.setLineWidth(0.9); pdf.line(X, 24, X + W, 24); };
   const nova = () => { if (!primeira) pdf.addPage(); primeira = false; fundo(); y = TOP; };
   const font = (st: string, pt: number, cor: Cor = INK) => { pdf.setFont("helvetica", st); pdf.setFontSize(pt); pdf.setTextColor(...cor); };
   const quebra = (t: unknown, w: number) => pdf.splitTextToSize(txtPdf(t), Math.max(5, w)) as string[];
@@ -67,7 +65,7 @@ export async function memoPdf(d: Memo, seq: number, ano: number, cancelado: bool
   });
   const total = pdf.getNumberOfPages();
   for (let i = 1; i <= total; i++) { pdf.setPage(i); pdf.setDrawColor(...LINHA); pdf.setLineWidth(0.2); pdf.line(X, 283, X + W, 283); font("normal", 6.6, LAB); pdf.text(txtPdf(RODAPE), X, 286.5); pdf.text(`Página ${i} de ${total}`, X + W, 286.5, { align: "right" }); }
-  pdf.setProperties({ title: txtPdf(`Memorando ${seq}/${ano} - ${d.e_razao ?? ""}`), author: "Neeko Automações Inteligentes", subject: txtPdf(d.m_assunto ?? ""), creator: "Neeko" });
+  pdf.setProperties({ title: txtPdf(`Memorando ${seq}/${ano} - ${d.e_razao ?? ""}`), author: marca.nome, subject: txtPdf(d.m_assunto ?? ""), creator: marca.nome });
   return pdf.output("blob");
 }
 
@@ -86,7 +84,7 @@ const XML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
 const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
 const REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
 
-/** Word editável, com o logo da Neeko no cabeçalho. */
+/** Word editável, com o logo do escritório no cabeçalho. */
 export async function memoDocx(d: Memo, seq: number, ano: number, cancelado: boolean): Promise<Blob> {
   const T = await carregarTabela(), W = 9638;
   let b = "";
@@ -102,9 +100,9 @@ export async function memoDocx(d: Memo, seq: number, ano: number, cancelado: boo
     else b += wtable(it.head, it.rows.map((r) => r.map((c) => (typeof c === "object" ? c.txt + (c.sub ? ` (${c.sub})` : "") + (c.tag ? " (principal)" : "") : c))), larguras[it.k]);
   });
   void W;
-  const cx = 1980000, cy = Math.round(cx / PROP);
+  const marca = await logoRelatorio(), cx = Math.min(1980000, Math.round(540000 * marca.prop)), cy = Math.round(cx / marca.prop), RODAPE = marca.rodape;
   const doc = `${XML}<w:document ${NS}><w:body>${b}<w:sectPr><w:headerReference w:type="default" r:id="rIdH"/><w:footerReference w:type="default" r:id="rIdF"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1500" w:right="1134" w:bottom="1000" w:left="1134" w:header="400" w:footer="400" w:gutter="0"/></w:sectPr></w:body></w:document>`;
-  const header = `${XML}<w:hdr ${NS}><w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="18" w:space="4" w:color="${MENTA}"/></w:pBdr></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="1" name="Logo Neeko" descr="Logo Neeko"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="1" name="logo.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdImg"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p></w:hdr>`;
+  const header = `${XML}<w:hdr ${NS}><w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="18" w:space="4" w:color="${MENTA}"/></w:pBdr></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="1" name="Logo" descr="Logo do escritório"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="1" name="logo.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdImg"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p></w:hdr>`;
   const footer = `${XML}<w:ftr ${NS}>${wp(wr(RODAPE, { sz: 15, color: "55657A" }), { after: 0 })}</w:ftr>`;
   const styles = `${XML}<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri" w:eastAsia="Calibri"/><w:sz w:val="20"/><w:lang w:val="pt-BR"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="40" w:line="252" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults></w:styles>`;
   const z = new JSZip();
@@ -112,7 +110,7 @@ export async function memoDocx(d: Memo, seq: number, ano: number, cancelado: boo
   z.file("_rels/.rels", `${XML}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/officeDocument" Target="word/document.xml"/></Relationships>`);
   z.file("word/_rels/document.xml.rels", `${XML}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdS" Type="${REL}/styles" Target="styles.xml"/><Relationship Id="rIdH" Type="${REL}/header" Target="header1.xml"/><Relationship Id="rIdF" Type="${REL}/footer" Target="footer1.xml"/></Relationships>`);
   z.file("word/_rels/header1.xml.rels", `${XML}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdImg" Type="${REL}/image" Target="media/logo.png"/></Relationships>`);
-  z.file("word/document.xml", doc); z.file("word/styles.xml", styles); z.file("word/header1.xml", header); z.file("word/footer1.xml", footer); z.file("word/media/logo.png", await logoBytes());
+  z.file("word/document.xml", doc); z.file("word/styles.xml", styles); z.file("word/header1.xml", header); z.file("word/footer1.xml", footer); z.file("word/media/logo.png", marca.bytes);
   return z.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
 }
 export function salvarBlob(b: Blob, nome: string) { const u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = nome; a.click(); setTimeout(() => URL.revokeObjectURL(u), 2000); }

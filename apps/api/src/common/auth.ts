@@ -5,7 +5,7 @@ import type { Request } from "express";
 import { PrismaService } from "../prisma.service";
 import { Erro } from "./errors";
 
-export const PERMISSOES = ["companies.read", "companies.manage", "fiscal.documents.read", "fiscal.capture", "fiscal.credentials.manage", "fiscal.ciencia.send", "fiscal.schedule.manage", "users.manage", "audit.read", "memoranda.read", "memoranda.manage"] as const;
+export const PERMISSOES = ["companies.read", "companies.manage", "fiscal.documents.read", "fiscal.capture", "fiscal.credentials.manage", "fiscal.ciencia.send", "fiscal.schedule.manage", "users.manage", "audit.read", "memoranda.read", "memoranda.manage", "office.manage"] as const;
 export type Permissao = (typeof PERMISSOES)[number];
 
 export interface Contexto {
@@ -22,6 +22,18 @@ export const SemMfa = () => SetMetadata(SEM_MFA, true);
 export const Plataforma = () => SetMetadata(PLATAFORMA, true);
 export const Exige = (...p: Permissao[]) => SetMetadata(EXIGE, p);
 export const Ctx = createParamDecorator((_: unknown, c: ExecutionContext) => c.switchToHttp().getRequest().contexto as Contexto);
+
+/** Sem atividade por este tempo, a pessoa deixa de ocupar um acesso simultâneo. */
+const JANELA_MS = 15 * 60 * 1000;
+export const inicioJanela = () => new Date(Date.now() - JANELA_MS);
+/** Conta pessoas distintas ativas no escritório; a própria pessoa nunca ocupa uma vaga a mais. */
+export async function conferirSimultaneos(prisma: PrismaService, organizationId: string, userId: string) {
+  const o = await prisma.organization.findUnique({ where: { id: organizationId }, select: { internal: true, plan: { select: { maxUsers: true } } } });
+  const max = o?.internal ? null : o?.plan?.maxUsers ?? null;
+  if (max === null) return;
+  const ativos = await prisma.session.findMany({ where: { organizationId, userId: { not: userId }, expiresAt: { gt: new Date() }, lastSeenAt: { gte: inicioJanela() } }, distinct: ["userId"], select: { userId: true } });
+  if (ativos.length >= max) throw new Erro(403, "LIMIT_SIMULTANEOUS", `Os ${max} acessos simultâneos do plano estão em uso. Aguarde alguém sair ou tente em alguns minutos.`);
+}
 
 export const COOKIE = "neeko_session";
 export const hashToken = (t: string) => createHash("sha256").update(t).digest("hex");
@@ -51,6 +63,9 @@ export class GuardaAcesso implements CanActivate {
     if (s.user.mfaEnabled && !s.mfaVerified) throw new Erro(403, "MFA_REQUIRED", "Informe o código de verificação.");
     if (this.reflector.getAllAndOverride<boolean>(SO_LOGADO, alvo)) return true;
     if (s.user.mustChangePassword) throw new Erro(403, "PASSWORD_CHANGE_REQUIRED", "Troque a senha provisória para continuar.");
+    const parado = Date.now() - s.lastSeenAt.getTime();
+    if (s.organizationId && parado >= JANELA_MS) await conferirSimultaneos(this.prisma, s.organizationId, s.userId);
+    if (parado >= 60000) await this.prisma.session.update({ where: { id: s.id }, data: { lastSeenAt: new Date() } });
     if (this.reflector.getAllAndOverride<boolean>(PLATAFORMA, alvo)) {
       if (s.user.globalRole !== "NEEKO_SUPERADMIN") throw new Erro(403, "FORBIDDEN", "Você não tem permissão para esta ação.");
       return true;

@@ -20,7 +20,7 @@ const MENU: Item[] = [
   { nome: "Memorandos", icone: Mails, href: "/memorandos", exige: "memoranda.read" },
   { nome: "Relatórios", icone: PieChart },
   { nome: "Neeko Gerencial", icone: Building2, plataforma: true, filhos: [{ href: "/plataforma/escritorios", nome: "Escritórios", exige: "" }, { href: "/plataforma/planos", nome: "Planos", exige: "" }] },
-  { nome: "Administração", icone: Settings, filhos: [{ href: "/certificados", nome: "Certificados", exige: "fiscal.credentials.manage" }, { href: "/usuarios", nome: "Usuários", exige: "users.manage" }] },
+  { nome: "Administração", icone: Settings, filhos: [{ href: "/escritorio", nome: "Perfil do escritório", exige: "office.manage" }, { href: "/certificados", nome: "Certificados", exige: "fiscal.credentials.manage" }, { href: "/usuarios", nome: "Usuários", exige: "users.manage" }] },
 ];
 const iniciais = (n: string) => { const p = n.trim().split(/\s+/); return ((p[0]?.[0] ?? "") + (p.length > 1 ? p[p.length - 1][0] : "")).toUpperCase(); };
 
@@ -52,7 +52,7 @@ export default function Painel({ children }: { children: ReactNode }) {
   return (
     <div className={styles.painel}>
       <aside className={[styles.lateral, menu ? styles.aberta : ""].join(" ")}>
-        <div className={styles.marca}><img src="/neeko-marca.png" alt="" width={54} height={38} /><div><b>Neeko</b><small>Tecnologia que impulsiona sua contabilidade</small></div></div>
+        {pessoa.organization?.logo ? <div className={styles.marcaEscritorio}><img src={pessoa.organization.logo} alt={pessoa.organization.name} /></div> : <div className={styles.marca}><img src="/neeko-marca.png" alt="" width={54} height={38} /><div><b>Neeko</b><small>Tecnologia que impulsiona sua contabilidade</small></div></div>}
         <nav aria-label="Menu principal" className={styles.nav}>
           {MENU.map((m) => {
             if (m.plataforma && !pessoa.platformAdmin) return null;
@@ -95,6 +95,7 @@ export default function Painel({ children }: { children: ReactNode }) {
           <Link href="/perfil" aria-label="Meu perfil">{pessoa.avatar ? <img src={pessoa.avatar} alt="" className={styles.avatarTopo} /> : <span className={styles.avatarTopo}>{iniciais(pessoa.name)}</span>}</Link>
         </header>
         <main className={styles.conteudo}>{children}</main>
+        <footer className={styles.rodape}><img src="/neeko-marca.png" alt="" width={24} height={17} /><span>Neeko · Tecnologia que impulsiona sua contabilidade</span></footer>
       </div>
     </div>
   );

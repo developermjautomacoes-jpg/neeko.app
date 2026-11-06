@@ -5,6 +5,7 @@ async function falha(r: Response): Promise<never> {
   if (typeof window !== "undefined") {
     if (r.status === 401 && j.code === "UNAUTHENTICATED") window.location.assign("/login");
     if (j.code === "PASSWORD_CHANGE_REQUIRED") window.location.assign("/trocar-senha");
+    if (j.code === "LIMIT_SIMULTANEOUS" && window.location.pathname !== "/login") window.location.assign("/login?limite=1");
     if (j.code === "MFA_REQUIRED") window.location.assign("/verificacao");
     if (j.code === "MFA_SETUP_REQUIRED") window.location.assign("/ativar-verificacao");
   }

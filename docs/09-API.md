@@ -39,6 +39,7 @@ O contexto de organização/empresa deve ser validado no backend. O identificado
 Base `/api/v1`. Sessão por cookie httpOnly; a organização vem da sessão, nunca da requisição.
 
 - `POST /auth/login`, `/auth/logout`, `/auth/password`, `/auth/mfa/setup|enable|verify`; `GET|PATCH /me`
+- `PUT /office` (logo e contatos do escritório; permissão `office.manage`)
 - `/platform/plans`, `/platform/offices`, `/platform/offices/:id/status`, `/platform/offices/:id/reset-manager`
 - `GET|POST /users`, `PATCH /users/:id`, `POST /users/:id/reset-password`
 - `GET|POST /certificates`, `DELETE /certificates/:id`

@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, Patch, Post, Req, Res } from "@nestjs/
 import { randomBytes } from "node:crypto";
 import type { Request, Response } from "express";
 import { z } from "zod";
-import { COOKIE, PERMISSOES, Publico, SemMfa, SoLogado, hashToken, lerCookie } from "../common/auth";
+import { COOKIE, PERMISSOES, Publico, SemMfa, SoLogado, hashToken, lerCookie, conferirSimultaneos } from "../common/auth";
 import { AuditoriaService } from "../common/audit.service";
 import { Erro, invalido } from "../common/errors";
 import { HASH_FALSO, conferirSenha, hashSenha, senhaFraca } from "../common/passwords";
@@ -34,6 +34,7 @@ export class AuthController {
     falhas.delete(email);
     const token = randomBytes(32).toString("base64url");
     const organizacao = u.memberships.find((m) => m.organization.status === "ACTIVE") ?? u.memberships[0];
+    if (organizacao?.organization.status === "ACTIVE") await conferirSimultaneos(this.prisma, organizacao.organizationId, u.id);
     await this.prisma.session.create({ data: { userId: u.id, organizationId: organizacao?.organizationId ?? null, tokenHash: hashToken(token), expiresAt: new Date(Date.now() + DURACAO_MS) } });
     await this.prisma.session.deleteMany({ where: { userId: u.id, expiresAt: { lt: new Date() } } });
     res.cookie(COOKIE, token, { httpOnly: true, sameSite: "strict", secure: config().NODE_ENV === "production", maxAge: DURACAO_MS, path: "/" });
@@ -71,7 +72,7 @@ export class MeController {
     const u = await this.prisma.user.findUniqueOrThrow({ where: { id: req.sessao.userId }, include: { memberships: { where: { status: "ACTIVE" }, include: { organization: true, permissions: true } } } });
     const atual = u.memberships.find((m) => m.organizationId === req.sessao.organizationId && m.organization.status === "ACTIVE");
     return { id: u.id, name: u.name, email: u.email, platformAdmin: u.globalRole === "NEEKO_SUPERADMIN", mfaEnabled: u.mfaEnabled, mfaPending: u.mfaEnabled && !req.sessao.mfaVerified, mfaSetupRequired: false, avatar: u.avatar, jobTitle: u.jobTitle, phone: u.phone, mustChangePassword: u.mustChangePassword,
-      organization: atual ? { id: atual.organizationId, name: atual.organization.name, role: atual.role } : null,
+      organization: atual ? { id: atual.organizationId, name: atual.organization.name, role: atual.role, logo: atual.organization.logo, contactEmail: atual.organization.contactEmail, contactPhone: atual.organization.contactPhone } : null,
       permissions: atual?.permissions.map((p) => p.permission) ?? [], availablePermissions: PERMISSOES };
   }
 

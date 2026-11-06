@@ -7,7 +7,7 @@ import styles from "../auth.module.css";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useState(() => (typeof window !== "undefined" && window.location.search.includes("limite=1") ? "Todos os acessos simultâneos do plano estão em uso. Tente novamente em alguns minutos." : ""));
   const [enviando, setEnviando] = useState(false);
   async function enviar(e: FormEvent) {
     e.preventDefault(); setEnviando(true); setErro("");

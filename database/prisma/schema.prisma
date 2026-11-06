@@ -37,6 +37,7 @@ model Plan {
   id           String   @id @default(uuid()) @db.Uuid
   name         String   @unique
   maxCompanies Int?
+  /// Pessoas usando ao mesmo tempo, não o total de cadastros.
   maxUsers     Int?
   monthlyPrice Decimal  @default(0) @db.Decimal(12, 2)
   active       Boolean  @default(true)
@@ -55,6 +56,10 @@ model Organization {
   /// Organização interna da Neeko: não é suspensa nem tem limites.
   internal     Boolean   @default(false)
   planId       String?   @db.Uuid
+  /// Cliente piloto: usa um plano, mas não entra em cobrança.
+  billingExempt Boolean  @default(false)
+  /// Logo PNG do escritório, usada no menu e nos relatórios.
+  logo         String?
   paidUntil    String    @default("")
   notes        String    @default("")
   createdAt    DateTime  @default(now())
@@ -103,10 +108,12 @@ model Session {
   /// Perfil privilegiado ainda sem verificação em duas etapas.
   mfaSetupRequired Boolean @default(false)
   expiresAt      DateTime
+  lastSeenAt     DateTime @default(now())
   createdAt      DateTime @default(now())
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([organizationId, lastSeenAt])
 }
 
 model OrganizationMembership {
