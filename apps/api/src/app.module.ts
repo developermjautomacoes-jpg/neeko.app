@@ -18,11 +18,14 @@ import { MemorandosController } from "./memoranda/memoranda.controller";
 import { MemorandosService } from "./memoranda/memoranda.service";
 import { MfaController } from "./identity/mfa.controller";
 import { PlataformaController } from "./platform/platform.controller";
+import { FinanceiroController } from "./finance/finance.controller";
+import { FinanceiroService } from "./finance/finance.service";
+import { EstoqueController } from "./finance/stock.controller";
 import { PrismaService } from "./prisma.service";
 
 @Module({
-  controllers: [HealthController, AuthController, MeController, UsersController, CertificatesController, FiscalController, PainelController, MemorandosController, MfaController, PlataformaController],
-  providers: [PrismaService, AuditoriaService, EscopoService, CertificadosService, NfseService, DfeService, AgendadorService, MemorandosService,
+  controllers: [HealthController, AuthController, MeController, UsersController, CertificatesController, FiscalController, PainelController, MemorandosController, MfaController, PlataformaController, FinanceiroController, EstoqueController],
+  providers: [PrismaService, AuditoriaService, EscopoService, CertificadosService, NfseService, DfeService, AgendadorService, MemorandosService, FinanceiroService,
     { provide: APP_GUARD, useClass: GuardaAcesso }, { provide: APP_FILTER, useClass: FiltroErros }],
 })
 export class AppModule {}

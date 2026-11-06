@@ -5,7 +5,7 @@ import type { Request } from "express";
 import { PrismaService } from "../prisma.service";
 import { Erro } from "./errors";
 
-export const PERMISSOES = ["companies.read", "companies.manage", "fiscal.documents.read", "fiscal.capture", "fiscal.credentials.manage", "fiscal.ciencia.send", "fiscal.schedule.manage", "users.manage", "audit.read", "memoranda.read", "memoranda.manage"] as const;
+export const PERMISSOES = ["companies.read", "companies.manage", "fiscal.documents.read", "fiscal.capture", "fiscal.credentials.manage", "fiscal.ciencia.send", "fiscal.schedule.manage", "users.manage", "audit.read", "memoranda.read", "memoranda.manage", "finance.read", "finance.manage", "finance.settle", "finance.approve", "stock.read", "stock.manage"] as const;
 export type Permissao = (typeof PERMISSOES)[number];
 
 export interface Contexto {

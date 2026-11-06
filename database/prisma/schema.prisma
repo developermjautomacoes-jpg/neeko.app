@@ -65,6 +65,8 @@ model Organization {
   companies    Company[]
   certificates FiscalCertificate[]
   settings     FiscalSettings?
+  /// Pagamentos acima deste valor exigem aprovação; nulo = sem aprovação.
+  approvalLimit Decimal? @db.Decimal(15, 2)
   auditEvents  AuditEvent[]
 }
 
@@ -160,6 +162,11 @@ model Company {
   dfeEvents    DfeEvent[]
   dfeFailures  DfeFailure[]
   memoranda    Memorandum[]
+  finAccounts   FinAccount[]
+  finCategories FinCategory[]
+  costCenters   CostCenter[]
+  finEntries    FinEntry[]
+  stockItems    StockItem[]
 
   @@unique([organizationId, cnpj])
   @@unique([organizationId, id])
@@ -420,6 +427,159 @@ model Memorandum {
 
   @@unique([organizationId, ano, seq])
   @@index([organizationId, companyId])
+}
+
+model FinAccount {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  companyId      String  @db.Uuid
+  name           String
+  bank           String  @default("")
+  openingBalance Decimal @default(0) @db.Decimal(15, 2)
+  active         Boolean @default(true)
+
+  company Company @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+  lines   FinStatementLine[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, companyId])
+}
+
+model FinCategory {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  companyId      String  @db.Uuid
+  name           String
+  /// receita | despesa
+  kind           String
+  active         Boolean @default(true)
+
+  company Company @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+
+  @@unique([organizationId, companyId, kind, name])
+  @@unique([organizationId, id])
+}
+
+model CostCenter {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  companyId      String  @db.Uuid
+  name           String
+  active         Boolean @default(true)
+
+  company Company @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+
+  @@unique([organizationId, companyId, name])
+  @@unique([organizationId, id])
+}
+
+/// Conta a pagar ou a receber. Recorrências são parcelas com o mesmo groupId.
+model FinEntry {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  companyId      String    @db.Uuid
+  /// pagar | receber
+  kind           String
+  description    String
+  partyName      String    @default("")
+  partyDoc       String    @default("")
+  docNumber      String    @default("")
+  categoryId     String?   @db.Uuid
+  costCenterId   String?   @db.Uuid
+  accountId      String?   @db.Uuid
+  issueDate      String
+  dueDate        String
+  amount         Decimal   @db.Decimal(15, 2)
+  /// aberto | aguardando | pago | cancelado | rejeitado
+  status         String    @default("aberto")
+  paidDate       String    @default("")
+  paidAmount     Decimal?  @db.Decimal(15, 2)
+  groupId        String?   @db.Uuid
+  installment    Int       @default(1)
+  installments   Int       @default(1)
+  notes          String    @default("")
+  createdById    String    @db.Uuid
+  createdByName  String    @default("")
+  approvedByName String    @default("")
+  approvedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  company     Company            @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+  attachments FinAttachment[]
+  lines       FinStatementLine[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, companyId, dueDate])
+  @@index([organizationId, companyId, status])
+}
+
+model FinAttachment {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  entryId        String   @db.Uuid
+  name           String
+  mime           String
+  content        Bytes
+  createdAt      DateTime @default(now())
+
+  entry FinEntry @relation(fields: [organizationId, entryId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([organizationId, entryId])
+}
+
+/// Linha do extrato OFX. fitId evita importar a mesma linha duas vezes.
+model FinStatementLine {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  accountId      String  @db.Uuid
+  fitId          String
+  date           String
+  amount         Decimal @db.Decimal(15, 2)
+  memo           String  @default("")
+  entryId        String? @db.Uuid
+  ignored        Boolean @default(false)
+
+  account FinAccount @relation(fields: [organizationId, accountId], references: [organizationId, id], onDelete: Cascade)
+  entry   FinEntry?  @relation(fields: [organizationId, entryId], references: [organizationId, id], onDelete: NoAction)
+
+  @@unique([organizationId, accountId, fitId])
+}
+
+model StockItem {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @db.Uuid
+  companyId      String  @db.Uuid
+  code           String
+  name           String
+  unit           String  @default("UN")
+  minQty         Decimal @default(0) @db.Decimal(15, 3)
+  qty            Decimal @default(0) @db.Decimal(15, 3)
+  avgCost        Decimal @default(0) @db.Decimal(15, 4)
+  active         Boolean @default(true)
+
+  company Company     @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+  moves   StockMove[]
+
+  @@unique([organizationId, companyId, code])
+  @@unique([organizationId, id])
+}
+
+model StockMove {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  itemId         String   @db.Uuid
+  /// entrada | saida | ajuste
+  type           String
+  qty            Decimal  @db.Decimal(15, 3)
+  unitCost       Decimal  @default(0) @db.Decimal(15, 4)
+  date           String
+  note           String   @default("")
+  byName         String   @default("")
+  createdAt      DateTime @default(now())
+
+  item StockItem @relation(fields: [organizationId, itemId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([organizationId, itemId])
 }
 
 /// Registro imutável de ações sensíveis.

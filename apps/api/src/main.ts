@@ -9,7 +9,7 @@ import { PrismaService } from "./prisma.service";
 
 export async function criarApp() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: ["log", "warn", "error"] });
-  app.useBodyParser("json", { limit: "2mb" });
+  app.useBodyParser("json", { limit: "9mb" });
   app.setGlobalPrefix("api/v1");
   app.disable("x-powered-by");
   return app;
