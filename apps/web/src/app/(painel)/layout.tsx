@@ -12,13 +12,13 @@ import { logoParaMenu } from "@/features/logoMenu";
 import { aplicarTema, menuClaro } from "@/features/temas";
 import styles from "./painel.module.css";
 
-interface Item { plataforma?: boolean; nome: string; icone: ComponentType<{ size?: number }>; href?: string; exige?: string; filhos?: { href: string; nome: string; exige: string }[] }
+interface Item { modulo?: string; plataforma?: boolean; nome: string; icone: ComponentType<{ size?: number }>; href?: string; exige?: string; filhos?: { href: string; nome: string; exige: string }[] }
 const MENU: Item[] = [
   { nome: "Início", icone: Home, href: "/inicio" },
   { nome: "Fiscal", icone: Landmark },
   { nome: "Documentos Fiscais", icone: FileStack, filhos: [{ href: "/notas/nfse", nome: "NFS-e", exige: "fiscal.documents.read" }, { href: "/notas/nfe-cte", nome: "NF-e e CT-e", exige: "fiscal.documents.read" }] },
   { nome: "Emissão de NFS-e", icone: FileBadge },
-  { nome: "BPO Financeiro", icone: Wallet },
+  { nome: "BPO Financeiro", icone: Wallet, modulo: "bpo", filhos: [{ href: "/bpo/contas", nome: "Contas a pagar e receber", exige: "finance.read" }, { href: "/bpo/fluxo", nome: "Fluxo de caixa", exige: "finance.read" }, { href: "/bpo/conciliacao", nome: "Conciliação bancária", exige: "finance.read" }, { href: "/bpo/estoque", nome: "Estoque", exige: "stock.read" }, { href: "/bpo/cadastros", nome: "Cadastros", exige: "finance.read" }] },
   { nome: "Contratos", icone: Handshake },
   { nome: "Mensagens", icone: MessageCircle, href: "/mensagens" },
   { nome: "Relatórios", icone: PieChart },
@@ -75,7 +75,7 @@ export default function Painel({ children }: { children: ReactNode }) {
       <aside className={[styles.lateral, menu ? styles.aberta : ""].join(" ")}>
         {!pessoa.organization?.internal && pessoa.organization?.logo ? <div className={styles.marcaEscritorio}>{logoMenu && <img src={logoMenu} alt={pessoa.organization.name} />}</div> : <div className={styles.marcaNeeko}><img src={menuClaro(pessoa.organization?.theme) ? "/logo-neeko.png" : "/logo-neeko-clara.png"} alt="Neeko Automação Inteligente" /></div>}
         <nav aria-label="Menu principal" className={styles.nav}>
-          {(pessoa?.organization && !pessoa.organization.internal ? MENU.filter((m) => LIBERADOS.includes(m.nome)).map(doEscritorio) : MENU).map((m) => {
+          {(pessoa?.organization && !pessoa.organization.internal ? MENU.filter((m) => LIBERADOS.includes(m.nome) || (!!m.modulo && !!pessoa.organization?.modules.includes(m.modulo))).map(doEscritorio) : MENU).map((m) => {
             if (m.plataforma && !pessoa.platformAdmin) return null;
             const I = m.icone;
             const filhos = m.filhos?.filter((f) => pode(f.exige));

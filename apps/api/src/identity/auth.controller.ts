@@ -113,7 +113,7 @@ export class MeController {
     const atual = u.memberships.find((m) => m.organizationId === req.sessao.organizationId && m.organization.status === "ACTIVE");
     return { id: u.id, name: u.name, email: u.email, importacao: config().OFFICE_IMPORT_ENABLED === "true", platformAdmin: u.globalRole === "NEEKO_SUPERADMIN" && req.sessao.portal === "neeko", portal: req.sessao.portal, mfaEnabled: u.mfaEnabled, mfaPending: u.mfaEnabled && !req.sessao.mfaVerified, mfaSetupRequired: false, avatar: u.avatar, jobTitle: atual?.role === "ORG_OWNER" || atual?.role === "ORG_ADMIN" ? u.jobTitle : "", phone: u.phone, mustChangePassword: u.mustChangePassword,
       organization: atual ? { id: atual.organizationId, name: atual.organization.name, role: atual.role, slug: atual.organization.slug, internal: atual.organization.internal, logo: atual.organization.logo, theme: atual.organization.theme, modules: atual.organization.internal ? ["bpo"] : atual.organization.modules, contactEmail: atual.organization.contactEmail, contactPhone: atual.organization.contactPhone } : null,
-      permissions: atual ? [...permissoesDe(atual.role, atual.permissions.map((p) => p.permission))] : [], availablePermissions: PERMISSOES };
+      permissions: atual ? [...permissoesDe(atual.role, atual.permissions.map((p) => p.permission))] : [], availablePermissions: atual && (atual.organization.internal || atual.organization.modules.includes("bpo")) ? PERMISSOES : PERMISSOES.filter((p) => !/^(finance|stock)\./.test(p)) };
   }
 
   /** Cada pessoa altera só o próprio perfil. A foto chega já recortada; o e-mail de acesso não muda por aqui. */

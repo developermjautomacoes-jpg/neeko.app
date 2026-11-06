@@ -55,7 +55,7 @@ export class PlataformaController {
     let slug = d.slug ?? criarLink(d.name);
     for (let i = 2; !d.slug && (await this.prisma.organization.findUnique({ where: { slug } })); i++) slug = `${criarLink(d.name)}-${i}`;
     const senha = await hashSenha(d.senhaProvisoria);
-    const o = await this.prisma.organization.create({ data: { name: d.name, slug, billingExempt: d.billingExempt, cnpj: d.cnpj, contactEmail: d.contactEmail, contactPhone: d.contactPhone, planId: d.planId, paidUntil: d.paidUntil, notes: d.notes,
+    const o = await this.prisma.organization.create({ data: { name: d.name, slug, billingExempt: d.billingExempt, cnpj: d.cnpj, contactEmail: d.contactEmail, contactPhone: d.contactPhone, planId: d.planId, paidUntil: d.paidUntil, notes: d.notes, modules: d.modules ?? [],
       memberships: { create: { role: "ORG_OWNER", allCompanies: true, permissions: { create: PERMISSOES.map((permission) => ({ permission })) }, user: { create: { email: d.gestorEmail, name: d.gestorNome, passwordHash: senha, mustChangePassword: true } } } } } });
     await this.auditoria.registrar(null, r.sessao.userId, "platform.office.created", o.id);
     return { id: o.id };

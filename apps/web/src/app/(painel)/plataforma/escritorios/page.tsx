@@ -6,8 +6,8 @@ import { formatarCnpj } from "@/lib/format";
 import { alterarEscritorio, criarEscritorio, excluirEscritorio, listarEscritorios, listarPlanos, redefinirGestor, situacaoEscritorio, type Escritorio, type Plano } from "@/services/conta";
 import styles from "../../pagina.module.css";
 
-interface F { id?: string; slug: string; name: string; cnpj: string; contactEmail: string; contactPhone: string; planId: string; billingExempt: boolean; paidUntil: string; notes: string; gestorNome: string; gestorEmail: string; senhaProvisoria: string }
-const vazio: F = { slug: "", name: "", cnpj: "", contactEmail: "", contactPhone: "", planId: "", billingExempt: false, paidUntil: "", notes: "", gestorNome: "", gestorEmail: "", senhaProvisoria: "" };
+interface F { id?: string; slug: string; name: string; cnpj: string; contactEmail: string; contactPhone: string; planId: string; billingExempt: boolean; bpo: boolean; paidUntil: string; notes: string; gestorNome: string; gestorEmail: string; senhaProvisoria: string }
+const vazio: F = { slug: "", name: "", cnpj: "", contactEmail: "", contactPhone: "", planId: "", billingExempt: false, bpo: false, paidUntil: "", notes: "", gestorNome: "", gestorEmail: "", senhaProvisoria: "" };
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const cents = (v: string) => Math.round(Number(v) * 100);
 const dataBr = (d: string) => d.split("-").reverse().join("/");
@@ -32,7 +32,7 @@ export default function Escritorios() {
   const ativos = clientes.filter((e) => e.status === "ACTIVE"), cobrados = ativos.filter((e) => !semCobranca(e)), mrr = cobrados.reduce((t, e) => t + cents(e.mensalidade), 0), vencidos = cobrados.filter((e) => e.paidUntil && e.paidUntil < hoje()).length;
   async function salvar() {
     if (!f) return;
-    const base = { slug: f.slug, name: f.name, cnpj: f.cnpj, contactEmail: f.contactEmail, contactPhone: f.contactPhone, planId: f.planId || null, billingExempt: f.billingExempt, paidUntil: f.paidUntil, notes: f.notes };
+    const base = { slug: f.slug, name: f.name, cnpj: f.cnpj, contactEmail: f.contactEmail, contactPhone: f.contactPhone, planId: f.planId || null, billingExempt: f.billingExempt, modules: f.bpo ? ["bpo"] : [], paidUntil: f.paidUntil, notes: f.notes };
     try { if (f.id) await alterarEscritorio(f.id, base); else await criarEscritorio({ ...base, gestorNome: f.gestorNome, gestorEmail: f.gestorEmail, senhaProvisoria: f.senhaProvisoria }); setF(null); await carregar(); avisar("Escritório salvo.", "sucesso"); }
     catch (x) { avisar(x instanceof Error ? x.message : "Não foi possível salvar.", "erro"); }
   }
@@ -52,7 +52,7 @@ export default function Escritorios() {
         { chave: "u", titulo: "Uso", render: (e) => <small>{e.empresas}{e.maxCompanies !== null ? ` de ${e.maxCompanies}` : ""} empresas<br />{e.usuarios} usuários<br />{e.emUso}{e.maxUsers !== null ? ` de ${e.maxUsers}` : ""} em uso agora</small> },
         { chave: "v", titulo: "Pago até", render: (e) => (e.paidUntil ? (e.paidUntil < hoje() && !e.internal && !semCobranca(e) ? <Badge tom="perigo">{dataBr(e.paidUntil)}</Badge> : dataBr(e.paidUntil)) : "—") },
         { chave: "s", titulo: "Situação", render: (e) => <Badge tom={e.status === "ACTIVE" ? "sucesso" : "perigo"}>{e.status === "ACTIVE" ? "ativo" : "suspenso"}</Badge> },
-        { chave: "a", titulo: "", alinhar: "direita", render: (e) => <div className={styles.acoes}><IconButton dica="Editar" icone={<Pencil size={16} />} onClick={() => setF({ ...vazio, id: e.id, slug: e.slug, name: e.name, cnpj: e.cnpj, contactEmail: e.contactEmail, contactPhone: e.contactPhone, planId: e.planId ?? "", billingExempt: e.billingExempt, paidUntil: e.paidUntil, notes: e.notes })} />
+        { chave: "a", titulo: "", alinhar: "direita", render: (e) => <div className={styles.acoes}><IconButton dica="Editar" icone={<Pencil size={16} />} onClick={() => setF({ ...vazio, id: e.id, slug: e.slug, name: e.name, cnpj: e.cnpj, contactEmail: e.contactEmail, contactPhone: e.contactPhone, planId: e.planId ?? "", billingExempt: e.billingExempt, bpo: e.modules.includes("bpo"), paidUntil: e.paidUntil, notes: e.notes })} />
           {!e.internal && <IconButton dica="Copiar link do escritório" icone={<Link2 size={16} />} onClick={() => void copiar(e)} />}
           {!e.internal && <IconButton dica="Reiniciar senha" icone={<KeyRound size={16} />} onClick={() => setReset(e)} />}
           {!e.internal && (e.status === "ACTIVE" ? <IconButton dica="Suspender" variante="danger" icone={<PauseCircle size={16} />} onClick={() => setSuspender(e)} /> : <IconButton dica="Reativar" icone={<PlayCircle size={16} />} onClick={() => void trocar(e, "ACTIVE")} />)}
@@ -63,6 +63,7 @@ export default function Escritorios() {
         <Select rotulo="Plano" value={f.planId} onChange={(e) => setF({ ...f, planId: e.target.value })}><option value="">Sem plano</option>{planos.filter((p) => p.active || p.id === f.planId).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select><Input rotulo="Pago até" type="date" value={f.paidUntil} onChange={(e) => setF({ ...f, paidUntil: e.target.value })} /></div>
         <Input rotulo="Link do escritório (depois de /e/)" placeholder="Gerado pelo nome, se ficar em branco" value={f.slug} onChange={(e) => setF({ ...f, slug: e.target.value })} />
         <label className={styles.check}><input type="checkbox" checked={f.billingExempt} onChange={(e) => setF({ ...f, billingExempt: e.target.checked })} /> Cliente piloto, sem cobrança</label>
+        <label className={styles.check}><input type="checkbox" checked={f.bpo} onChange={(e) => setF({ ...f, bpo: e.target.checked })} /> Liberar módulo BPO Financeiro</label>
         <Input rotulo="Observações" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} />
         {!f.id && <><p className={styles.titulo}>Gestor do escritório</p><div className={styles.colunas}><Input rotulo="Nome do gestor" value={f.gestorNome} onChange={(e) => setF({ ...f, gestorNome: e.target.value })} /><Input rotulo="E-mail de acesso" type="email" value={f.gestorEmail} onChange={(e) => setF({ ...f, gestorEmail: e.target.value })} /><Input rotulo="Senha provisória" autoComplete="off" dica="Ao menos 10 caracteres, com letras e números." value={f.senhaProvisoria} onChange={(e) => setF({ ...f, senhaProvisoria: e.target.value })} /></div></>}</div>}
     </Modal>
