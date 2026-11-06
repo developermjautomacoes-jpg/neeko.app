@@ -16,6 +16,7 @@ Mudanças relevantes da Neeko Platform serão registradas aqui.
 - Mensagens entre usuários com canal Geral, menções e notificações; cargo definido pelo administrador; controle de certificados com filtros e relatórios; ações das tabelas em ícones com dica.
 - Empresas em Administração: cadastro e memorando na mesma tela. Mensagens com emoticons, grupos privados ou abertos e encaminhamento.
 - Importação de pacotes desligada por padrão; volta com `OFFICE_IMPORT_ENABLED=true`.
+- Exclusão de usuário e edição completa de nome, e-mail e cargo.
 - Tema Marinho Clássico, de menu claro.
 - Quatro temas por escritório: Verde Corporativo (padrão), Azul Tech, Roxo Premium e Dourado Elegante, no lugar das cores livres.
 - A paleta do escritório passa a valer em todas as telas: fundos, menu, destaques, indicadores e gráficos.

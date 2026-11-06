@@ -8,7 +8,8 @@ export const lerEscritorioPublico = (slug: string) => api<{ name: string; logo: 
 export const sair = () => api("POST", "auth/logout", {});
 export const trocarSenha = (atual: string, nova: string) => api("POST", "auth/password", { atual, nova });
 export async function listarUsuarios() { return (await api<{ usuarios: Usuario[] }>("GET", "users")).usuarios; }
-export const definirCargo = (id: string, cargo: string) => api("PUT", `users/${id}/job-title`, { cargo });
+export const salvarDados = (id: string, d: { name: string; email: string; jobTitle: string }) => api("PUT", `users/${id}/details`, d);
+export const excluirUsuario = (id: string) => api("DELETE", `users/${id}`);
 export const criarUsuario = (u: { jobTitle: string; name: string; email: string; senhaProvisoria: string; role: string; permissions: string[]; allCompanies: boolean; companyIds: string[] }) => api("POST", "users", u);
 export const alterarUsuario = (id: string, u: { role: string; status: string; permissions: string[]; allCompanies: boolean; companyIds: string[] }) => api("PATCH", `users/${id}`, u);
 export const redefinirSenha = (id: string, senhaProvisoria: string) => api("POST", `users/${id}/reset-password`, { senhaProvisoria });

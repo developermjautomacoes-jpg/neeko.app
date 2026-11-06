@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Patch, Post, Put } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Put } from "@nestjs/common";
 import { z } from "zod";
 import { AuditoriaService } from "../common/audit.service";
 import { Contexto, Ctx, Exige, PERMISSOES } from "../common/auth";
@@ -56,12 +56,32 @@ export class UsersController {
     return { id: m.id };
   }
 
-  /** O cargo é definido por quem administra, inclusive o da proprietária. */
-  @Exige("users.manage") @Put(":id/job-title")
-  async cargo(@Ctx() c: Contexto, @Param("id") id: string, @Body() corpo: unknown) {
-    const { cargo } = validar(z.object({ cargo: z.string().trim().max(80) }), corpo), m = await this.vinculo(c, id);
-    await this.prisma.user.update({ where: { id: m.userId }, data: { jobTitle: cargo } });
-    await this.auditoria.registrar(c.organizationId, c.userId, "users.jobtitle.changed", m.userId);
+  /** Nome, e-mail e cargo. Os dados da proprietária só ela altera; quem também está em outro escritório não é alterado por aqui. */
+  @Exige("users.manage") @Put(":id/details")
+  async dados(@Ctx() c: Contexto, @Param("id") id: string, @Body() corpo: unknown) {
+    const d = validar(z.object({ name: z.string().trim().min(2, "Informe o nome.").max(120), email: z.string().email("Informe um e-mail válido.").transform((e) => e.trim().toLowerCase()), jobTitle: z.string().trim().max(80).default("") }), corpo);
+    const m = await this.vinculo(c, id);
+    if (m.role === "ORG_OWNER" && m.id !== c.membershipId) throw new Erro(403, "FORBIDDEN", "Só a proprietária altera os próprios dados.");
+    if ((await this.prisma.organizationMembership.count({ where: { userId: m.userId } })) > 1) throw new Erro(403, "FORBIDDEN", "Esta pessoa também está em outro escritório. Peça que ela altere pelo próprio perfil.");
+    const outro = await this.prisma.user.findUnique({ where: { email: d.email } });
+    if (outro && outro.id !== m.userId) throw new Erro(409, "EMAIL_IN_USE", "Este e-mail já tem cadastro.");
+    await this.prisma.user.update({ where: { id: m.userId }, data: { name: d.name, email: d.email, jobTitle: d.jobTitle } });
+    await this.auditoria.registrar(c.organizationId, c.userId, "users.details.changed", m.userId);
+    return { ok: true };
+  }
+
+  /** Tira a pessoa do escritório. Sem outro vínculo, a conta deixa de existir e o e-mail fica livre. */
+  @Exige("users.manage") @Delete(":id")
+  async excluir(@Ctx() c: Contexto, @Param("id") id: string) {
+    const m = await this.vinculo(c, id);
+    if (m.role === "ORG_OWNER") throw new Erro(403, "FORBIDDEN", "A pessoa proprietária não pode ser excluída.");
+    if (m.id === c.membershipId) throw new Erro(403, "FORBIDDEN", "Você não pode excluir o próprio acesso.");
+    await this.prisma.$transaction([
+      this.prisma.session.deleteMany({ where: { userId: m.userId, organizationId: c.organizationId } }),
+      this.prisma.organizationMembership.delete({ where: { id } }),
+      this.prisma.user.deleteMany({ where: { id: m.userId, globalRole: { not: "NEEKO_SUPERADMIN" }, memberships: { none: {} } } }),
+    ]);
+    await this.auditoria.registrar(c.organizationId, c.userId, "users.deleted", m.userId);
     return { ok: true };
   }
 
