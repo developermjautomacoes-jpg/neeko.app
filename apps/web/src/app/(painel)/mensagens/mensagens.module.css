@@ -31,7 +31,9 @@
 .balao { position: relative; }
 .acaoMsg { position: absolute; top: 4px; right: -40px; opacity: 0; transition: opacity 120ms ease; }
 .minha .acaoMsg { right: auto; left: -40px; }
+.balao .acaoMsg { opacity: 0.55; }
 .balao:hover .acaoMsg, .acaoMsg:focus-within { opacity: 1; }
+@media (hover: none) { .balao .acaoMsg { opacity: 1; } }
 .encaminhada { display: block; font-style: italic; }
 .emojis { position: absolute; bottom: calc(100% + 4px); left: var(--space-3); z-index: 5; display: grid; grid-template-columns: repeat(8, 34px); padding: var(--space-2); background: var(--color-surface); border-radius: var(--radius-sm); box-shadow: var(--shadow-md); }
 .emojis button { height: 34px; border: 0; border-radius: 8px; background: none; font-size: 1.2rem; cursor: pointer; }
