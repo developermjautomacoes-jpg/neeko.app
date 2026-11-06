@@ -51,7 +51,6 @@ export class GuardaAcesso implements CanActivate {
     if (s.user.mfaEnabled && !s.mfaVerified) throw new Erro(403, "MFA_REQUIRED", "Informe o código de verificação.");
     if (this.reflector.getAllAndOverride<boolean>(SO_LOGADO, alvo)) return true;
     if (s.user.mustChangePassword) throw new Erro(403, "PASSWORD_CHANGE_REQUIRED", "Troque a senha provisória para continuar.");
-    if (s.mfaSetupRequired && !s.user.mfaEnabled) throw new Erro(403, "MFA_SETUP_REQUIRED", "Ative a verificação em duas etapas para continuar.");
     if (this.reflector.getAllAndOverride<boolean>(PLATAFORMA, alvo)) {
       if (s.user.globalRole !== "NEEKO_SUPERADMIN") throw new Erro(403, "FORBIDDEN", "Você não tem permissão para esta ação.");
       return true;

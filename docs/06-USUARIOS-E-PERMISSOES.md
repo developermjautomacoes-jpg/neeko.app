@@ -25,7 +25,7 @@ Exemplos de ações: `companies.read`, `companies.manage`, `fiscal.documents.rea
 - Menor privilégio.
 - Negar por padrão.
 - Validar autorização em cada endpoint e job.
-- MFA obrigatório para perfis privilegiados; para os demais, aplicar política baseada em risco.
+- MFA opcional para todos os perfis, por decisão da responsável pelo produto (2026-11-06); quem já ativou continua informando o código.
 - Revogar sessões ao remover vínculo ou suspender usuário.
 - Registrar concessões e alterações de permissões.
 - Separar permissão para emitir, cancelar, consultar e configurar credenciais fiscais.

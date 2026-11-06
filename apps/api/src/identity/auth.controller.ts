@@ -34,8 +34,7 @@ export class AuthController {
     falhas.delete(email);
     const token = randomBytes(32).toString("base64url");
     const organizacao = u.memberships.find((m) => m.organization.status === "ACTIVE") ?? u.memberships[0];
-    const privilegio = u.globalRole === "NEEKO_SUPERADMIN" || u.memberships.some((m) => m.role === "ORG_OWNER" || m.role === "ORG_ADMIN");
-    await this.prisma.session.create({ data: { userId: u.id, organizationId: organizacao?.organizationId ?? null, tokenHash: hashToken(token), expiresAt: new Date(Date.now() + DURACAO_MS), mfaSetupRequired: privilegio && !u.mfaEnabled } });
+    await this.prisma.session.create({ data: { userId: u.id, organizationId: organizacao?.organizationId ?? null, tokenHash: hashToken(token), expiresAt: new Date(Date.now() + DURACAO_MS) } });
     await this.prisma.session.deleteMany({ where: { userId: u.id, expiresAt: { lt: new Date() } } });
     res.cookie(COOKIE, token, { httpOnly: true, sameSite: "strict", secure: config().NODE_ENV === "production", maxAge: DURACAO_MS, path: "/" });
     await this.auditoria.registrar(u.memberships[0]?.organizationId ?? null, u.id, "auth.login");
@@ -68,10 +67,10 @@ export class AuthController {
 export class MeController {
   constructor(private prisma: PrismaService, private auditoria: AuditoriaService) {}
   @SemMfa() @Get()
-  async eu(@Req() req: Request & { sessao: { userId: string; organizationId: string | null; mfaVerified: boolean; mfaSetupRequired: boolean } }) {
+  async eu(@Req() req: Request & { sessao: { userId: string; organizationId: string | null; mfaVerified: boolean } }) {
     const u = await this.prisma.user.findUniqueOrThrow({ where: { id: req.sessao.userId }, include: { memberships: { where: { status: "ACTIVE" }, include: { organization: true, permissions: true } } } });
     const atual = u.memberships.find((m) => m.organizationId === req.sessao.organizationId && m.organization.status === "ACTIVE");
-    return { id: u.id, name: u.name, email: u.email, platformAdmin: u.globalRole === "NEEKO_SUPERADMIN", mfaEnabled: u.mfaEnabled, mfaPending: u.mfaEnabled && !req.sessao.mfaVerified, mfaSetupRequired: req.sessao.mfaSetupRequired && !u.mfaEnabled, avatar: u.avatar, jobTitle: u.jobTitle, phone: u.phone, mustChangePassword: u.mustChangePassword,
+    return { id: u.id, name: u.name, email: u.email, platformAdmin: u.globalRole === "NEEKO_SUPERADMIN", mfaEnabled: u.mfaEnabled, mfaPending: u.mfaEnabled && !req.sessao.mfaVerified, mfaSetupRequired: false, avatar: u.avatar, jobTitle: u.jobTitle, phone: u.phone, mustChangePassword: u.mustChangePassword,
       organization: atual ? { id: atual.organizationId, name: atual.organization.name, role: atual.role } : null,
       permissions: atual?.permissions.map((p) => p.permission) ?? [], availablePermissions: PERMISSOES };
   }

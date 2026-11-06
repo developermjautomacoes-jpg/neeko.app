@@ -62,9 +62,9 @@ test("primeiro acesso exige trocar a senha provisória", async () => {
   assert.equal((await ana.post("/auth/password", { atual: "errada", nova: "NovaSenha123" })).status, 400);
   assert.equal((await ana.post("/auth/password", { atual: "Provisoria123", nova: "fraca" })).status, 400);
   assert.equal((await ana.post("/auth/password", { atual: "Provisoria123", nova: "NovaSenha123" })).status, 200);
-  assert.equal((await ana.get("/fiscal/companies")).corpo.code, "MFA_SETUP_REQUIRED", "perfil privilegiado ativa duas etapas");
+  assert.equal((await ana.get("/fiscal/companies")).status, 200, "duas etapas é opcional");
   ana = await logar("ana@a.test", "NovaSenha123");
-  assert.equal((await ana.get("/me")).corpo.mfaSetupRequired, true);
+  assert.equal((await ana.get("/me")).corpo.mfaSetupRequired, false);
   mfaAna = await ativarMfa(ana);
   assert.equal((await ana.get("/fiscal/companies")).status, 200);
   const antiga = new Sessao(); assert.equal((await antiga.post("/auth/login", { email: "ana@a.test", senha: "Provisoria123" })).status, 401);

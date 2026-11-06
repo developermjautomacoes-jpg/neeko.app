@@ -4,7 +4,7 @@
 
 - HTTPS em todos os ambientes não locais.
 - Senhas com hash moderno e parâmetros seguros; nunca reversíveis.
-- MFA para superadmin e gestores, conforme política.
+- MFA opcional; a ativação não é exigida de nenhum perfil.
 - Sessões curtas/renováveis, revogação e proteção contra CSRF conforme mecanismo de autenticação.
 - Rate limiting, proteção contra brute force e validação de entrada.
 - Criptografia em trânsito e em repouso.
