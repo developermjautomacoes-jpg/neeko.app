@@ -230,9 +230,11 @@ test("mensagens: direta, geral, menção e isolamento", async () => {
   const de = await prisma.organizationMembership.findFirst({ where: { user: { email: "bia@a.test" } } });
   const dd = { name: "Bia Souza", email: "bia@a.test" };
   assert.equal((await bia.pedir("PUT", `/users/${de.id}/details`, { ...dd, jobTitle: "Diretora" })).status, 403, "cargo é do administrador");
-  assert.equal((await ana.pedir("PUT", `/users/${de.id}/details`, { ...dd, name: "Bia Lima", jobTitle: "Analista" })).status, 200); const eub = (await bia.get("/me")).corpo; assert.equal(eub.jobTitle, "Analista"); assert.equal(eub.name, "Bia Lima");
+  assert.equal((await ana.pedir("PUT", `/users/${de.id}/details`, { ...dd, name: "Bia Lima", jobTitle: "Analista" })).status, 200); const eub = (await bia.get("/me")).corpo; assert.equal(eub.jobTitle, "", "colaborador não vê cargo"); assert.equal(eub.name, "Bia Lima");
+  const cargoDe = async () => (await ana.get("/users")).corpo.usuarios.find((x: any) => x.email === "bia@a.test")?.jobTitle; assert.equal(await cargoDe(), "Analista");
+  assert.equal((await caio.get("/messages")).corpo.pessoas.every((p: any) => p.cargo === ""), true, "lista do colaborador sem cargo"); assert.ok((await ana.get("/messages")).corpo.pessoas.some((p: any) => p.cargo === "Analista"), "sócia vê");
   assert.equal((await ana.pedir("PUT", `/users/${de.id}/details`, { ...dd, email: "caio@a.test" })).corpo.code, "EMAIL_IN_USE"); await ana.pedir("PUT", `/users/${de.id}/details`, { ...dd, jobTitle: "Analista" });
-  await bia.pedir("PATCH", "/me", { name: "Bia Souza", jobTitle: "Sócia", phone: "", avatar: null }); assert.equal((await bia.get("/me")).corpo.jobTitle, "Analista", "o perfil não muda o cargo");
+  await bia.pedir("PATCH", "/me", { name: "Bia Souza", jobTitle: "Sócia", phone: "", avatar: null }); assert.equal(await cargoDe(), "Analista", "o perfil não muda o cargo");
   const iAna = await id("ana@a.test");
   const pv = await bia.post("/messages/groups", { nome: "Fechamento", privado: true, pessoas: [iAna] }); assert.equal(pv.status, 201);
   assert.equal((await bia.post("/messages/groups", { nome: "X", privado: true, pessoas: [] })).status, 400);

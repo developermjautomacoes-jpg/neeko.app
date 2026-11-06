@@ -17,7 +17,8 @@ export class MensagensController {
   constructor(private prisma: PrismaService) {}
   private async pessoas(c: Contexto) {
     const m = await this.prisma.organizationMembership.findMany({ where: { organizationId: c.organizationId, status: "ACTIVE", user: { active: true } }, select: { userId: true, user: { select: { name: true, jobTitle: true } } }, orderBy: { user: { name: "asc" } } });
-    return m.map((x) => ({ id: x.userId, nome: x.user.name, cargo: x.user.jobTitle }));
+    const veCargo = c.role === "ORG_OWNER" || c.role === "ORG_ADMIN"; // cargo é só para sócia e administração
+    return m.map((x) => ({ id: x.userId, nome: x.user.name, cargo: veCargo ? x.user.jobTitle : "" }));
   }
   /** Privado só existe para quem participa: para os demais, responde como inexistente. */
   private async grupo(c: Contexto, id: string) {

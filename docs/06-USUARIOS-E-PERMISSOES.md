@@ -30,6 +30,7 @@ Exemplos de ações: `companies.read`, `companies.manage`, `fiscal.documents.rea
 - O limite de usuários do plano conta acessos simultâneos: pessoas distintas com atividade nos últimos 15 minutos; cadastros não têm limite.
 - Há dois links de entrada: `/login` (administração da Neeko) e `/e/<slug>` (cada escritório, com a logo dele). O acesso ao Gerencial só vale em sessão aberta por `/login`.
 - `ORG_ADMIN` tem todas as permissões e vê todas as empresas, como `ORG_OWNER`; não exclui a proprietária nem acessa a empresa restrita sem a liberação dela.
+- O cargo é visível só para `ORG_OWNER` e `ORG_ADMIN`.
 - MFA opcional para todos os perfis, por decisão da responsável pelo produto (2026-11-06); quem já ativou continua informando o código.
 - Revogar sessões ao remover vínculo ou suspender usuário.
 - Registrar concessões e alterações de permissões.

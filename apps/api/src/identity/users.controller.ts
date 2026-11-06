@@ -38,7 +38,8 @@ export class UsersController {
   @Exige("users.manage") @Get()
   async listar(@Ctx() c: Contexto) {
     const l = await this.prisma.organizationMembership.findMany({ where: { organizationId: c.organizationId }, include: { user: true, permissions: true, companies: true }, orderBy: { createdAt: "asc" } });
-    return { usuarios: l.map((m) => ({ id: m.id, jobTitle: m.user.jobTitle, name: m.user.name, email: m.user.email, role: m.role, status: m.status, allCompanies: m.allCompanies,
+    const veCargo = c.role === "ORG_OWNER" || c.role === "ORG_ADMIN";
+    return { usuarios: l.map((m) => ({ id: m.id, jobTitle: veCargo ? m.user.jobTitle : "", name: m.user.name, email: m.user.email, role: m.role, status: m.status, allCompanies: m.allCompanies,
       permissions: m.permissions.map((p) => p.permission), companyIds: m.companies.map((x) => x.companyId), mustChangePassword: m.user.mustChangePassword })) };
   }
 
