@@ -209,6 +209,8 @@ export function NfsePage() {
   const naoValidas = notas.filter((n) => !valida(n)).length;
   const ocupado = !!progresso || !!verificando;
   const vista = empresas.find((e) => e.id === cnpjVista);
+  // Sem empresa escolhida, abre a primeira da lista para a tela nunca ficar vazia.
+  useEffect(() => { if (!carregando && empresas.length && !empresas.some((e) => e.id === cnpjVista)) setCnpjVista(empresas[0].id); }, [carregando, empresas, cnpjVista]);
   const listadas = useMemo(() => { const q = filtroEmpresa.trim().toLowerCase(), n = q.replace(/\D/g, ""); return empresas.filter((e) => !q || e.razao.toLowerCase().includes(q) || (!!n && e.cnpj.includes(n))); }, [empresas, filtroEmpresa]);
   const todasVisiveis = visiveis.length > 0 && visiveis.every((n) => selecao.has(n.chave));
   function alternarTodas() {
@@ -244,8 +246,8 @@ export function NfsePage() {
             : <Button variante="primary" onClick={() => void capturar()} disabled={!marcadas.size || !!verificando}>Capturar selecionadas ({marcadas.size})</Button>}
           {carregando ? <Loading /> : !empresas.length ? <p className={styles.vazio}>Nenhuma empresa. Cadastre a primeira em Administração &gt; Empresas.</p> : (
             <ul className={styles.listaEmpresas}>{listadas.map((e) => (
-              <li key={e.id} className={`${styles.empresa} ${cnpjVista === e.id ? styles.empresaAtual : ""}`}>
-                <input type="checkbox" aria-label={`Selecionar ${e.razao}`} checked={marcadas.has(e.id)} disabled={ocupado || !e.certificado || certVencido(e)} onChange={() => marcar(e.id)} />
+              <li key={e.id} className={`${styles.empresa} ${cnpjVista === e.id ? styles.empresaAtual : ""}`} onClick={(x) => { if ((x.target as HTMLElement).tagName !== "INPUT") setCnpjVista(e.id); }}>
+                <input type="checkbox" aria-label={`Selecionar ${e.razao}`} checked={marcadas.has(e.id)} disabled={ocupado || !e.certificado || certVencido(e)} onChange={() => { marcar(e.id); setCnpjVista(e.id); }} />
                 <button type="button" onClick={() => setCnpjVista(e.id)}>
                   <b>{e.razao || "(sem nome)"}</b><small>{formatarCnpj(e.cnpj)}</small>
                   <small className={e.ultimoErro || !e.certificado || certVencido(e) ? styles.alertaLista : ""}>{e.ultimoErro ? "Erro na última captura" : !e.certificado ? "Sem certificado" : certVencido(e) ? "Certificado vencido" : `${e.notas} nota(s)`}</small>
