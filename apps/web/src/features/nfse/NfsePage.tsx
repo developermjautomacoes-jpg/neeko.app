@@ -1,5 +1,5 @@
 "use client";
-import { Eye, FileText, RotateCcw, Stethoscope } from "lucide-react";
+import { FileText, RotateCcw, Settings, Stethoscope } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AgendaNfse, AmbienteNfse, CertificadoNfse, ModoBuscaNfse, EmpresaNfse, FalhaNfse, NotaNfse, PapelNfse, SituacaoNfse } from "@/types/nfse";
 import { Badge, Button, Card, ConfirmDialog, DataTable, Input, KpiCard, Loading, Modal, Notice, PageHeader, Select, useToast, IconButton } from "@neeko/ui";
@@ -41,6 +41,8 @@ export function NfsePage() {
   const [verificando, setVerificando] = useState("");
   const [recomecar, setRecomecar] = useState<EmpresaNfse | null>(null);
   const [procurador, setProcurador] = useState<CertificadoNfse | null>(null);
+  const [filtroEmpresa, setFiltroEmpresa] = useState("");
+  const [config, setConfig] = useState(false);
   const [procArquivo, setProcArquivo] = useState<File | null>(null);
   const [procSenha, setProcSenha] = useState("");
   const [procApelido, setProcApelido] = useState("");
@@ -79,8 +81,8 @@ export function NfsePage() {
     setMarcadas((m) => { const n = new Set(m); if (n.has(cnpj)) n.delete(cnpj); else n.add(cnpj); return n; });
   }
 
-  async function capturar() {
-    const fila = aptas.filter((e) => marcadas.has(e.id));
+  async function capturar(ids?: string[]) {
+    const fila = aptas.filter((e) => (ids ? ids.includes(e.id) : marcadas.has(e.id)));
     if (!fila.length) { avisar("Marque ao menos uma empresa com certificado válido.", "erro"); return; }
     parar.current = false; setRelatorio([]);
     const saida: string[] = [];
@@ -205,6 +207,8 @@ export function NfsePage() {
   const tomadas = notas.filter((n) => n.papel === "tomador");
   const naoValidas = notas.filter((n) => !valida(n)).length;
   const ocupado = !!progresso || !!verificando;
+  const vista = empresas.find((e) => e.id === cnpjVista);
+  const listadas = useMemo(() => { const q = filtroEmpresa.trim().toLowerCase(), n = q.replace(/\D/g, ""); return empresas.filter((e) => !q || e.razao.toLowerCase().includes(q) || (!!n && e.cnpj.includes(n))); }, [empresas, filtroEmpresa]);
   const todasVisiveis = visiveis.length > 0 && visiveis.every((n) => selecao.has(n.chave));
   function alternarTodas() {
     setSelecao((m) => { const n = new Set(m); visiveis.forEach((v) => { if (todasVisiveis) n.delete(v.chave); else n.add(v.chave); }); return n; });
@@ -214,86 +218,61 @@ export function NfsePage() {
   return (
     <>
       <PageHeader titulo="Captura de NFS-e" descricao="Baixa do Ambiente de Dados Nacional as notas prestadas e tomadas de cada empresa, usando o certificado da empresa ou o do procurador."
-        acoes={<Select rotulo="Ambiente" value={ambiente} disabled={ocupado} onChange={(e) => { setAmbiente(e.target.value as AmbienteNfse); setCnpjVista(""); setMarcadas(new Set()); }}>
-          <option value="producao">Produção</option><option value="restrita">Produção restrita (testes)</option></Select>} />
+        acoes={<div className={styles.topoAcoes}><Select rotulo="Ambiente" value={ambiente} disabled={ocupado} onChange={(e) => { setAmbiente(e.target.value as AmbienteNfse); setCnpjVista(""); setMarcadas(new Set()); }}>
+          <option value="producao">Produção</option><option value="restrita">Produção restrita (testes)</option></Select><IconButton dica="Procurador e captura automática" icone={<Settings size={16} />} onClick={() => setConfig(true)} /></div>} />
       {erro && <Notice tom="erro">{erro}</Notice>}
       {ambiente === "restrita" && <Notice tom="alerta">Produção restrita: as notas deste ambiente não têm validade fiscal e ficam separadas das de produção.</Notice>}
 
-      <Card titulo="Empresas" descricao="Vêm do cadastro de empresas. Escolha em cada empresa a busca pelo certificado dela (mesma raiz do CNPJ) ou por procuração." semPadding>
-        <div className={styles.barra}>
-          <Button tamanho="sm" onClick={() => setMarcadas(new Set(aptas.map((e) => e.id)))} disabled={ocupado || !aptas.length}>Marcar todas aptas</Button>
-          <Button tamanho="sm" onClick={() => setMarcadas(new Set())} disabled={ocupado}>Limpar</Button>
-          <span className={styles.espaco} />
-          {progresso
-            ? <Button variante="danger" onClick={() => { parar.current = true; }}>Interromper</Button>
-            : <Button variante="primary" onClick={capturar} disabled={!marcadas.size || !!verificando}>Capturar selecionadas ({marcadas.size})</Button>}
-        </div>
-        {progresso && (
-          <div className={styles.progresso} role="status">
-            <b>{progresso.empresa}</b> · empresa {progresso.indice} de {progresso.total} · {progresso.notas} nota(s) e {progresso.eventos} evento(s) nesta captura
-            <small>{progresso.texto} Pode continuar usando o sistema em outra aba; mantenha esta aberta.</small>
-          </div>
-        )}
-        {relatorio.length > 0 && <ul className={styles.relatorio}>{relatorio.map((l) => <li key={l}>{l}</li>)}</ul>}
-        {carregando ? <Loading /> : (
-          <DataTable linhas={empresas} chaveLinha={(e) => e.id} vazio="Nenhuma empresa. Cadastre a primeira em Administração > Empresas."
-            colunas={[
-              { chave: "sel", titulo: "", largura: "36px", render: (e) => <input type="checkbox" aria-label={`Selecionar ${e.razao}`} checked={marcadas.has(e.id)} disabled={ocupado || !e.certificado || certVencido(e)} onChange={() => marcar(e.id)} /> },
-              { chave: "emp", titulo: "Empresa", render: (e) => <><b>{e.razao || "(sem nome)"}</b><br /><small>{formatarCnpj(e.cnpj)}</small></> },
-              { chave: "modo", titulo: "Buscar por", render: (e) => (
-                <select className={styles.modo} aria-label={`Forma de busca de ${e.razao}`} value={e.modo} disabled={ocupado} onChange={(x) => void trocarModo(e.id, x.target.value as ModoBuscaNfse)}>
-                  <option value="certificado">Certificado da empresa</option><option value="procuracao">Procuração</option>
-                </select>
-              ) },
-              { chave: "cert", titulo: "Certificado", render: (e) => !e.certificado ? <Badge tom="alerta">{e.modo === "procuracao" ? "cadastre o procurador" : "sem certificado"}</Badge> : certVencido(e) ? <Badge tom="perigo">vencido em {dataBr(e.certificado.validade)}</Badge> : <>{e.certificado.nome}<br /><small>até {dataBr(e.certificado.validade)}</small></> },
-              { chave: "cap", titulo: "Última captura", render: (e) => e.ultimoErro ? <span className={styles.erro}>{e.ultimoErro}</span> : e.ultimaCaptura ? <>{dataHora(e.ultimaCaptura)}<br /><small>NSU {e.ultimoNsu}</small></> : "Nunca" },
-              { chave: "not", titulo: "Notas", alinhar: "direita", render: (e) => <>{e.notas}{e.falhas > 0 && <><br /><Badge tom="perigo">{e.falhas} com falha</Badge></>}</> },
-              { chave: "ac", titulo: "", alinhar: "direita", render: (e) => (
-                <div className={styles.acoes}>
-                  <IconButton dica="Ver notas" icone={<Eye size={16} />} disabled={!e.notas} onClick={() => setCnpjVista(e.id)} />
-                  <IconButton dica="Diagnosticar conexão" icone={<Stethoscope size={16} />} disabled={ocupado || !e.certificado} carregando={diagnosticando === e.id} onClick={() => rodarDiagnostico(e.id)} />
-                  <IconButton dica="Recomeçar a busca" icone={<RotateCcw size={16} />} disabled={ocupado || e.ultimoNsu === 0} onClick={() => setRecomecar(e)} />
-                </div>
-              ) },
-            ]} />
-        )}
-      </Card>
-
-      <div className={styles.notas}>
-        <Card titulo="Certificado do procurador" descricao="Usado nas empresas marcadas com “Procuração”. Cada cliente precisa dar a procuração eletrônica para a NFS-e ao titular deste certificado, no Portal de Serviços da Receita Federal.">
-          {procurador
-            ? <p className={styles.procurador}><b>{procurador.nome}</b> · {procurador.documento} · {procurador.validade < hoje() ? <Badge tom="perigo">vencido em {dataBr(procurador.validade)}</Badge> : `até ${dataBr(procurador.validade)}`} <Button tamanho="sm" disabled={ocupado} onClick={tirarProcurador}>Retirar</Button></p>
-            : <Notice tom="alerta">Nenhum certificado de procurador cadastrado.</Notice>}
-          <div className={styles.procForm}>
-            <Input key={procChave} rotulo={procurador ? "Trocar certificado (.pfx ou .p12)" : "Arquivo do certificado (.pfx ou .p12)"} type="file" accept=".pfx,.p12" onChange={(e) => setProcArquivo(e.target.files?.[0] ?? null)} />
-            <Input rotulo="Senha do certificado" type="password" autoComplete="new-password" value={procSenha} onChange={(e) => setProcSenha(e.target.value)} />
-            <Input rotulo="Apelido (opcional)" placeholder="Ex.: e-CNPJ do escritório" value={procApelido} onChange={(e) => setProcApelido(e.target.value)} />
-            <Button variante="primary" carregando={enviandoProc} onClick={enviarProcurador}>Cadastrar procurador</Button>
-          </div>
-        </Card>
-      </div>
-
-      {agenda && (
-        <div className={styles.notas}>
-          <Card titulo="Captura automática" descricao="Roda no servidor, no horário de Brasília e em produção, para as empresas com certificado válido, sem precisar deixar o sistema aberto. A busca manual acima continua disponível.">
-            <div className={styles.agenda}>
-              <label className={styles.check}><input type="checkbox" checked={agenda.ativo} onChange={(e) => setAgenda({ ...agenda, ativo: e.target.checked })} /> Capturar todo dia</label>
-              <Input rotulo="Horário" type="time" value={agenda.hora} onChange={(e) => setAgenda({ ...agenda, hora: e.target.value })} />
-              <Button variante="primary" carregando={salvandoAgenda} onClick={gravarAgenda}>Salvar</Button>
-            </div>
-            <p className={styles.agendaInfo}>{agenda.status === "rodando" ? `Em andamento desde ${dataHora(agenda.inicio)}.` : agenda.fim ? `Última execução: ${dataHora(agenda.fim)}.` : "Ainda não executada."}</p>
-            {agenda.linhas.length > 0 && <ul className={styles.relatorioAgenda}>{agenda.linhas.map((l) => <li key={l}>{l}</li>)}</ul>}
-          </Card>
+      {progresso && (
+        <div className={styles.progresso} role="status">
+          <b>{progresso.empresa}</b> · empresa {progresso.indice} de {progresso.total} · {progresso.notas} nota(s) e {progresso.eventos} evento(s) nesta captura
+          <small>{progresso.texto} Pode continuar usando o sistema em outra aba; mantenha esta aberta.</small>
         </div>
       )}
-
-      <div className={styles.notas}>
-        <Card titulo="Notas capturadas" descricao="Totais sem canceladas e substituídas.">
+      {relatorio.length > 0 && <ul className={styles.relatorio}>{relatorio.map((l) => <li key={l}>{l}</li>)}</ul>}
+      <div className={styles.grade}>
+        <aside className={styles.lateral}>
+          <Input rotulo="Empresas" type="search" placeholder="Buscar por nome ou CNPJ" value={filtroEmpresa} onChange={(e) => setFiltroEmpresa(e.target.value)} />
+          <small className={styles.total}>{listadas.length} de {empresas.length} empresas</small>
+          <div className={styles.barraLista}>
+            <Button tamanho="sm" onClick={() => setMarcadas(new Set(aptas.map((e) => e.id)))} disabled={ocupado || !aptas.length}>Marcar aptas</Button>
+            <Button tamanho="sm" onClick={() => setMarcadas(new Set())} disabled={ocupado}>Limpar</Button>
+          </div>
+          {progresso
+            ? <Button variante="danger" onClick={() => { parar.current = true; }}>Interromper</Button>
+            : <Button variante="primary" onClick={() => void capturar()} disabled={!marcadas.size || !!verificando}>Capturar selecionadas ({marcadas.size})</Button>}
+          {carregando ? <Loading /> : !empresas.length ? <p className={styles.vazio}>Nenhuma empresa. Cadastre a primeira em Administração &gt; Empresas.</p> : (
+            <ul className={styles.listaEmpresas}>{listadas.map((e) => (
+              <li key={e.id} className={`${styles.empresa} ${cnpjVista === e.id ? styles.empresaAtual : ""}`}>
+                <input type="checkbox" aria-label={`Selecionar ${e.razao}`} checked={marcadas.has(e.id)} disabled={ocupado || !e.certificado || certVencido(e)} onChange={() => marcar(e.id)} />
+                <button type="button" onClick={() => setCnpjVista(e.id)}>
+                  <b>{e.razao || "(sem nome)"}</b><small>{formatarCnpj(e.cnpj)}</small>
+                  <small className={e.ultimoErro || !e.certificado || certVencido(e) ? styles.alertaLista : ""}>{e.ultimoErro ? "Erro na última captura" : !e.certificado ? "Sem certificado" : certVencido(e) ? "Certificado vencido" : `${e.notas} nota(s)`}</small>
+                </button>
+              </li>
+            ))}</ul>
+          )}
+        </aside>
+        <div className={styles.detalhe}>
+          {!vista ? <Card><p className={styles.vazio}>Selecione uma empresa na lista para ver as notas capturadas.</p></Card> : <>
+            <Card>
+              <div className={styles.cabecaEmpresa}>
+                <div><h2>{vista.razao || "(sem nome)"}</h2><small>{formatarCnpj(vista.cnpj)}</small></div>
+                <div className={styles.acoes}>
+                  <IconButton dica="Diagnosticar conexão" icone={<Stethoscope size={16} />} disabled={ocupado || !vista.certificado} carregando={diagnosticando === vista.id} onClick={() => rodarDiagnostico(vista.id)} />
+                  <IconButton dica="Recomeçar a busca" icone={<RotateCcw size={16} />} disabled={ocupado || vista.ultimoNsu === 0} onClick={() => setRecomecar(vista)} />
+                  <Button variante="primary" disabled={ocupado || !vista.certificado || certVencido(vista)} onClick={() => void capturar([vista.id])}>Capturar notas</Button>
+                </div>
+              </div>
+              <div className={styles.dadosEmpresa}>
+                <Select rotulo="Buscar por" value={vista.modo} disabled={ocupado} onChange={(x) => void trocarModo(vista.id, x.target.value as ModoBuscaNfse)}><option value="certificado">Certificado da empresa</option><option value="procuracao">Procuração</option></Select>
+                <div><span>Certificado</span>{!vista.certificado ? <Badge tom="alerta">{vista.modo === "procuracao" ? "cadastre o procurador" : "sem certificado"}</Badge> : certVencido(vista) ? <Badge tom="perigo">vencido em {dataBr(vista.certificado.validade)}</Badge> : <p>{vista.certificado.nome}<small>até {dataBr(vista.certificado.validade)}</small></p>}</div>
+                <div><span>Última captura</span>{vista.ultimoErro ? <p className={styles.erro}>{vista.ultimoErro}</p> : vista.ultimaCaptura ? <p>{dataHora(vista.ultimaCaptura)}<small>NSU {vista.ultimoNsu}</small></p> : <p>Nunca</p>}</div>
+                <div><span>Notas</span><p>{vista.notas}{vista.falhas > 0 && <> <Badge tom="perigo">{vista.falhas} com falha</Badge></>}</p></div>
+              </div>
+            </Card>
+            <div className={styles.notas}><Card titulo="Notas capturadas" descricao="Totais sem canceladas e substituídas.">
           <div className={styles.filtros}>
-            <Select rotulo="Empresa" value={cnpjVista} onChange={(e) => setCnpjVista(e.target.value)}>
-              <option value="">Escolha…</option>
-              {empresas.filter((e) => e.notas > 0).map((e) => <option key={e.id} value={e.id}>{e.razao || formatarCnpj(e.cnpj)}</option>)}
-            </Select>
             <Select rotulo="Competência" value={competencia} disabled={!competencias.length} onChange={(e) => void carregarNotas(cnpjVista, e.target.value)}>
               {competencias.map((c) => <option key={c.competencia} value={c.competencia}>{c.competencia.split("-").reverse().join("/")} ({c.notas})</option>)}
             </Select>
@@ -321,19 +300,49 @@ export function NfsePage() {
             <DataTable linhas={visiveis} chaveLinha={(n) => n.chave} vazio="Nenhuma nota com esses filtros."
               colunas={[
                 { chave: "sel", titulo: <input type="checkbox" aria-label="Selecionar todas" checked={todasVisiveis} onChange={alternarTodas} />, largura: "36px", render: (n) => <input type="checkbox" aria-label={`Selecionar nota ${n.numero}`} checked={selecao.has(n.chave)} onChange={() => alternarNota(n.chave)} /> },
-                { chave: "n", titulo: "Número", render: (n) => <><b>{n.numero}</b><br /><small>{dataBr(n.emissao)}</small></> },
-                { chave: "t", titulo: "Tipo", render: (n) => ROTULO_PAPEL[n.papel] },
-                { chave: "c", titulo: "Contraparte", render: (n) => { const p = n.papel === "prestador"; return <>{(p ? n.toma_nome : n.prest_nome) || "(sem nome)"}<br /><small>{formatarCnpj(p ? n.toma_doc : n.prest_doc)}</small></>; } },
-                { chave: "s", titulo: "Serviço", render: (n) => <span title={n.desc_nac}>{n.trib_nac}</span> },
-                { chave: "v", titulo: "Valor", alinhar: "direita", render: (n) => moeda(n.v_serv) },
+                { chave: "n", titulo: "Número", render: (n) => <><b>{n.numero}</b><br /><small>{dataBr(n.emissao)} · {ROTULO_PAPEL[n.papel]}</small></> },
+                { chave: "c", titulo: "Contraparte", render: (n) => { const p = n.papel === "prestador"; return <>{(p ? n.toma_nome : n.prest_nome) || "(sem nome)"}<br /><small>{formatarCnpj(p ? n.toma_doc : n.prest_doc)} · <span title={n.desc_nac}>serviço {n.trib_nac}</span></small></>; } },
+                { chave: "v", titulo: "Valor", alinhar: "direita", render: (n) => <>{moeda(n.v_serv)}{n.v_total_ret > 0 && <><br /><small>retenções {moeda(n.v_total_ret)}</small></>}</> },
                 { chave: "i", titulo: "ISS", alinhar: "direita", render: (n) => <>{moeda(n.v_iss)}<br /><small>{ROTULO_RET_ISS[n.tp_ret_iss] ?? ""}</small></> },
-                { chave: "r", titulo: "Retenções", alinhar: "direita", render: (n) => moeda(n.v_total_ret) },
                 { chave: "x", titulo: "Situação", render: (n) => <Badge tom={tomSituacao[n.situacao]}>{ROTULO_SITUACAO[n.situacao]}</Badge> },
                 { chave: "d", titulo: "", alinhar: "direita", render: (n) => <IconButton dica="Abrir DANFSe" icone={<FileText size={16} />} disabled={baixando === "danfse"} onClick={() => abrirDanfse([n.chave])} /> },
               ]} />
           )}
+        </Card></div>
+          </>}
+        </div>
+      </div>
+
+      <Modal aberto={config} titulo="Configurações da captura" largura="lg" onFechar={() => setConfig(false)}>
+      <div className={styles.notas}>
+        <Card titulo="Certificado do procurador" descricao="Usado nas empresas marcadas com “Procuração”. Cada cliente precisa dar a procuração eletrônica para a NFS-e ao titular deste certificado, no Portal de Serviços da Receita Federal.">
+          {procurador
+            ? <p className={styles.procurador}><b>{procurador.nome}</b> · {procurador.documento} · {procurador.validade < hoje() ? <Badge tom="perigo">vencido em {dataBr(procurador.validade)}</Badge> : `até ${dataBr(procurador.validade)}`} <Button tamanho="sm" disabled={ocupado} onClick={tirarProcurador}>Retirar</Button></p>
+            : <Notice tom="alerta">Nenhum certificado de procurador cadastrado.</Notice>}
+          <div className={styles.procForm}>
+            <Input key={procChave} rotulo={procurador ? "Trocar certificado (.pfx ou .p12)" : "Arquivo do certificado (.pfx ou .p12)"} type="file" accept=".pfx,.p12" onChange={(e) => setProcArquivo(e.target.files?.[0] ?? null)} />
+            <Input rotulo="Senha do certificado" type="password" autoComplete="new-password" value={procSenha} onChange={(e) => setProcSenha(e.target.value)} />
+            <Input rotulo="Apelido (opcional)" placeholder="Ex.: e-CNPJ do escritório" value={procApelido} onChange={(e) => setProcApelido(e.target.value)} />
+            <Button variante="primary" carregando={enviandoProc} onClick={enviarProcurador}>Cadastrar procurador</Button>
+          </div>
         </Card>
       </div>
+
+      {agenda && (
+        <div className={styles.notas}>
+          <Card titulo="Captura automática" descricao="Roda no servidor, no horário de Brasília e em produção, para as empresas com certificado válido, sem precisar deixar o sistema aberto. A busca manual continua disponível.">
+            <div className={styles.agenda}>
+              <label className={styles.check}><input type="checkbox" checked={agenda.ativo} onChange={(e) => setAgenda({ ...agenda, ativo: e.target.checked })} /> Capturar todo dia</label>
+              <Input rotulo="Horário" type="time" value={agenda.hora} onChange={(e) => setAgenda({ ...agenda, hora: e.target.value })} />
+              <Button variante="primary" carregando={salvandoAgenda} onClick={gravarAgenda}>Salvar</Button>
+            </div>
+            <p className={styles.agendaInfo}>{agenda.status === "rodando" ? `Em andamento desde ${dataHora(agenda.inicio)}.` : agenda.fim ? `Última execução: ${dataHora(agenda.fim)}.` : "Ainda não executada."}</p>
+            {agenda.linhas.length > 0 && <ul className={styles.relatorioAgenda}>{agenda.linhas.map((l) => <li key={l}>{l}</li>)}</ul>}
+          </Card>
+        </div>
+      )}
+
+      </Modal>
 
       <Modal aberto={!!diagnostico} titulo="Diagnóstico da conexão" largura="lg" onFechar={() => setDiagnostico(null)}
         rodape={<Button onClick={() => { void navigator.clipboard.writeText((diagnostico ?? []).join("\n")); avisar("Diagnóstico copiado.", "sucesso"); }}>Copiar</Button>}>

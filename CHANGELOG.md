@@ -16,6 +16,7 @@ Mudanças relevantes da Neeko Platform serão registradas aqui.
 - Mensagens entre usuários com canal Geral, menções e notificações; cargo definido pelo administrador; controle de certificados com filtros e relatórios; ações das tabelas em ícones com dica.
 - Empresas em Administração: cadastro e memorando na mesma tela. Mensagens com emoticons, grupos privados ou abertos e encaminhamento.
 - Importação de pacotes desligada por padrão; volta com `OFFICE_IMPORT_ENABLED=true`.
+- Captura de NFS-e com lista lateral de empresas e configurações em janela própria.
 - Administração com acesso total ao escritório, exceto excluir a proprietária.
 - Exclusão de usuário e edição completa de nome, e-mail e cargo.
 - Tema Marinho Clássico, de menu claro.
