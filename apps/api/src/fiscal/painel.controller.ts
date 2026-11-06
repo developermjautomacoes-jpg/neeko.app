@@ -30,6 +30,9 @@ export class PainelController {
     ]);
     const pontos = serie.map((competencia) => ({ competencia, valor: (valores.find((v) => v.competencia === competencia)?._sum.vServ?.toFixed(2)) ?? "0.00",
       notas: (nfse.find((n) => n.competencia === competencia)?._count ?? 0) + (dfe.find((n) => n.competencia === competencia)?._count ?? 0) }));
+    // Empresas com notas importadas no mês (NFS-e ou NF-e/CT-e), sobre o total da carteira.
+    const comNotas = async (comp: string) => { const [a, b] = await Promise.all([this.prisma.nfseDocument.groupBy({ by: ["companyId"], where: { ...onde, competencia: comp } }), this.prisma.dfeDocument.groupBy({ by: ["companyId"], where: { ...onde, competencia: comp } })]); return new Set([...a, ...b].map((x) => x.companyId)).size; };
+    const [empNotas, empNotasAnt] = await Promise.all([comNotas(serie[11]), comNotas(serie[10])]);
     const atual = pontos[11], anterior = pontos[10], dia = hoje(), em30 = new Date(Date.parse(dia) + 30 * 86400000).toISOString().slice(0, 10);
     const certDe = empresas.map((e) => (e.nfseMode === "procuracao" ? procurador : this.certs.escolher(certs, e.cnpj, e.certificateId)));
     const semCert = certDe.filter((x) => !x).length, vencidos = certDe.filter((x) => x && x.validUntil < dia).length, vencendo = certDe.filter((x) => x && x.validUntil >= dia && x.validUntil <= em30).length;
@@ -72,6 +75,7 @@ export class PainelController {
       ] },
       atencao: { total: atencao.length, lista: atencao.slice(0, 8) },
       cadastros: { total: incompletos.length, lista: incompletos.slice(0, 6) },
+      empresasComNotas: empNotas, empresasComNotasVariacao: variacao(empNotas, empNotasAnt), competencia: serie[11],
       online: online.map((u) => ({ id: u.id, nome: u.name, avatar: u.avatar })),
     };
   }

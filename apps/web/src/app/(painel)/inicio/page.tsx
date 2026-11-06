@@ -1,9 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ClipboardList, ArrowDown, ArrowRight, ArrowUp, Building2, CheckCircle2, CircleAlert, CircleDollarSign, FileSearch, FileText, Mail, ShieldCheck, TriangleAlert, Users, Zap, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Building2, CheckCircle2, CircleAlert, FileCheck2, FileSearch, FileText, Mail, ShieldCheck, TriangleAlert, Users, Zap, type LucideIcon } from "lucide-react";
 import { Loading, Modal, Notice } from "@neeko/ui";
-import { centavos } from "@/lib/format";
 import { eu, type Eu } from "@/services/conta";
 import { lerPainel, type Painel } from "@/services/fiscal";
 import { formatarCnpj } from "@/lib/format";
@@ -45,7 +44,6 @@ export default function Inicio() {
   const [pendencias, setPendencias] = useState(false);
   if (erro) return <Notice tom="alerta">{erro}</Notice>;
   if (!d) return <Loading />;
-  const pontos = d.serie.map((p) => ({ competencia: p.competencia, centavos: centavos(p.valor) }));
   const r = 44, volta = 2 * Math.PI * r;
   return (
     <div className={styles.inicio}>
@@ -69,8 +67,8 @@ export default function Inicio() {
       <section className={styles.indicadores} aria-label="Indicadores">
         <Indicador icone={Building2} cor="var(--tom-1)" fundo="var(--tom-1-fundo)" rotulo="Empresas Atendidas" valor={String(d.empresas)} href="/empresas" />
         <Indicador icone={FileText} cor="var(--tom-2)" fundo="var(--tom-2-fundo)" rotulo="Notas Capturadas (Mês)" valor={d.notasMes.toLocaleString("pt-BR")} variacao={d.notasVariacao} serie={d.serie.map((p) => p.notas)} href="/notas/nfse" />
-        <Indicador icone={CircleDollarSign} cor="var(--tom-3)" fundo="var(--tom-3-fundo)" rotulo="Serviços Prestados (Mês)" valor={brl(centavos(d.servicosMes))} variacao={d.servicosVariacao} serie={pontos.map((p) => p.centavos)} href="/notas/nfse" />
-        <Indicador icone={TriangleAlert} cor="#F2780C" fundo="#FFE9D6" rotulo="Pendências Fiscais" valor={String(d.pendencias)} onClick={() => setPendencias(true)} />
+        <Indicador icone={FileCheck2} cor="var(--tom-3)" fundo="var(--tom-3-fundo)" rotulo={`Empresas com notas (${d.competencia.split("-").reverse().join("/")})`} valor={`${d.empresasComNotas} de ${d.empresas}`} variacao={d.empresasComNotasVariacao} href="/notas/nfse" />
+        <Indicador icone={TriangleAlert} cor="#F2780C" fundo="#FFE9D6" rotulo="Pendências" valor={String(d.pendencias + d.cadastros.total)} onClick={() => setPendencias(true)} />
       </section>
 
       <section className={styles.meio}>
@@ -96,21 +94,20 @@ export default function Inicio() {
 
       <section className={styles.fim}>
         <article className={styles.cartao}>
-          <header className={styles.cab}><h2><ClipboardList size={20} aria-hidden /> Cadastros a finalizar</h2><span className={styles.periodo}>{d.cadastros.total}</span></header>
-          {d.cadastros.lista.length ? <ul className={styles.atencao}>{d.cadastros.lista.map((e) => <li key={e.id}><Link href={`/empresas/${e.id}`}><i className={styles.grau3} aria-hidden /><span><b>{e.razao}</b><small>Falta: {e.falta.join(", ")}</small></span><ArrowRight size={16} aria-hidden /></Link></li>)}</ul> : <p className={styles.vazio}>Todos os cadastros estão completos.</p>}
-          {d.cadastros.total > d.cadastros.lista.length && <Link href="/empresas" className={styles.verTodas}>Ver todas as empresas</Link>}
+          <header className={styles.cab}><h2><TriangleAlert size={20} aria-hidden /> Pendências</h2><span className={styles.periodo}>{d.pendenciasLista.length + d.cadastros.total}</span></header>
+          {!d.pendenciasLista.length && !d.cadastros.total ? <p className={styles.vazio}>Nenhuma pendência.</p> : <ul className={styles.atencao}>
+            {d.pendenciasLista.map((p) => <li key={p.texto}><Link href={p.rota}><i className={styles.grau2} aria-hidden /><span><b>{p.texto}</b></span><ArrowRight size={16} aria-hidden /></Link></li>)}
+            {d.cadastros.lista.map((e) => <li key={e.id}><Link href={`/empresas/${e.id}`}><i className={styles.grau3} aria-hidden /><span><b>{e.razao}</b><small>Cadastro a finalizar: {e.falta.join(", ")}</small></span><ArrowRight size={16} aria-hidden /></Link></li>)}
+          </ul>}
+          {d.cadastros.total > d.cadastros.lista.length && <Link href="/empresas" className={styles.verTodas}>Mais {d.cadastros.total - d.cadastros.lista.length} cadastro(s) a finalizar</Link>}
         </article>
         <article className={styles.cartao}>
           <header className={styles.cab}><h2><Users size={20} aria-hidden /> Equipe online</h2><span className={styles.periodo}>{d.online.length}</span></header>
           {d.online.length ? <ul className={styles.online}>{d.online.map((u) => <li key={u.id}>{u.avatar ? <img src={u.avatar} alt="" /> : <span className={styles.iniciais}>{u.nome.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase()}</span>}<b>{u.nome}</b><i aria-label="online" /></li>)}</ul> : <p className={styles.vazio}>Ninguém online agora.</p>}
         </article>
-        <article className={styles.cartao}>
-          <header className={styles.cab}><h2><TriangleAlert size={20} aria-hidden /> Pendências</h2></header>
-          {d.pendenciasLista.length ? <ul className={styles.atividade}>{d.pendenciasLista.slice(0, 5).map((p) => <li key={p.texto}><i className={styles.pontoAlerta} aria-hidden /><Link href={p.rota}>{p.texto}</Link></li>)}</ul> : <p className={styles.vazio}>Nenhuma pendência.</p>}
-        </article>
       </section>
       <Modal aberto={pendencias} titulo="Pendências" largura="sm" onFechar={() => setPendencias(false)}>
-        {d.pendenciasLista.length ? <div className={styles.listaPendencias}>{d.pendenciasLista.map((p) => <Link key={p.texto} href={p.rota}>{p.texto}</Link>)}</div> : <p>Nenhuma pendência.</p>}
+        {d.pendenciasLista.length || d.cadastros.total ? <div className={styles.listaPendencias}>{d.pendenciasLista.map((p) => <Link key={p.texto} href={p.rota}>{p.texto}</Link>)}{d.cadastros.lista.map((e) => <Link key={e.id} href={`/empresas/${e.id}`}>{e.razao}: cadastro a finalizar ({e.falta.join(", ")})</Link>)}</div> : <p>Nenhuma pendência.</p>}
       </Modal>
     </div>
   );
