@@ -46,6 +46,10 @@ model User {
   name               String
   passwordHash       String
   mustChangePassword Boolean    @default(true)
+  /// Foto de perfil já recortada, em data URL JPEG.
+  avatar             String?
+  jobTitle           String     @default("")
+  phone              String     @default("")
   globalRole         GlobalRole @default(USER)
   active             Boolean    @default(true)
   createdAt          DateTime   @default(now())

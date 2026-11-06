@@ -36,6 +36,11 @@ export default function Painel({ children }: { children: ReactNode }) {
     eu().then((p) => { if (p.mustChangePassword) window.location.assign("/trocar-senha"); else { setPessoa(p); if (p.permissions.includes("fiscal.documents.read")) lerPainel().then(setDados).catch(() => undefined); } }).catch(() => undefined);
   }, []);
   useEffect(() => { setMenu(false); setSino(false); setBusca(""); }, [rota]);
+  useEffect(() => {
+    const atualizar = () => { eu().then(setPessoa).catch(() => undefined); };
+    window.addEventListener("neeko:perfil", atualizar);
+    return () => window.removeEventListener("neeko:perfil", atualizar);
+  }, []);
   const achadas = useMemo(() => {
     const q = busca.trim().toLowerCase(); if (!q) return [];
     const n = q.replace(/\D/g, "");
@@ -65,10 +70,10 @@ export default function Painel({ children }: { children: ReactNode }) {
           })}
         </nav>
         <div className={styles.pessoa}>
-          <span className={styles.avatar}>{iniciais(pessoa.name)}</span>
-          <span><b>{pessoa.name}</b><small>{pessoa.organization?.name}</small></span>
+          {pessoa.avatar ? <img src={pessoa.avatar} alt="" className={styles.avatar} /> : <span className={styles.avatar}>{iniciais(pessoa.name)}</span>}
+          <span><b>{pessoa.name}</b><small>{pessoa.jobTitle || pessoa.organization?.name}</small></span>
         </div>
-        <Link href="/trocar-senha" className={styles.acaoLateral}>Trocar senha</Link>
+        <Link href="/perfil" className={styles.acaoLateral}>Meu perfil</Link>
         <button type="button" className={styles.acaoLateral} onClick={() => { void sair().finally(() => window.location.assign("/login")); }}><LogOut size={18} /> Sair</button>
       </aside>
       <div className={styles.area}>
@@ -85,7 +90,7 @@ export default function Painel({ children }: { children: ReactNode }) {
             {sino && <div className={styles.resultados}>{dados?.pendenciasLista.length ? dados.pendenciasLista.map((p) => <Link key={p.texto} href={p.rota}>{p.texto}</Link>) : <p>Nenhuma pendência.</p>}</div>}
           </div>
           <b className={styles.org}>{pessoa.organization?.name}</b>
-          <span className={styles.avatarTopo} aria-hidden>{iniciais(pessoa.name)}</span>
+          <Link href="/perfil" aria-label="Meu perfil">{pessoa.avatar ? <img src={pessoa.avatar} alt="" className={styles.avatarTopo} /> : <span className={styles.avatarTopo}>{iniciais(pessoa.name)}</span>}</Link>
         </header>
         <main className={styles.conteudo}>{children}</main>
       </div>

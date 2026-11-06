@@ -166,6 +166,14 @@ test("cada pessoa tem login próprio e só o que recebeu", async () => {
   await ana.pedir("PATCH", `/users/${novo.corpo.id}`, { role: "STAFF", status: "SUSPENDED", permissions: [], allCompanies: false, companyIds: [] });
   assert.equal((await new Sessao().post("/auth/login", { email: "bruno@a.test", senha: "SenhaBruno123" })).status, 200);
 });
+test("perfil: cada pessoa altera nome e foto próprios", async () => {
+  const foto = "data:image/jpeg;base64,/9j/4AAQSkZJRg==";
+  assert.equal((await ana.pedir("PATCH", "/me", { name: "Monique Jesus", jobTitle: "Gestora", phone: "", avatar: foto })).status, 200);
+  const e = (await ana.get("/me")).corpo; assert.equal(e.name, "Monique Jesus"); assert.equal(e.avatar, foto); assert.equal(e.email, "ana@a.test");
+  assert.equal((await ana.pedir("PATCH", "/me", { name: "Monique Jesus", avatar: "data:text/html;base64,PHNjcmlwdD4=" })).status, 400);
+  assert.equal((await ana.pedir("PATCH", "/me", { name: "Monique Jesus", avatar: "javascript:alert(1)" })).status, 400);
+  assert.equal((await new Sessao().pedir("PATCH", "/me", { name: "Xx", avatar: null })).status, 401);
+});
 test("sem escalada: não concede o que não tem", async () => {
   const o = await prisma.organization.findFirst({}); const u = await prisma.user.findUnique({ where: { email: "ana@a.test" } });
   await prisma.membershipPermission.deleteMany({ where: { permission: "audit.read", membership: { userId: u.id } } });

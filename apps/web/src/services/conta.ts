@@ -1,6 +1,6 @@
 import { api } from "./http";
 
-export interface Eu { id: string; name: string; email: string; mustChangePassword: boolean; organization: { id: string; name: string; role: string } | null; permissions: string[]; availablePermissions: string[] }
+export interface Eu { id: string; name: string; email: string; avatar: string | null; jobTitle: string; phone: string; mustChangePassword: boolean; organization: { id: string; name: string; role: string } | null; permissions: string[]; availablePermissions: string[] }
 export interface Usuario { id: string; name: string; email: string; role: string; status: "ACTIVE" | "SUSPENDED"; allCompanies: boolean; permissions: string[]; companyIds: string[]; mustChangePassword: boolean }
 export const eu = () => api<Eu>("GET", "me");
 export const entrar = (email: string, senha: string) => api<{ mustChangePassword: boolean }>("POST", "auth/login", { email, senha });
@@ -10,3 +10,4 @@ export async function listarUsuarios() { return (await api<{ usuarios: Usuario[]
 export const criarUsuario = (u: { name: string; email: string; senhaProvisoria: string; role: string; permissions: string[]; allCompanies: boolean; companyIds: string[] }) => api("POST", "users", u);
 export const alterarUsuario = (id: string, u: { role: string; status: string; permissions: string[]; allCompanies: boolean; companyIds: string[] }) => api("PATCH", `users/${id}`, u);
 export const redefinirSenha = (id: string, senhaProvisoria: string) => api("POST", `users/${id}/reset-password`, { senhaProvisoria });
+export const salvarPerfil = (p: { name: string; jobTitle: string; phone: string; avatar: string | null }) => api("PATCH", "me", p);

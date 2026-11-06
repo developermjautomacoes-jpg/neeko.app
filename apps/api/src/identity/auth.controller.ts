@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Post, Req, Res } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Patch, Post, Req, Res } from "@nestjs/common";
 import { randomBytes } from "node:crypto";
 import type { Request, Response } from "express";
 import { z } from "zod";
@@ -64,13 +64,23 @@ export class AuthController {
 
 @Controller("me")
 export class MeController {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private auditoria: AuditoriaService) {}
   @SoLogado() @Get()
   async eu(@Req() req: Request & { sessao: { userId: string; organizationId: string | null } }) {
     const u = await this.prisma.user.findUniqueOrThrow({ where: { id: req.sessao.userId }, include: { memberships: { where: { status: "ACTIVE" }, include: { organization: true, permissions: true } } } });
     const atual = u.memberships.find((m) => m.organizationId === req.sessao.organizationId);
-    return { id: u.id, name: u.name, email: u.email, mustChangePassword: u.mustChangePassword,
+    return { id: u.id, name: u.name, email: u.email, avatar: u.avatar, jobTitle: u.jobTitle, phone: u.phone, mustChangePassword: u.mustChangePassword,
       organization: atual ? { id: atual.organizationId, name: atual.organization.name, role: atual.role } : null,
       permissions: atual?.permissions.map((p) => p.permission) ?? [], availablePermissions: PERMISSOES };
+  }
+
+  /** Cada pessoa altera só o próprio perfil. A foto chega já recortada; o e-mail de acesso não muda por aqui. */
+  @SoLogado() @Patch()
+  async perfil(@Req() req: Request & { sessao: { userId: string; organizationId: string | null } }, @Body() corpo: unknown) {
+    const d = validar(z.object({ name: z.string().trim().min(2, "Informe o nome.").max(120), jobTitle: z.string().trim().max(80).default(""), phone: z.string().trim().max(30).default(""),
+      avatar: z.string().max(400000, "A foto ficou grande demais.").regex(/^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/=]+$/, "Foto inválida.").nullable() }), corpo);
+    await this.prisma.user.update({ where: { id: req.sessao.userId }, data: d });
+    await this.auditoria.registrar(req.sessao.organizationId, req.sessao.userId, "users.profile.changed");
+    return { ok: true };
   }
 }
