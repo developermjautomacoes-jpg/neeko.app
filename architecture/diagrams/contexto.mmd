@@ -1,0 +1,12 @@
+flowchart TB
+  N[Neeko Superadmin] --> P[Neeko Platform]
+  O[Gestor do escritório] --> P
+  C[Colaboradores] --> P
+  U[Usuário da empresa cliente] --> P
+  P --> T1[Tenant Escritório A]
+  P --> T2[Tenant Escritório B]
+  T1 --> E1[Empresas da carteira A]
+  T2 --> E2[Empresas da carteira B]
+  P --> I[Camada de integrações]
+  I --> F[Provedores fiscais e serviços oficiais]
+  I --> B[Serviços bancários]
