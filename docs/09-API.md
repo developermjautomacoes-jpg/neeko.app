@@ -40,6 +40,8 @@ Base `/api/v1`. Sessão por cookie httpOnly; a organização vem da sessão, nun
 
 - `POST /auth/login`, `/auth/logout`, `/auth/password`, `/auth/mfa/setup|enable|verify`; `GET|PATCH /me`
 - `DELETE /platform/offices/:id` (exige repetir o nome; apaga o escritório e seus dados; a organização interna não é excluída)
+- `GET /public/offices/:slug` (público: nome e logo do escritório ativo)
+- `POST /auth/login` aceita `escritorio` (slug): sem ele, só a equipe Neeko entra; com ele, só membros daquele escritório, e o Gerencial fica bloqueado.
 - `PUT /office` (logo e contatos do escritório; permissão `office.manage`)
 - `/platform/plans`, `/platform/offices`, `/platform/offices/:id/status`, `/platform/offices/:id/reset-manager`
 - `GET|POST /users`, `PATCH /users/:id`, `POST /users/:id/reset-password`

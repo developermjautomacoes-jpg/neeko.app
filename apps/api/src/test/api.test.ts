@@ -31,7 +31,8 @@ class Sessao {
   get = (r: string) => this.pedir("GET", r);
   post = (r: string, c: unknown = {}) => this.pedir("POST", r, c);
 }
-async function logar(email: string, senha: string) { const s = new Sessao(); const r = await s.post("/auth/login", { email, senha }); assert.equal(r.status, 200); return s; }
+async function corpoLogin(email: string, senha: string) { const m = await prisma.organizationMembership.findFirst({ where: { user: { email } }, include: { organization: true } }); return { email, senha, ...(m && !m.organization.internal ? { escritorio: m.organization.slug } : {}) }; }
+async function logar(email: string, senha: string) { const s = new Sessao(); const r = await s.post("/auth/login", await corpoLogin(email, senha)); assert.equal(r.status, 200); return s; }
 const b32d = (t: string) => { let bits = ""; for (const c of t) bits += "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567".indexOf(c).toString(2).padStart(5, "0"); return Buffer.from(bits.match(/.{8}/g)!.map((b) => parseInt(b, 2))); };
 async function ativarMfa(s: Sessao) { const { totp } = await import("../identity/mfa.controller"); const r = (await s.post("/auth/mfa/setup")).corpo, seg = b32d(r.chave); const a = await s.post("/auth/mfa/enable", { codigo: totp(seg, Math.floor(Date.now() / 30000)) }); assert.equal(a.status, 200); return { seg, codigos: a.corpo.codigos as string[] }; }
 
@@ -174,7 +175,7 @@ test("cada pessoa tem login próprio e só o que recebeu", async () => {
   bruno = await logar("bruno@a.test", "SenhaBruno123");
   assert.equal((await bruno.get(`/fiscal/nfse/${empresa}/documents`)).corpo.notas.length, 2);
   await ana.pedir("PATCH", `/users/${novo.corpo.id}`, { role: "STAFF", status: "SUSPENDED", permissions: [], allCompanies: false, companyIds: [] });
-  assert.equal((await new Sessao().post("/auth/login", { email: "bruno@a.test", senha: "SenhaBruno123" })).status, 200);
+  assert.equal((await new Sessao().post("/auth/login", { email: "bruno@a.test", senha: "SenhaBruno123" })).status, 403, "membro suspenso não entra");
 });
 test("perfil: cada pessoa altera nome e foto próprios", async () => {
   const foto = "data:image/jpeg;base64,/9j/4AAQSkZJRg==";
@@ -226,7 +227,7 @@ test("plataforma: Neeko gerencia escritórios sem ver dados deles", async () => 
   assert.equal((await g.post("/users", { ...n, name: "Dois", email: "dois@beta.test" })).status, 201, "o plano limita acessos simultâneos, não cadastros");
   await prisma.user.updateMany({ where: { email: { in: ["um@beta.test", "dois@beta.test"] } }, data: { mustChangePassword: false } });
   const um = await logar("um@beta.test", "Provisoria456");
-  const cheio = await new Sessao().post("/auth/login", { email: "dois@beta.test", senha: "Provisoria456" }); assert.equal(cheio.status, 403); assert.equal(cheio.corpo.code, "LIMIT_SIMULTANEOUS");
+  const cheio = await new Sessao().post("/auth/login", await corpoLogin("dois@beta.test", "Provisoria456")); assert.equal(cheio.status, 403); assert.equal(cheio.corpo.code, "LIMIT_SIMULTANEOUS");
   assert.equal((await ana.get("/platform/offices")).corpo.escritorios.find((o: any) => o.id === es.corpo.id).emUso, 2);
   await logar("gestora@beta.test", "SenhaBeta1234"); await prisma.session.updateMany({ where: { user: { email: "gestora@beta.test" } }, data: { mfaVerified: true } });
   await prisma.session.updateMany({ where: { user: { email: "um@beta.test" } }, data: { lastSeenAt: new Date(Date.now() - 20 * 60000) } });
@@ -254,7 +255,21 @@ test("plataforma: Neeko gerencia escritórios sem ver dados deles", async () => 
   assert.equal((await g3.get("/memoranda")).status, 200);
   const interna = lista.find((o: any) => o.internal); assert.equal((await ana.post(`/platform/offices/${interna.id}/status`, { status: "SUSPENDED" })).status, 400);
   assert.equal((await ana.post(`/platform/offices/${es.corpo.id}/reset-manager`, { senhaProvisoria: "Provisoria555" })).status, 200);
-  assert.equal((await new Sessao().post("/auth/login", { email: "gestora@beta.test", senha: "Provisoria555" })).corpo.mustChangePassword, true);
+  assert.equal((await new Sessao().post("/auth/login", await corpoLogin("gestora@beta.test", "Provisoria555"))).corpo.mustChangePassword, true);
+  const slug = (await ana.get("/platform/offices")).corpo.escritorios.find((o: any) => o.id === es.corpo.id).slug; assert.equal(slug, "escritorio-beta");
+  assert.deepEqual(Object.keys((await new Sessao().get(`/public/offices/${slug}`)).corpo).sort(), ["logo", "name"]);
+  assert.equal((await new Sessao().get(`/public/offices/${interna.slug}`)).status, 404, "a organização interna não tem link público");
+  assert.equal((await new Sessao().post("/auth/login", { email: "gestora@beta.test", senha: "Provisoria555" })).corpo.code, "USE_OFFICE_LINK", "gestor não entra pelo link da Neeko");
+  assert.equal((await new Sessao().post("/auth/login", { email: "gestora@beta.test", senha: "Provisoria555", escritorio: "outro" })).status, 401);
+  assert.equal((await new Sessao().post("/auth/login", { email: "o@b.test", senha: "NovaSenha123", escritorio: slug })).status, 401, "link de outro escritório recusa");
+  await prisma.organizationMembership.create({ data: { organizationId: es.corpo.id, role: "STAFF", userId: (await prisma.user.findFirstOrThrow({ where: { email: "ana@a.test" } })).id } });
+  await ana.post("/platform/plans", { name: "Sem limite", maxCompanies: null, maxUsers: null, monthlyPrice: "1" });
+  const cliente = new Sessao(); assert.equal((await cliente.post("/auth/login", { email: "ana@a.test", senha: "NovaSenha123", escritorio: slug })).status, 200);
+  await prisma.session.updateMany({ where: { user: { email: "ana@a.test" }, portal: "escritorio" }, data: { mfaVerified: true } });
+  assert.equal((await cliente.get("/platform/offices")).status, 403, "link do escritório não abre o gerencial");
+  assert.equal((await cliente.get("/me")).corpo.platformAdmin, false);
+  assert.equal((await ana.pedir("PATCH", `/platform/offices/${es.corpo.id}`, { name: "Escritório Beta", cnpj: "", planId: p.corpo.id, slug: interna.slug })).status, 409, "link repetido");
+  assert.equal((await ana.pedir("PATCH", `/platform/offices/${es.corpo.id}`, { name: "Escritório Beta", cnpj: "", planId: p.corpo.id, slug: "Com Espaço" })).status, 400);
   assert.equal((await ana.pedir("DELETE", `/platform/offices/${interna.id}`, { nome: interna.name })).status, 400, "interna não é excluída");
   assert.equal((await ana.pedir("DELETE", `/platform/offices/${es.corpo.id}`, { nome: "Outro" })).status, 400, "nome precisa conferir");
   const g4 = await logar("gestora@beta.test", "Provisoria555"); await prisma.user.updateMany({ where: { email: "gestora@beta.test" }, data: { mustChangePassword: false } });

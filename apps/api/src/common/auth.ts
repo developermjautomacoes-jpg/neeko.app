@@ -67,7 +67,7 @@ export class GuardaAcesso implements CanActivate {
     if (s.organizationId && parado >= JANELA_MS) await conferirSimultaneos(this.prisma, s.organizationId, s.userId);
     if (parado >= 60000) await this.prisma.session.update({ where: { id: s.id }, data: { lastSeenAt: new Date() } });
     if (this.reflector.getAllAndOverride<boolean>(PLATAFORMA, alvo)) {
-      if (s.user.globalRole !== "NEEKO_SUPERADMIN") throw new Erro(403, "FORBIDDEN", "Você não tem permissão para esta ação.");
+      if (s.user.globalRole !== "NEEKO_SUPERADMIN" || s.portal !== "neeko") throw new Erro(403, "FORBIDDEN", "Você não tem permissão para esta ação.");
       return true;
     }
     const exige = this.reflector.getAllAndOverride<Permissao[]>(EXIGE, alvo);

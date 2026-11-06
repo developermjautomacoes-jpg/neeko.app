@@ -58,6 +58,8 @@ model Organization {
   planId       String?   @db.Uuid
   /// Cliente piloto: usa um plano, mas não entra em cobrança.
   billingExempt Boolean  @default(false)
+  /// Identifica o link de acesso do escritório: /e/<slug>.
+  slug         String    @unique @default(dbgenerated("gen_random_uuid()::text"))
   /// Logo PNG do escritório, usada no menu e nos relatórios.
   logo         String?
   paidUntil    String    @default("")
@@ -109,6 +111,8 @@ model Session {
   mfaSetupRequired Boolean @default(false)
   expiresAt      DateTime
   lastSeenAt     DateTime @default(now())
+  /// neeko: link da administração | escritorio: link do escritório.
+  portal         String   @default("neeko")
   createdAt      DateTime @default(now())
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

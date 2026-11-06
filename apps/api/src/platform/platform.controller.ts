@@ -11,7 +11,9 @@ import { PrismaService } from "../prisma.service";
 
 const limite = z.number().int().min(0).max(100000).nullable();
 const plano = z.object({ name: z.string().trim().min(2, "Informe o nome do plano.").max(60), maxCompanies: limite, maxUsers: limite, monthlyPrice: z.string().regex(/^\d{1,10}(\.\d{1,2})?$/, "Preço inválido."), active: z.boolean().default(true) });
-const dados = z.object({ name: z.string().trim().min(2, "Informe o nome do escritório.").max(160), cnpj: z.string().transform(limparCnpj).refine((c) => !c || cnpjValido(c), "CNPJ inválido."), contactEmail: z.string().trim().max(160).default(""), contactPhone: z.string().trim().max(30).default(""), billingExempt: z.boolean().default(false), planId: z.string().uuid().nullable(), paidUntil: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/, "Data inválida.").default(""), notes: z.string().max(1000).default("") });
+const LINK = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+const criarLink = (n: string) => n.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 50) || "escritorio";
+const dados = z.object({ slug: z.preprocess((v) => (typeof v === "string" && !v.trim() ? undefined : v), z.string().trim().toLowerCase().min(2, "Link muito curto.").max(60).regex(LINK, "Use só letras, números e hífen no link.").optional()), name: z.string().trim().min(2, "Informe o nome do escritório.").max(160), cnpj: z.string().transform(limparCnpj).refine((c) => !c || cnpjValido(c), "CNPJ inválido."), contactEmail: z.string().trim().max(160).default(""), contactPhone: z.string().trim().max(30).default(""), billingExempt: z.boolean().default(false), planId: z.string().uuid().nullable(), paidUntil: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/, "Data inválida.").default(""), notes: z.string().max(1000).default("") });
 const novo = dados.extend({ gestorNome: z.string().trim().min(2, "Informe o nome do gestor.").max(120), gestorEmail: z.string().email("E-mail do gestor inválido.").transform((e) => e.trim().toLowerCase()), senhaProvisoria: z.string().max(200) });
 type Req2 = Request & { sessao: { userId: string } };
 
@@ -41,7 +43,7 @@ export class PlataformaController {
     const l = await this.prisma.organization.findMany({ orderBy: { name: "asc" }, include: { plan: true, _count: { select: { companies: { where: { active: true } }, memberships: { where: { status: "ACTIVE" } } } }, memberships: { where: { role: "ORG_OWNER" }, take: 1, orderBy: { createdAt: "asc" }, include: { user: { select: { name: true, email: true } } } } } });
     const agora = await this.prisma.session.findMany({ where: { expiresAt: { gt: new Date() }, lastSeenAt: { gte: inicioJanela() } }, distinct: ["organizationId", "userId"], select: { organizationId: true } });
     const emUso = (id: string) => agora.filter((s) => s.organizationId === id).length;
-    return { escritorios: l.map((o) => ({ id: o.id, billingExempt: o.billingExempt, emUso: emUso(o.id), name: o.name, cnpj: o.cnpj, contactEmail: o.contactEmail, contactPhone: o.contactPhone, status: o.status, internal: o.internal, planId: o.planId, plano: o.plan?.name ?? "", mensalidade: o.plan?.monthlyPrice.toFixed(2) ?? "0.00", maxCompanies: o.plan?.maxCompanies ?? null, maxUsers: o.plan?.maxUsers ?? null, paidUntil: o.paidUntil, notes: o.notes, empresas: o._count.companies, usuarios: o._count.memberships, gestor: o.memberships[0]?.user.name ?? "", gestorEmail: o.memberships[0]?.user.email ?? "", createdAt: o.createdAt })) };
+    return { escritorios: l.map((o) => ({ id: o.id, slug: o.slug, billingExempt: o.billingExempt, emUso: emUso(o.id), name: o.name, cnpj: o.cnpj, contactEmail: o.contactEmail, contactPhone: o.contactPhone, status: o.status, internal: o.internal, planId: o.planId, plano: o.plan?.name ?? "", mensalidade: o.plan?.monthlyPrice.toFixed(2) ?? "0.00", maxCompanies: o.plan?.maxCompanies ?? null, maxUsers: o.plan?.maxUsers ?? null, paidUntil: o.paidUntil, notes: o.notes, empresas: o._count.companies, usuarios: o._count.memberships, gestor: o.memberships[0]?.user.name ?? "", gestorEmail: o.memberships[0]?.user.email ?? "", createdAt: o.createdAt })) };
   }
   @Plataforma() @Post("offices")
   async criar(@Req() r: Req2, @Body() c: unknown) {
@@ -49,8 +51,11 @@ export class PlataformaController {
     if (fraca) throw invalido(fraca);
     if (await this.prisma.user.findUnique({ where: { email: d.gestorEmail } })) throw new Erro(409, "EMAIL_IN_USE", "Este e-mail já tem cadastro. Use outro para o gestor.");
     if (d.planId && !(await this.prisma.plan.findFirst({ where: { id: d.planId, active: true } }))) throw invalido("Escolha um plano ativo.");
+    if (d.slug && (await this.prisma.organization.findUnique({ where: { slug: d.slug } }))) throw new Erro(409, "EM_USO", "Esse link já está em uso.");
+    let slug = d.slug ?? criarLink(d.name);
+    for (let i = 2; !d.slug && (await this.prisma.organization.findUnique({ where: { slug } })); i++) slug = `${criarLink(d.name)}-${i}`;
     const senha = await hashSenha(d.senhaProvisoria);
-    const o = await this.prisma.organization.create({ data: { name: d.name, billingExempt: d.billingExempt, cnpj: d.cnpj, contactEmail: d.contactEmail, contactPhone: d.contactPhone, planId: d.planId, paidUntil: d.paidUntil, notes: d.notes,
+    const o = await this.prisma.organization.create({ data: { name: d.name, slug, billingExempt: d.billingExempt, cnpj: d.cnpj, contactEmail: d.contactEmail, contactPhone: d.contactPhone, planId: d.planId, paidUntil: d.paidUntil, notes: d.notes,
       memberships: { create: { role: "ORG_OWNER", allCompanies: true, permissions: { create: PERMISSOES.map((permission) => ({ permission })) }, user: { create: { email: d.gestorEmail, name: d.gestorNome, passwordHash: senha, mustChangePassword: true } } } } } });
     await this.auditoria.registrar(null, r.sessao.userId, "platform.office.created", o.id);
     return { id: o.id };
@@ -59,6 +64,7 @@ export class PlataformaController {
   async alterar(@Req() r: Req2, @Param("id") id: string, @Body() c: unknown) {
     const d = validar(dados, c);
     if (d.planId && !(await this.prisma.plan.findUnique({ where: { id: d.planId } }))) throw invalido("Plano não encontrado.");
+    if (d.slug && (await this.prisma.organization.findFirst({ where: { slug: d.slug, id: { not: this.id(id) } } }))) throw new Erro(409, "EM_USO", "Esse link já está em uso.");
     if (!(await this.prisma.organization.updateMany({ where: { id: this.id(id) }, data: d })).count) throw naoEncontrado("Escritório não encontrado.");
     await this.auditoria.registrar(null, r.sessao.userId, "platform.office.changed", id); return { ok: true };
   }

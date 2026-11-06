@@ -2,6 +2,7 @@
 import { useState, type FormEvent } from "react";
 import { Button, Input, Notice } from "@neeko/ui";
 import { destinoApos, eu, sair, verificarMfa } from "@/services/conta";
+import { telaEntrada } from "@/services/http";
 import styles from "../auth.module.css";
 
 export default function Verificacao() {
@@ -19,6 +20,6 @@ export default function Verificacao() {
     {erro && <Notice tom="erro">{erro}</Notice>}
     <Input rotulo="Código" autoComplete="one-time-code" required autoFocus value={codigo} onChange={(e) => setCodigo(e.target.value)} />
     <Button type="submit" variante="primary" carregando={enviando}>Confirmar</Button>
-    <Button variante="ghost" onClick={() => { void sair().finally(() => window.location.assign("/login")); }}>Sair</Button>
+    <Button variante="ghost" onClick={() => { void sair().finally(() => window.location.assign(telaEntrada())); }}>Sair</Button>
   </form></div>;
 }

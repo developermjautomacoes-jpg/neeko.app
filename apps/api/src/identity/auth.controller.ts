@@ -20,10 +20,10 @@ export class AuthController {
 
   @Publico() @Post("login") @HttpCode(200)
   async login(@Body() corpo: unknown, @Res({ passthrough: true }) res: Response) {
-    const { email, senha } = validar(z.object({ email: z.string().email("Informe um e-mail válido.").transform((e) => e.trim().toLowerCase()), senha: z.string().min(1, "Informe a senha.").max(200) }), corpo);
+    const { email, senha, escritorio } = validar(z.object({ email: z.string().email("Informe um e-mail válido.").transform((e) => e.trim().toLowerCase()), senha: z.string().min(1, "Informe a senha.").max(200), escritorio: z.string().max(60).optional() }), corpo);
     const f = falhas.get(email);
     if (f && f.n >= TENTATIVAS && f.ate > Date.now()) throw new Erro(429, "TOO_MANY_ATTEMPTS", "Muitas tentativas. Aguarde 15 minutos.");
-    const u = await this.prisma.user.findUnique({ where: { email }, include: { memberships: { where: { status: "ACTIVE" }, orderBy: { createdAt: "asc" }, include: { organization: { select: { status: true } } } } } });
+    const u = await this.prisma.user.findUnique({ where: { email }, include: { memberships: { where: { status: "ACTIVE" }, orderBy: { createdAt: "asc" }, include: { organization: { select: { status: true, internal: true, slug: true } } } } } });
     const ok = await conferirSenha(senha, u?.passwordHash ?? HASH_FALSO);
     if (!u || !ok || !u.active) {
       const n = f && f.ate > Date.now() ? f.n + 1 : 1;
@@ -33,9 +33,13 @@ export class AuthController {
     }
     falhas.delete(email);
     const token = randomBytes(32).toString("base64url");
-    const organizacao = u.memberships.find((m) => m.organization.status === "ACTIVE") ?? u.memberships[0];
+    const interna = u.memberships.find((m) => m.organization.internal);
+    // O link do escritório só aceita quem pertence a ele; o link da Neeko, só a equipe Neeko.
+    const organizacao = escritorio ? u.memberships.find((m) => m.organization.slug === escritorio) : interna ?? u.memberships.find((m) => m.organization.status === "ACTIVE") ?? u.memberships[0];
+    if (escritorio && !organizacao) throw new Erro(401, "BAD_CREDENTIALS", "E-mail ou senha incorretos.");
+    if (!escritorio && !interna && u.globalRole !== "NEEKO_SUPERADMIN") throw new Erro(403, "USE_OFFICE_LINK", "Este acesso é da administração da Neeko. Entre pelo link do seu escritório.");
     if (organizacao?.organization.status === "ACTIVE") await conferirSimultaneos(this.prisma, organizacao.organizationId, u.id);
-    await this.prisma.session.create({ data: { userId: u.id, organizationId: organizacao?.organizationId ?? null, tokenHash: hashToken(token), expiresAt: new Date(Date.now() + DURACAO_MS) } });
+    await this.prisma.session.create({ data: { userId: u.id, organizationId: organizacao?.organizationId ?? null, tokenHash: hashToken(token), portal: escritorio ? "escritorio" : "neeko", expiresAt: new Date(Date.now() + DURACAO_MS) } });
     await this.prisma.session.deleteMany({ where: { userId: u.id, expiresAt: { lt: new Date() } } });
     res.cookie(COOKIE, token, { httpOnly: true, sameSite: "strict", secure: config().NODE_ENV === "production", maxAge: DURACAO_MS, path: "/" });
     await this.auditoria.registrar(u.memberships[0]?.organizationId ?? null, u.id, "auth.login");
@@ -68,11 +72,11 @@ export class AuthController {
 export class MeController {
   constructor(private prisma: PrismaService, private auditoria: AuditoriaService) {}
   @SemMfa() @Get()
-  async eu(@Req() req: Request & { sessao: { userId: string; organizationId: string | null; mfaVerified: boolean } }) {
+  async eu(@Req() req: Request & { sessao: { userId: string; organizationId: string | null; mfaVerified: boolean; portal: string } }) {
     const u = await this.prisma.user.findUniqueOrThrow({ where: { id: req.sessao.userId }, include: { memberships: { where: { status: "ACTIVE" }, include: { organization: true, permissions: true } } } });
     const atual = u.memberships.find((m) => m.organizationId === req.sessao.organizationId && m.organization.status === "ACTIVE");
-    return { id: u.id, name: u.name, email: u.email, platformAdmin: u.globalRole === "NEEKO_SUPERADMIN", mfaEnabled: u.mfaEnabled, mfaPending: u.mfaEnabled && !req.sessao.mfaVerified, mfaSetupRequired: false, avatar: u.avatar, jobTitle: u.jobTitle, phone: u.phone, mustChangePassword: u.mustChangePassword,
-      organization: atual ? { id: atual.organizationId, name: atual.organization.name, role: atual.role, logo: atual.organization.logo, contactEmail: atual.organization.contactEmail, contactPhone: atual.organization.contactPhone } : null,
+    return { id: u.id, name: u.name, email: u.email, platformAdmin: u.globalRole === "NEEKO_SUPERADMIN" && req.sessao.portal === "neeko", portal: req.sessao.portal, mfaEnabled: u.mfaEnabled, mfaPending: u.mfaEnabled && !req.sessao.mfaVerified, mfaSetupRequired: false, avatar: u.avatar, jobTitle: u.jobTitle, phone: u.phone, mustChangePassword: u.mustChangePassword,
+      organization: atual ? { id: atual.organizationId, name: atual.organization.name, role: atual.role, slug: atual.organization.slug, logo: atual.organization.logo, contactEmail: atual.organization.contactEmail, contactPhone: atual.organization.contactPhone } : null,
       permissions: atual?.permissions.map((p) => p.permission) ?? [], availablePermissions: PERMISSOES };
   }
 

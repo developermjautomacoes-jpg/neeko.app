@@ -7,6 +7,7 @@ import { Loading, Notice } from "@neeko/ui";
 import { formatarCnpj } from "@/lib/format";
 import { destinoApos, eu, sair, type Eu } from "@/services/conta";
 import { lerPainel, type Painel as DadosPainel } from "@/services/fiscal";
+import { telaEntrada } from "@/services/http";
 import styles from "./painel.module.css";
 
 interface Item { plataforma?: boolean; nome: string; icone: ComponentType<{ size?: number }>; href?: string; exige?: string; filhos?: { href: string; nome: string; exige: string }[] }
@@ -76,7 +77,7 @@ export default function Painel({ children }: { children: ReactNode }) {
           <span><b>{pessoa.name}</b><small>{pessoa.jobTitle || pessoa.organization?.name}</small></span>
         </div>
         <Link href="/perfil" className={styles.acaoLateral}>Meu perfil</Link>
-        <button type="button" className={styles.acaoLateral} onClick={() => { void sair().finally(() => window.location.assign("/login")); }}><LogOut size={18} /> Sair</button>
+        <button type="button" className={styles.acaoLateral} onClick={() => { void sair().finally(() => window.location.assign(telaEntrada())); }}><LogOut size={18} /> Sair</button>
       </aside>
       <div className={styles.area}>
         <header className={styles.topo}>

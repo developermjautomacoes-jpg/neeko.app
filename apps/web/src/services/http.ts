@@ -1,11 +1,15 @@
+const CHAVE = "neeko:escritorio";
+export function lembrarLink(slug: string | null) { try { if (slug) localStorage.setItem(CHAVE, slug); else localStorage.removeItem(CHAVE); } catch { /* sem armazenamento, volta à entrada da Neeko */ } }
+/** Volta à tela de entrada pela qual a pessoa acessou. */
+export function telaEntrada() { try { const s = localStorage.getItem(CHAVE); if (s) return `/e/${s}`; } catch { /* idem */ } return "/login"; }
 export class ErroApi extends Error { constructor(readonly status: number, readonly codigo: string, mensagem: string) { super(mensagem); } }
 
 async function falha(r: Response): Promise<never> {
   const j = await r.json().catch(() => ({})) as { code?: string; message?: string };
   if (typeof window !== "undefined") {
-    if (r.status === 401 && j.code === "UNAUTHENTICATED") window.location.assign("/login");
+    if (r.status === 401 && j.code === "UNAUTHENTICATED") window.location.assign(telaEntrada());
     if (j.code === "PASSWORD_CHANGE_REQUIRED") window.location.assign("/trocar-senha");
-    if (j.code === "LIMIT_SIMULTANEOUS" && window.location.pathname !== "/login") window.location.assign("/login?limite=1");
+    if (j.code === "LIMIT_SIMULTANEOUS" && !/^\/(login|e\/)/.test(window.location.pathname)) window.location.assign(`${telaEntrada()}?limite=1`);
     if (j.code === "MFA_REQUIRED") window.location.assign("/verificacao");
     if (j.code === "MFA_SETUP_REQUIRED") window.location.assign("/ativar-verificacao");
   }
