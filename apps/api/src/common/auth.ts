@@ -45,6 +45,13 @@ export function raizesRestritas(o: { cnpj: string; restrictedRoots: string[] }) 
   return [...new Set([...(propria.length === 8 ? [propria] : []), ...o.restrictedRoots])];
 }
 
+/** Proprietária e administração têm todas as permissões. A empresa do próprio escritório segue sob liberação da proprietária. */
+export function permissoesDe(role: string, proprias: string[]) {
+  const p = new Set(proprias);
+  if (role === "ORG_OWNER" || role === "ORG_ADMIN") for (const x of PERMISSOES) if (x !== "companies.restricted" || role === "ORG_OWNER") p.add(x);
+  return p;
+}
+
 export const COOKIE = "neeko_session";
 export const hashToken = (t: string) => createHash("sha256").update(t).digest("hex");
 export function lerCookie(req: Request, nome: string): string | null {
@@ -86,9 +93,9 @@ export class GuardaAcesso implements CanActivate {
     if (!m) throw new Erro(403, "FORBIDDEN", "Você não tem acesso a esta organização.");
     if (m.organization.status !== "ACTIVE") throw new Erro(403, "OFFICE_SUSPENDED", "O acesso deste escritório está suspenso. Fale com a Neeko.");
     if (!m.organization.internal && req.path.includes("/fiscal/dfe/")) throw new Erro(403, "MODULE_DISABLED", "Este módulo ainda não está liberado para o escritório.");
-    const permissions = new Set(m.permissions.map((p) => p.permission));
+    const permissions = permissoesDe(m.role, m.permissions.map((p) => p.permission));
     if (!(exige ?? []).every((p) => permissions.has(p))) throw new Erro(403, "FORBIDDEN", "Você não tem permissão para esta ação.");
-    req.contexto = { userId: s.userId, sessionId: s.id, organizationId: s.organizationId, membershipId: m.id, role: m.role, allCompanies: m.allCompanies, permissions, restritas: m.role === "ORG_OWNER" || permissions.has("companies.restricted") ? [] : raizesRestritas(m.organization) } satisfies Contexto;
+    req.contexto = { userId: s.userId, sessionId: s.id, organizationId: s.organizationId, membershipId: m.id, role: m.role, allCompanies: m.allCompanies || m.role === "ORG_ADMIN" || m.role === "ORG_OWNER", permissions, restritas: m.role === "ORG_OWNER" || permissions.has("companies.restricted") ? [] : raizesRestritas(m.organization) } satisfies Contexto;
     return true;
   }
 }

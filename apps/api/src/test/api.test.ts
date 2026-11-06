@@ -189,10 +189,11 @@ test("perfil: cada pessoa altera nome e foto próprios", async () => {
   assert.equal((await new Sessao().pedir("PATCH", "/me", { name: "Xx", avatar: null })).status, 401);
 });
 test("sem escalada: não concede o que não tem", async () => {
-  const o = await prisma.organization.findFirst({}); const u = await prisma.user.findUnique({ where: { email: "ana@a.test" } });
-  await prisma.membershipPermission.deleteMany({ where: { permission: "audit.read", membership: { userId: u.id } } });
-  assert.equal((await ana.post("/users", { name: "Carla", email: "c@a.test", senhaProvisoria: "Provisoria456", role: "STAFF", permissions: ["audit.read"], allCompanies: true, companyIds: [] })).status, 403);
-  void o;
+  const r = await ana.post("/users", { name: "Rh Teste", email: "rh@a.test", senhaProvisoria: "Provisoria456", role: "STAFF", permissions: ["users.manage"], allCompanies: false, companyIds: [] }); assert.equal(r.status, 201);
+  await prisma.user.update({ where: { email: "rh@a.test" }, data: { mustChangePassword: false } });
+  const rh = await logar("rh@a.test", "Provisoria456");
+  assert.equal((await rh.post("/users", { name: "Carla", email: "c@a.test", senhaProvisoria: "Provisoria456", role: "STAFF", permissions: ["audit.read"], allCompanies: true, companyIds: [] })).status, 403);
+  await prisma.user.delete({ where: { email: "rh@a.test" } });
 });
 test("duas etapas: exige código e aceita recuperação uma vez", async () => {
   const { totp } = await import("../identity/mfa.controller");
@@ -258,6 +259,23 @@ test("mensagens: direta, geral, menção e isolamento", async () => {
   assert.equal((await bia.pedir("DELETE", `/users/${mc.id}`)).status, 403, "exige users.manage");
   assert.equal((await ana.pedir("DELETE", `/users/${mc.id}`)).status, 200); assert.equal(await prisma.user.count({ where: { email: "caio@a.test" } }), 0); assert.equal((await caio.get("/me")).status, 401, "quem foi excluído perde o acesso");
   await prisma.chat.deleteMany({}); await prisma.message.deleteMany({}); await prisma.user.delete({ where: { email: "bia@a.test" } });
+});
+test("administração faz tudo, menos excluir a proprietária", async () => {
+  const senha = "Provisoria456", r = await ana.post("/users", { name: "Adm Geral", email: "adm@a.test", senhaProvisoria: senha, role: "ORG_ADMIN", permissions: [], allCompanies: false, companyIds: [] }); assert.equal(r.status, 201);
+  await prisma.user.update({ where: { email: "adm@a.test" }, data: { mustChangePassword: false } });
+  const adm = await logar("adm@a.test", senha), org = (await prisma.organization.findFirst({ where: { internal: true } })).id;
+  assert.equal((await adm.get("/me")).corpo.permissions.includes("office.manage"), true); assert.equal((await adm.get("/me")).corpo.permissions.includes("companies.restricted"), false);
+  assert.equal((await adm.get("/memoranda")).status, 200); assert.ok((await adm.get("/fiscal/companies")).corpo.empresas.length > 0, "vê todas as empresas");
+  assert.equal((await adm.pedir("PUT", "/office/theme", { tema: "roxo" })).status, 200); await adm.pedir("PUT", "/office/theme", { tema: "verde" });
+  const novo = await adm.post("/users", { name: "Outra Pessoa", email: "op@a.test", senhaProvisoria: senha, role: "STAFF", permissions: ["memoranda.read"], allCompanies: true, companyIds: [] }); assert.equal(novo.status, 201);
+  const dono = await prisma.organizationMembership.findFirst({ where: { user: { email: "ana@a.test" } } });
+  assert.equal((await adm.pedir("DELETE", `/users/${dono.id}`)).status, 403, "não exclui a proprietária");
+  assert.equal((await adm.pedir("DELETE", `/users/${novo.corpo.id}`)).status, 200);
+  const eu = (await ana.get("/me")).corpo; assert.equal((await adm.pedir("PUT", `/users/${dono.id}/details`, { name: eu.name, email: eu.email, jobTitle: "Sócia" })).status, 200);
+  assert.equal((await adm.post("/users", { name: "Tres", email: "t3@a.test", senhaProvisoria: senha, role: "STAFF", permissions: ["companies.restricted"], allCompanies: true, companyIds: [] })).status, 403, "empresa do escritório só a proprietária libera");
+  await prisma.organization.update({ where: { id: org }, data: { cnpj: "11.222.333/0001-81" } });
+  assert.equal(JSON.stringify((await adm.get("/fiscal/companies")).corpo).includes(A), false, "empresa restrita segue fora"); await prisma.organization.update({ where: { id: org }, data: { cnpj: "" } });
+  await prisma.user.delete({ where: { email: "adm@a.test" } });
 });
 test("redefinir senha por código enviado no e-mail", async () => {
   const c = new Sessao(), { hashSenha } = await import("../common/passwords");

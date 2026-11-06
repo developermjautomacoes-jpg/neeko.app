@@ -76,7 +76,7 @@ export default function Usuarios() {
             { chave: "e", titulo: "Empresas", render: (u) => (u.allCompanies ? "Todas" : u.companyIds.length) },
             { chave: "s", titulo: "Situação", render: (u) => u.status === "SUSPENDED" ? <Badge tom="perigo">suspenso</Badge> : u.mustChangePassword ? <Badge tom="alerta">senha provisória</Badge> : <Badge tom="sucesso">ativo</Badge> },
             { chave: "a", titulo: "", alinhar: "direita", render: (u) => <div className={styles.acoes}>
-              {(u.role !== "ORG_OWNER" || u.email === pessoa?.email) && <IconButton dica="Editar" icone={<Pencil size={16} />} onClick={() => setForm({ ...vazio, ...u, senhaProvisoria: "" })} />}
+              {(u.role !== "ORG_OWNER" || u.email === pessoa?.email || pessoa?.organization?.role === "ORG_ADMIN") && <IconButton dica="Editar" icone={<Pencil size={16} />} onClick={() => setForm({ ...vazio, ...u, senhaProvisoria: "" })} />}
               {u.role !== "ORG_OWNER" && <IconButton dica="Redefinir senha" icone={<KeyRound size={16} />} onClick={() => setRedefinir(u)} />}
               {u.role !== "ORG_OWNER" && u.email !== pessoa?.email && <IconButton dica="Excluir" variante="danger" icone={<Trash2 size={16} />} onClick={() => setExcluindo(u)} />}
             </div> },
@@ -96,11 +96,12 @@ export default function Usuarios() {
             </Select>
             {form.id && <Select rotulo="Situação" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}><option value="ACTIVE">Ativo</option><option value="SUSPENDED">Suspenso</option></Select>}
           </div>
+          {form.role === "ORG_ADMIN" ? <Notice>A administração pode criar, editar e excluir tudo no escritório e vê todas as empresas. Só não exclui a proprietária.</Notice> : <>
           <p className={styles.titulo}>Permissões</p>
           <div className={styles.lista}>{(pessoa?.permissions ?? []).map((p) => <label key={p} className={styles.check}><input type="checkbox" checked={form.permissions.includes(p)} onChange={() => setForm({ ...form, permissions: alternar(form.permissions, p) })} /> {NOMES[p] ?? p}</label>)}</div>
           <label className={styles.check}><input type="checkbox" checked={form.allCompanies} onChange={(e) => setForm({ ...form, allCompanies: e.target.checked })} /> Acesso a todas as empresas</label>
           {!form.allCompanies && <><p className={styles.titulo}>Empresas</p>
-            <div className={styles.lista}>{empresas.length ? empresas.map((e) => <label key={e.id} className={styles.check}><input type="checkbox" checked={form.companyIds.includes(e.id)} onChange={() => setForm({ ...form, companyIds: alternar(form.companyIds, e.id) })} /> {e.razao || formatarCnpj(e.cnpj)}</label>) : <small>Nenhuma empresa cadastrada.</small>}</div></>}</>}
+            <div className={styles.lista}>{empresas.length ? empresas.map((e) => <label key={e.id} className={styles.check}><input type="checkbox" checked={form.companyIds.includes(e.id)} onChange={() => setForm({ ...form, companyIds: alternar(form.companyIds, e.id) })} /> {e.razao || formatarCnpj(e.cnpj)}</label>) : <small>Nenhuma empresa cadastrada.</small>}</div></>}</>}</>}
         </div>}
       </Modal>
       <Modal aberto={!!redefinir} titulo="Redefinir senha" largura="sm" onFechar={() => setRedefinir(null)} rodape={<><Button onClick={() => setRedefinir(null)}>Voltar</Button><Button variante="primary" carregando={salvando} onClick={salvarSenha}>Definir</Button></>}>

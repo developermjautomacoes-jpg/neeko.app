@@ -56,12 +56,12 @@ export class UsersController {
     return { id: m.id };
   }
 
-  /** Nome, e-mail e cargo. Os dados da proprietária só ela altera; quem também está em outro escritório não é alterado por aqui. */
+  /** Nome, e-mail e cargo. Os dados da proprietária ficam com ela e com a administração; quem também está em outro escritório não é alterado por aqui. */
   @Exige("users.manage") @Put(":id/details")
   async dados(@Ctx() c: Contexto, @Param("id") id: string, @Body() corpo: unknown) {
     const d = validar(z.object({ name: z.string().trim().min(2, "Informe o nome.").max(120), email: z.string().email("Informe um e-mail válido.").transform((e) => e.trim().toLowerCase()), jobTitle: z.string().trim().max(80).default("") }), corpo);
     const m = await this.vinculo(c, id);
-    if (m.role === "ORG_OWNER" && m.id !== c.membershipId) throw new Erro(403, "FORBIDDEN", "Só a proprietária altera os próprios dados.");
+    if (m.role === "ORG_OWNER" && m.id !== c.membershipId && c.role !== "ORG_ADMIN") throw new Erro(403, "FORBIDDEN", "Só a administração altera os dados da proprietária.");
     if ((await this.prisma.organizationMembership.count({ where: { userId: m.userId } })) > 1) throw new Erro(403, "FORBIDDEN", "Esta pessoa também está em outro escritório. Peça que ela altere pelo próprio perfil.");
     const outro = await this.prisma.user.findUnique({ where: { email: d.email } });
     if (outro && outro.id !== m.userId) throw new Erro(409, "EMAIL_IN_USE", "Este e-mail já tem cadastro.");

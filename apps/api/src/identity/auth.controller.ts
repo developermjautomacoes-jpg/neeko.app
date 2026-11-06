@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, Patch, Post, Req, Res } from "@nestjs/
 import { randomBytes, randomInt } from "node:crypto";
 import type { Request, Response } from "express";
 import { z } from "zod";
-import { COOKIE, PERMISSOES, Publico, SemMfa, SoLogado, hashToken, lerCookie, conferirSimultaneos } from "../common/auth";
+import { COOKIE, PERMISSOES, Publico, SemMfa, SoLogado, hashToken, lerCookie, conferirSimultaneos, permissoesDe } from "../common/auth";
 import { AuditoriaService } from "../common/audit.service";
 import { Erro, invalido } from "../common/errors";
 import { HASH_FALSO, conferirSenha, hashSenha, senhaFraca } from "../common/passwords";
@@ -113,7 +113,7 @@ export class MeController {
     const atual = u.memberships.find((m) => m.organizationId === req.sessao.organizationId && m.organization.status === "ACTIVE");
     return { id: u.id, name: u.name, email: u.email, importacao: config().OFFICE_IMPORT_ENABLED === "true", platformAdmin: u.globalRole === "NEEKO_SUPERADMIN" && req.sessao.portal === "neeko", portal: req.sessao.portal, mfaEnabled: u.mfaEnabled, mfaPending: u.mfaEnabled && !req.sessao.mfaVerified, mfaSetupRequired: false, avatar: u.avatar, jobTitle: u.jobTitle, phone: u.phone, mustChangePassword: u.mustChangePassword,
       organization: atual ? { id: atual.organizationId, name: atual.organization.name, role: atual.role, slug: atual.organization.slug, internal: atual.organization.internal, logo: atual.organization.logo, theme: atual.organization.theme, contactEmail: atual.organization.contactEmail, contactPhone: atual.organization.contactPhone } : null,
-      permissions: atual?.permissions.map((p) => p.permission) ?? [], availablePermissions: PERMISSOES };
+      permissions: atual ? [...permissoesDe(atual.role, atual.permissions.map((p) => p.permission))] : [], availablePermissions: PERMISSOES };
   }
 
   /** Cada pessoa altera só o próprio perfil. A foto chega já recortada; o e-mail de acesso não muda por aqui. */
