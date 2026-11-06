@@ -119,7 +119,7 @@ export class MeController {
   /** Cada pessoa altera só o próprio perfil. A foto chega já recortada; o e-mail de acesso não muda por aqui. */
   @SoLogado() @Patch()
   async perfil(@Req() req: Request & { sessao: { userId: string; organizationId: string | null } }, @Body() corpo: unknown) {
-    const d = validar(z.object({ name: z.string().trim().min(2, "Informe o nome.").max(120), jobTitle: z.string().trim().max(80).default(""), phone: z.string().trim().max(30).default(""),
+    const d = validar(z.object({ name: z.string().trim().min(2, "Informe o nome.").max(120), phone: z.string().trim().max(30).default(""),
       avatar: z.string().max(400000, "A foto ficou grande demais.").regex(/^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/=]+$/, "Foto inválida.").nullable() }), corpo);
     await this.prisma.user.update({ where: { id: req.sessao.userId }, data: d });
     await this.auditoria.registrar(req.sessao.organizationId, req.sessao.userId, "users.profile.changed");

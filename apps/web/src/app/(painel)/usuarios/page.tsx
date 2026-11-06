@@ -1,8 +1,9 @@
 "use client";
+import { Briefcase, KeyRound, Pencil } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Badge, Button, Card, DataTable, Input, Loading, Modal, Notice, PageHeader, Select, useToast } from "@neeko/ui";
+import { Badge, Button, Card, DataTable, Input, Loading, Modal, Notice, PageHeader, Select, useToast, IconButton } from "@neeko/ui";
 import { formatarCnpj } from "@/lib/format";
-import { alterarUsuario, criarUsuario, eu, listarUsuarios, redefinirSenha, type Eu, type Usuario } from "@/services/conta";
+import { definirCargo, alterarUsuario, criarUsuario, eu, listarUsuarios, redefinirSenha, type Eu, type Usuario } from "@/services/conta";
 import { listarEmpresas } from "@/services/fiscal";
 import type { EmpresaNfse } from "@/types/nfse";
 import styles from "../pagina.module.css";
@@ -12,8 +13,8 @@ const NOMES: Record<string, string> = {
   "fiscal.ciencia.send": "Registrar ciência da operação", "fiscal.schedule.manage": "Configurar captura noturna", "users.manage": "Gerenciar usuários", "audit.read": "Ver auditoria", "memoranda.read": "Ver memorandos", "memoranda.manage": "Gerenciar memorandos", "office.manage": "Alterar perfil do escritório", "companies.restricted": "Ver a empresa do próprio escritório",
 };
 const PAPEIS: Record<string, string> = { ORG_OWNER: "Proprietária", ORG_ADMIN: "Administração", STAFF: "Colaborador", COMPANY_USER: "Usuário de empresa" };
-interface Form { id?: string; name: string; email: string; senhaProvisoria: string; role: string; status: string; permissions: string[]; allCompanies: boolean; companyIds: string[] }
-const vazio: Form = { name: "", email: "", senhaProvisoria: "", role: "STAFF", status: "ACTIVE", permissions: ["companies.read", "fiscal.documents.read", "memoranda.read"], allCompanies: false, companyIds: [] };
+interface Form { id?: string; jobTitle: string; name: string; email: string; senhaProvisoria: string; role: string; status: string; permissions: string[]; allCompanies: boolean; companyIds: string[] }
+const vazio: Form = { jobTitle: "", name: "", email: "", senhaProvisoria: "", role: "STAFF", status: "ACTIVE", permissions: ["companies.read", "fiscal.documents.read", "memoranda.read"], allCompanies: false, companyIds: [] };
 const alternar = (l: string[], v: string) => (l.includes(v) ? l.filter((x) => x !== v) : [...l, v]);
 
 export default function Usuarios() {
@@ -24,6 +25,8 @@ export default function Usuarios() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [form, setForm] = useState<Form | null>(null);
+  const [cargo, setCargo] = useState<Usuario | null>(null);
+  const [cargoNovo, setCargoNovo] = useState("");
   const [redefinir, setRedefinir] = useState<Usuario | null>(null);
   const [senhaNova, setSenhaNova] = useState("");
   const [salvando, setSalvando] = useState(false);
@@ -39,10 +42,15 @@ export default function Usuarios() {
     try {
       const { role, status, permissions, allCompanies, companyIds } = form;
       if (form.id) await alterarUsuario(form.id, { role, status, permissions, allCompanies, companyIds });
-      else await criarUsuario({ name: form.name, email: form.email, senhaProvisoria: form.senhaProvisoria, role, permissions, allCompanies, companyIds });
+      else await criarUsuario({ jobTitle: form.jobTitle, name: form.name, email: form.email, senhaProvisoria: form.senhaProvisoria, role, permissions, allCompanies, companyIds });
       setForm(null); await carregar(); avisar("Usuário salvo.", "sucesso");
     } catch (x) { avisar(x instanceof Error ? x.message : "Não foi possível salvar.", "erro"); }
     finally { setSalvando(false); }
+  }
+  async function salvarCargo() {
+    if (!cargo) return;
+    try { await definirCargo(cargo.id, cargoNovo); setCargo(null); await carregar(); avisar("Cargo salvo.", "sucesso"); }
+    catch (x) { avisar(x instanceof Error ? x.message : "Não foi possível salvar.", "erro"); }
   }
   async function salvarSenha() {
     if (!redefinir) return;
@@ -61,11 +69,13 @@ export default function Usuarios() {
           colunas={[
             { chave: "n", titulo: "Pessoa", render: (u) => <><b>{u.name}</b><br /><small>{u.email}</small></> },
             { chave: "p", titulo: "Papel", render: (u) => PAPEIS[u.role] ?? u.role },
+            { chave: "c", titulo: "Cargo", render: (u) => u.jobTitle || "—" },
             { chave: "e", titulo: "Empresas", render: (u) => (u.allCompanies ? "Todas" : u.companyIds.length) },
             { chave: "s", titulo: "Situação", render: (u) => u.status === "SUSPENDED" ? <Badge tom="perigo">suspenso</Badge> : u.mustChangePassword ? <Badge tom="alerta">senha provisória</Badge> : <Badge tom="sucesso">ativo</Badge> },
-            { chave: "a", titulo: "", alinhar: "direita", render: (u) => u.role === "ORG_OWNER" ? null : <div className={styles.acoes}>
-              <Button tamanho="sm" onClick={() => setForm({ ...vazio, ...u, senhaProvisoria: "" })}>Editar</Button>
-              <Button tamanho="sm" onClick={() => setRedefinir(u)}>Redefinir senha</Button>
+            { chave: "a", titulo: "", alinhar: "direita", render: (u) => <div className={styles.acoes}>
+              <IconButton dica="Definir cargo" icone={<Briefcase size={16} />} onClick={() => { setCargo(u); setCargoNovo(u.jobTitle); }} />
+              {u.role !== "ORG_OWNER" && <IconButton dica="Editar acesso" icone={<Pencil size={16} />} onClick={() => setForm({ ...vazio, ...u, senhaProvisoria: "" })} />}
+              {u.role !== "ORG_OWNER" && <IconButton dica="Redefinir senha" icone={<KeyRound size={16} />} onClick={() => setRedefinir(u)} />}
             </div> },
           ]} />}
       </Card>
@@ -73,6 +83,7 @@ export default function Usuarios() {
         {form && <div className={styles.form}>
           {!form.id && <div className={styles.colunas}>
             <Input rotulo="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Input rotulo="Cargo" value={form.jobTitle} onChange={(e) => setForm({ ...form, jobTitle: e.target.value })} />
             <Input rotulo="E-mail" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             <Input rotulo="Senha provisória" type="text" autoComplete="off" dica="Ao menos 10 caracteres, com letras e números." value={form.senhaProvisoria} onChange={(e) => setForm({ ...form, senhaProvisoria: e.target.value })} />
           </div>}
@@ -95,6 +106,7 @@ export default function Usuarios() {
           <Input rotulo="Senha provisória" type="text" autoComplete="off" value={senhaNova} onChange={(e) => setSenhaNova(e.target.value)} />
         </div>
       </Modal>
+      <Modal aberto={!!cargo} largura="sm" titulo={`Cargo de ${cargo?.name ?? ""}`} onFechar={() => setCargo(null)} rodape={<><Button onClick={() => setCargo(null)}>Voltar</Button><Button variante="primary" onClick={() => void salvarCargo()}>Salvar</Button></>}><Input rotulo="Cargo" value={cargoNovo} onChange={(e) => setCargoNovo(e.target.value)} /></Modal>
     </>
   );
 }

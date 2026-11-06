@@ -1,7 +1,9 @@
 "use client";
+import { Ban, Eye, FileText, FileType, LogOut, Pencil, RotateCcw, Undo2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Badge, Button, Card, ConfirmDialog, DataTable, Input, Loading, Modal, Notice, PageHeader, Select, useToast } from "@neeko/ui";
+import { useRouter } from "next/navigation";
+import { Badge, Button, Card, ConfirmDialog, DataTable, Input, Loading, Modal, Notice, PageHeader, Select, useToast, IconButton } from "@neeko/ui";
 import { baixarMemo } from "@/features/memorandos/documentos";
 import { MOTIVOS_SAIDA, br, fmtCnpj, hojeISO, type Memo } from "@/features/memorandos/regras";
 import { eu } from "@/services/conta";
@@ -12,6 +14,7 @@ type Filtro = "ativos" | "inativos" | "cancelado" | "";
 type Acao = { tipo: "cancelar" | "reativar" | "voltou"; m: MemorandoResumo };
 
 export default function Memorandos() {
+  const router = useRouter();
   const avisar = useToast();
   const [lista, setLista] = useState<MemorandoResumo[]>([]);
   const [sem, setSem] = useState<{ cnpj: string; legalName: string }[]>([]);
@@ -67,11 +70,11 @@ export default function Memorandos() {
             { chave: "r", titulo: "Regime", render: (m) => m.regime || "—" },
             { chave: "s", titulo: "Situação", render: (m) => m.status === "cancelado" ? <Badge tom="perigo">cancelado</Badge> : m.clientStatus === "inativa" ? <><Badge tom="alerta">saiu</Badge><br /><small>{br(m.exitDate)}</small></> : <Badge tom="sucesso">ativo</Badge> },
             { chave: "a", titulo: "", alinhar: "direita", render: (m) => <div className={styles.acoes}>
-              <Link href={`/memorandos/${m.id}`} className={styles.botaoSm}>{pode ? "Editar" : "Ver"}</Link>
-              <Button tamanho="sm" carregando={salvando === `${m.id}pdf`} onClick={() => documento(m, "pdf")}>PDF</Button>
-              <Button tamanho="sm" carregando={salvando === `${m.id}docx`} onClick={() => documento(m, "docx")}>Word</Button>
-              {pode && m.status === "ativo" && (m.clientStatus === "ativa" ? <Button tamanho="sm" onClick={() => { setForm({ dataSaida: hojeISO(), motivo: MOTIVOS_SAIDA[0], obs: "" }); setSaida(m); }}>Saída</Button> : <Button tamanho="sm" onClick={() => setAcao({ tipo: "voltou", m })}>Voltou</Button>)}
-              {pode && (m.status === "ativo" ? <Button tamanho="sm" variante="danger" onClick={() => setAcao({ tipo: "cancelar", m })}>Cancelar</Button> : <Button tamanho="sm" onClick={() => setAcao({ tipo: "reativar", m })}>Reativar</Button>)}
+              <IconButton dica={pode ? "Editar" : "Visualizar"} icone={pode ? <Pencil size={16} /> : <Eye size={16} />} onClick={() => router.push(`/memorandos/${m.id}`)} />
+              <IconButton dica="Baixar PDF" icone={<FileText size={16} />} carregando={salvando === `${m.id}pdf`} onClick={() => documento(m, "pdf")} />
+              <IconButton dica="Baixar Word" icone={<FileType size={16} />} carregando={salvando === `${m.id}docx`} onClick={() => documento(m, "docx")} />
+              {pode && m.status === "ativo" && (m.clientStatus === "ativa" ? <IconButton dica="Registrar saída do cliente" icone={<LogOut size={16} />} onClick={() => { setForm({ dataSaida: hojeISO(), motivo: MOTIVOS_SAIDA[0], obs: "" }); setSaida(m); }} /> : <IconButton dica="Cliente voltou" icone={<Undo2 size={16} />} onClick={() => setAcao({ tipo: "voltou", m })} />)}
+              {pode && (m.status === "ativo" ? <IconButton dica="Cancelar memorando" variante="danger" icone={<Ban size={16} />} onClick={() => setAcao({ tipo: "cancelar", m })} /> : <IconButton dica="Reativar memorando" icone={<RotateCcw size={16} />} onClick={() => setAcao({ tipo: "reativar", m })} />)}
             </div> },
           ]} />}
       </Card>

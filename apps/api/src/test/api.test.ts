@@ -182,7 +182,7 @@ test("cada pessoa tem login próprio e só o que recebeu", async () => {
 });
 test("perfil: cada pessoa altera nome e foto próprios", async () => {
   const foto = "data:image/jpeg;base64,/9j/4AAQSkZJRg==";
-  assert.equal((await ana.pedir("PATCH", "/me", { name: "Monique Jesus", jobTitle: "Gestora", phone: "", avatar: foto })).status, 200);
+  assert.equal((await ana.pedir("PATCH", "/me", { name: "Monique Jesus", phone: "", avatar: foto })).status, 200);
   const e = (await ana.get("/me")).corpo; assert.equal(e.name, "Monique Jesus"); assert.equal(e.avatar, foto); assert.equal(e.email, "ana@a.test");
   assert.equal((await ana.pedir("PATCH", "/me", { name: "Monique Jesus", avatar: "data:text/html;base64,PHNjcmlwdD4=" })).status, 400);
   assert.equal((await ana.pedir("PATCH", "/me", { name: "Monique Jesus", avatar: "javascript:alert(1)" })).status, 400);
@@ -209,6 +209,28 @@ test("duas etapas: exige código e aceita recuperação uma vez", async () => {
   const ok = await s2.post("/auth/mfa/verify", { codigo: totp(mfaAna.seg, passo) }); assert.equal(ok.status, 200);
   const s3 = await logar("ana@a.test", "NovaSenha123");
   assert.equal((await s3.post("/auth/mfa/verify", { codigo: totp(mfaAna.seg, passo) })).status, 400, "código usado não vale de novo");
+});
+test("mensagens: direta, geral, menção e isolamento", async () => {
+  const senha = "Provisoria456", u = async (nome: string, email: string) => { const r = await ana.post("/users", { name: nome, email, senhaProvisoria: senha, role: "STAFF", permissions: [], allCompanies: false, companyIds: [], jobTitle: "Assistente" }); assert.equal(r.status, 201, JSON.stringify(r.corpo)); await prisma.user.update({ where: { email }, data: { mustChangePassword: false } }); return logar(email, senha); };
+  const bia = await u("Bia Souza", "bia@a.test"), caio = await u("Caio Lima", "caio@a.test");
+  const id = async (email: string) => (await prisma.user.findUnique({ where: { email } })).id, iBia = await id("bia@a.test"), iCaio = await id("caio@a.test");
+  assert.equal((await bia.post(`/messages/${iCaio}`, { texto: "   " })).status, 400);
+  assert.equal((await bia.post(`/messages/${iCaio}`, { texto: "Oi Caio" })).status, 201);
+  assert.equal((await caio.get("/messages")).corpo.total, 1); assert.equal((await ana.get("/messages")).corpo.total, 0, "terceiro não recebe");
+  assert.equal((await ana.get(`/messages/${iCaio}`)).corpo.mensagens.length, 0, "terceiro não lê conversa alheia");
+  const aviso = (await caio.get("/messages")).corpo.avisos[0]; assert.equal(aviso.de, "Bia Souza"); assert.equal(aviso.conversa, iBia);
+  assert.equal((await caio.post(`/messages/${iBia}/read`)).status, 200); assert.equal((await caio.get("/messages")).corpo.total, 0);
+  assert.equal((await bia.post("/messages/geral", { texto: "Bom dia @Caio Lima, veja o memorando" })).status, 201);
+  const c2 = (await caio.get("/messages")).corpo; assert.equal(c2.total, 1); assert.equal(c2.avisos[0].mencao, true);
+  const a2 = (await ana.get("/messages")).corpo; assert.equal(a2.total, 1, "Geral avisa todos"); assert.equal(a2.avisos[0].mencao, false);
+  assert.equal((await bia.get("/messages")).corpo.total, 0, "quem envia não recebe aviso");
+  assert.equal((await caio.get("/messages/geral")).corpo.mensagens[0].mencionou, true);
+  assert.equal((await bia.get(`/messages/${iBia}`)).status, 404, "não conversa consigo");
+  const de = await prisma.organizationMembership.findFirst({ where: { user: { email: "bia@a.test" } } });
+  assert.equal((await bia.pedir("PUT", `/users/${de.id}/job-title`, { cargo: "Diretora" })).status, 403, "cargo é do administrador");
+  assert.equal((await ana.pedir("PUT", `/users/${de.id}/job-title`, { cargo: "Analista" })).status, 200); assert.equal((await bia.get("/me")).corpo.jobTitle, "Analista");
+  await bia.pedir("PATCH", "/me", { name: "Bia Souza", jobTitle: "Sócia", phone: "", avatar: null }); assert.equal((await bia.get("/me")).corpo.jobTitle, "Analista", "o perfil não muda o cargo");
+  await prisma.message.deleteMany({}); for (const e of ["bia@a.test", "caio@a.test"]) await prisma.user.delete({ where: { email: e } });
 });
 test("redefinir senha por código enviado no e-mail", async () => {
   const c = new Sessao(), { hashSenha } = await import("../common/passwords");
@@ -356,6 +378,7 @@ test("isolamento entre organizações", async () => {
   const { hashSenha } = await import("../common/passwords");
   await prisma.user.create({ data: { email: "o@b.test", name: "O", passwordHash: await hashSenha("SenhaOutra123"), mustChangePassword: false, memberships: { create: { role: "STAFF", allCompanies: true, organization: { create: { name: "Org B" } }, permissions: { create: ["companies.read", "companies.manage", "fiscal.documents.read", "fiscal.capture", "fiscal.credentials.manage", "fiscal.ciencia.send", "users.manage", "memoranda.read", "memoranda.manage"].map((permission) => ({ permission })) } } } } });
   outra = await logar("o@b.test", "SenhaOutra123");
+  const anaId = (await prisma.user.findUnique({ where: { email: "ana@a.test" } })).id; assert.equal((await outra.post(`/messages/${anaId}`, { texto: "oi" })).status, 404, "mensagem não atravessa escritório"); assert.equal((await outra.get(`/messages/${anaId}`)).status, 404);
   await prisma.organization.updateMany({ where: { memberships: { some: { user: { email: "o@b.test" } } } }, data: { internal: true } }); // libera NF-e/CT-e para testar o isolamento
   assert.deepEqual((await outra.get("/fiscal/companies")).corpo.empresas, []);
   assert.deepEqual((await outra.get("/certificates")).corpo.certificados, []);

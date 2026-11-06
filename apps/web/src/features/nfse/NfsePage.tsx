@@ -1,7 +1,8 @@
 "use client";
+import { Eye, FileText, RotateCcw, Stethoscope } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AgendaNfse, AmbienteNfse, CertificadoNfse, ModoBuscaNfse, EmpresaNfse, FalhaNfse, NotaNfse, PapelNfse, SituacaoNfse } from "@/types/nfse";
-import { Badge, Button, Card, ConfirmDialog, DataTable, Input, KpiCard, Loading, Modal, Notice, PageHeader, Select, useToast } from "@neeko/ui";
+import { Badge, Button, Card, ConfirmDialog, DataTable, Input, KpiCard, Loading, Modal, Notice, PageHeader, Select, useToast, IconButton } from "@neeko/ui";
 import { arquivoParaBase64, dataBr, dataHora, formatarCnpj } from "@/lib/format";
 import { baixarXmls, buscarXmls, capturarLote, definirModo, definirProcurador, diagnosticar, enviarCertificado, lerAgenda, lerProcurador, listarEmpresas, listarNotas, reiniciarCaptura, salvarAgenda, verificarEventos } from "@/services/fiscal";
 import { ROTULO_RET_ISS, ROTULO_SITUACAO, exportarExcel, issRetido, valida } from "./nfseExcel";
@@ -249,9 +250,9 @@ export function NfsePage() {
               { chave: "not", titulo: "Notas", alinhar: "direita", render: (e) => <>{e.notas}{e.falhas > 0 && <><br /><Badge tom="perigo">{e.falhas} com falha</Badge></>}</> },
               { chave: "ac", titulo: "", alinhar: "direita", render: (e) => (
                 <div className={styles.acoes}>
-                  <Button tamanho="sm" disabled={!e.notas} onClick={() => setCnpjVista(e.id)}>Ver notas</Button>
-                  <Button tamanho="sm" disabled={ocupado || !e.certificado} carregando={diagnosticando === e.id} onClick={() => rodarDiagnostico(e.id)}>Diagnosticar</Button>
-                  <Button tamanho="sm" disabled={ocupado || e.ultimoNsu === 0} onClick={() => setRecomecar(e)}>Recomeçar</Button>
+                  <IconButton dica="Ver notas" icone={<Eye size={16} />} disabled={!e.notas} onClick={() => setCnpjVista(e.id)} />
+                  <IconButton dica="Diagnosticar conexão" icone={<Stethoscope size={16} />} disabled={ocupado || !e.certificado} carregando={diagnosticando === e.id} onClick={() => rodarDiagnostico(e.id)} />
+                  <IconButton dica="Recomeçar a busca" icone={<RotateCcw size={16} />} disabled={ocupado || e.ultimoNsu === 0} onClick={() => setRecomecar(e)} />
                 </div>
               ) },
             ]} />
@@ -328,7 +329,7 @@ export function NfsePage() {
                 { chave: "i", titulo: "ISS", alinhar: "direita", render: (n) => <>{moeda(n.v_iss)}<br /><small>{ROTULO_RET_ISS[n.tp_ret_iss] ?? ""}</small></> },
                 { chave: "r", titulo: "Retenções", alinhar: "direita", render: (n) => moeda(n.v_total_ret) },
                 { chave: "x", titulo: "Situação", render: (n) => <Badge tom={tomSituacao[n.situacao]}>{ROTULO_SITUACAO[n.situacao]}</Badge> },
-                { chave: "d", titulo: "", alinhar: "direita", render: (n) => <Button tamanho="sm" disabled={baixando === "danfse"} onClick={() => abrirDanfse([n.chave])}>DANFSe</Button> },
+                { chave: "d", titulo: "", alinhar: "direita", render: (n) => <IconButton dica="Abrir DANFSe" icone={<FileText size={16} />} disabled={baixando === "danfse"} onClick={() => abrirDanfse([n.chave])} /> },
               ]} />
           )}
         </Card>

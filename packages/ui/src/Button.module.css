@@ -25,3 +25,9 @@
 .danger { color: var(--color-danger); border-color: var(--color-danger-bg); background: var(--color-surface); }
 .danger:hover:not(:disabled) { background: var(--color-danger-bg); }
 .btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.soIcone { position: relative; width: 34px; height: 34px; padding: 0; flex: none; }
+.soIcone::after { content: attr(data-dica); position: absolute; right: 0; bottom: calc(100% + 6px); z-index: 30; padding: 4px 8px; border-radius: 6px; background: var(--color-toast); color: #fff; font-size: 0.72rem; font-weight: 500; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 120ms ease; }
+.soIcone:hover::after, .soIcone:focus-visible::after { opacity: 1; }
+.soIcone:disabled::after { display: none; }
+.carregando { opacity: 0.5; }

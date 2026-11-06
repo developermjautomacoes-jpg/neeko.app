@@ -1,6 +1,6 @@
 import type { NotaXml } from "@/features/nfse/nfseDanfse";
 import { centavos } from "@/lib/format";
-import type { AgendaNfse, AmbienteNfse, Certificado, CertificadoNfse, DocumentoDfe, EmpresaDfe, EmpresaNfse, FalhaDfe, ListaDfe, ListaNotasNfse, ModoBuscaNfse, NotaNfse, PassoCaptura, PassoCiencia, PassoVerificacao, ServicoDfe } from "@/types/nfse";
+import type { AgendaNfse, AmbienteNfse, Certificado, EmpresaCert, CertificadoNfse, DocumentoDfe, EmpresaDfe, EmpresaNfse, FalhaDfe, ListaDfe, ListaNotasNfse, ModoBuscaNfse, NotaNfse, PassoCaptura, PassoCiencia, PassoVerificacao, ServicoDfe } from "@/types/nfse";
 import { api, baixar } from "./http";
 
 type NotaApi = Record<string, string | number> & { vServ: string; vBc: string; vIss: string; vRetCp: string; vRetIrrf: string; vRetCsll: string; vPis: string; vCofins: string; vTotalRet: string; vLiq: string };
@@ -25,7 +25,7 @@ export const salvarAgenda = (ativo: boolean, hora: string) => api<AgendaNfse>("P
 export async function lerProcurador() { return (await api<{ procurador: CertificadoNfse | null }>("GET", "fiscal/procurator")).procurador; }
 export async function definirProcurador(id: string | null) { return (await api<{ procurador: CertificadoNfse | null }>("PUT", "fiscal/procurator", { id })).procurador; }
 
-export async function listarCertificados() { return (await api<{ certificados: Certificado[] }>("GET", "certificates")).certificados; }
+export const lerCertificados = () => api<{ certificados: Certificado[]; semCertificado: EmpresaCert[] }>("GET", "certificates");
 export const enviarCertificado = (c: { pfx: string; senha: string; apelido: string }) => api<{ id: string }>("POST", "certificates", c);
 export const removerCertificado = (id: string) => api("DELETE", `certificates/${id}`);
 

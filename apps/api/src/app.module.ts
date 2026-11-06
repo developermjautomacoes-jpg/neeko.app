@@ -21,10 +21,11 @@ import { PlataformaController } from "./platform/platform.controller";
 import { EscritorioController, EscritorioPublicoController } from "./identity/office.controller";
 import { CorreioService } from "./common/mail.service";
 import { MigracaoService } from "./identity/migration.service";
+import { MensagensController } from "./messages/messages.controller";
 import { PrismaService } from "./prisma.service";
 
 @Module({
-  controllers: [HealthController, AuthController, MeController, UsersController, CertificatesController, FiscalController, PainelController, MemorandosController, MfaController, PlataformaController, EscritorioController, EscritorioPublicoController],
+  controllers: [HealthController, AuthController, MeController, UsersController, CertificatesController, FiscalController, PainelController, MemorandosController, MfaController, PlataformaController, EscritorioController, EscritorioPublicoController, MensagensController],
   providers: [PrismaService, AuditoriaService, EscopoService, CertificadosService, NfseService, DfeService, AgendadorService, MemorandosService, CorreioService, MigracaoService,
     { provide: APP_GUARD, useClass: GuardaAcesso }, { provide: APP_FILTER, useClass: FiltroErros }],
 })

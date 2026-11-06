@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Param, Patch, Post, Put } from "@nestjs/common";
 import { z } from "zod";
 import { AuditoriaService } from "../common/audit.service";
 import { Contexto, Ctx, Exige, PERMISSOES } from "../common/auth";
@@ -13,7 +13,7 @@ const acesso = z.object({
   allCompanies: z.boolean(),
   companyIds: z.array(z.string().uuid()).max(5000),
 });
-const novo = acesso.extend({ name: z.string().trim().min(2, "Informe o nome.").max(120), email: z.string().email("Informe um e-mail válido.").transform((e) => e.trim().toLowerCase()), senhaProvisoria: z.string().max(200) });
+const novo = acesso.extend({ name: z.string().trim().min(2, "Informe o nome.").max(120), email: z.string().email("Informe um e-mail válido.").transform((e) => e.trim().toLowerCase()), senhaProvisoria: z.string().max(200), jobTitle: z.string().trim().max(80).default("") });
 
 /** Pessoas da organização. Cada uma tem e-mail e senha próprios; quem administra só define a senha provisória. */
 @Controller("users")
@@ -38,7 +38,7 @@ export class UsersController {
   @Exige("users.manage") @Get()
   async listar(@Ctx() c: Contexto) {
     const l = await this.prisma.organizationMembership.findMany({ where: { organizationId: c.organizationId }, include: { user: true, permissions: true, companies: true }, orderBy: { createdAt: "asc" } });
-    return { usuarios: l.map((m) => ({ id: m.id, name: m.user.name, email: m.user.email, role: m.role, status: m.status, allCompanies: m.allCompanies,
+    return { usuarios: l.map((m) => ({ id: m.id, jobTitle: m.user.jobTitle, name: m.user.name, email: m.user.email, role: m.role, status: m.status, allCompanies: m.allCompanies,
       permissions: m.permissions.map((p) => p.permission), companyIds: m.companies.map((x) => x.companyId), mustChangePassword: m.user.mustChangePassword })) };
   }
 
@@ -48,12 +48,21 @@ export class UsersController {
     const fraca = senhaFraca(d.senhaProvisoria); if (fraca) throw invalido(fraca);
     this.conferirConcessao(c, d.permissions); await this.conferirEmpresas(c, d.companyIds);
     if (await this.prisma.user.findUnique({ where: { email: d.email } })) throw new Erro(409, "EMAIL_IN_USE", "Este e-mail já tem cadastro.");
-    const u = await this.prisma.user.create({ data: { email: d.email, name: d.name, passwordHash: await hashSenha(d.senhaProvisoria), mustChangePassword: true,
+    const u = await this.prisma.user.create({ data: { email: d.email, name: d.name, passwordHash: await hashSenha(d.senhaProvisoria), mustChangePassword: true, jobTitle: d.jobTitle,
       memberships: { create: { organizationId: c.organizationId, role: d.role, allCompanies: d.allCompanies, permissions: { create: d.permissions.map((permission) => ({ permission })) } } } }, include: { memberships: true } });
     const m = u.memberships[0];
     if (d.companyIds.length) await this.prisma.companyAccess.createMany({ data: d.companyIds.map((companyId) => ({ organizationId: c.organizationId, membershipId: m.id, companyId })) });
     await this.auditoria.registrar(c.organizationId, c.userId, "users.created", u.id, { role: d.role, permissions: d.permissions, allCompanies: d.allCompanies });
     return { id: m.id };
+  }
+
+  /** O cargo é definido por quem administra, inclusive o da proprietária. */
+  @Exige("users.manage") @Put(":id/job-title")
+  async cargo(@Ctx() c: Contexto, @Param("id") id: string, @Body() corpo: unknown) {
+    const { cargo } = validar(z.object({ cargo: z.string().trim().max(80) }), corpo), m = await this.vinculo(c, id);
+    await this.prisma.user.update({ where: { id: m.userId }, data: { jobTitle: cargo } });
+    await this.auditoria.registrar(c.organizationId, c.userId, "users.jobtitle.changed", m.userId);
+    return { ok: true };
   }
 
   @Exige("users.manage") @Patch(":id")

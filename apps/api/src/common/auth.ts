@@ -13,7 +13,7 @@ export interface Contexto {
   /** Raízes de CNPJ que esta pessoa não pode ver nem cadastrar. */
   restritas: string[];
 }
-const PUBLICO = "publico", EXIGE = "exige", SO_LOGADO = "soLogado", SEM_MFA = "semMfa", PLATAFORMA = "plataforma";
+const MEMBRO = "membro", PUBLICO = "publico", EXIGE = "exige", SO_LOGADO = "soLogado", SEM_MFA = "semMfa", PLATAFORMA = "plataforma";
 /** Rota sem contexto de organização. */
 export const Publico = () => SetMetadata(PUBLICO, true);
 /** Rota de quem está autenticado, mesmo com senha provisória. */
@@ -22,6 +22,8 @@ export const SoLogado = () => SetMetadata(SO_LOGADO, true);
 export const SemMfa = () => SetMetadata(SEM_MFA, true);
 /** Só a administração da Neeko. Não dá acesso a conteúdo de escritórios. */
 export const Plataforma = () => SetMetadata(PLATAFORMA, true);
+/** Qualquer pessoa ativa do escritório, sem permissão específica. */
+export const Membro = () => SetMetadata(MEMBRO, true);
 export const Exige = (...p: Permissao[]) => SetMetadata(EXIGE, p);
 export const Ctx = createParamDecorator((_: unknown, c: ExecutionContext) => c.switchToHttp().getRequest().contexto as Contexto);
 
@@ -79,13 +81,13 @@ export class GuardaAcesso implements CanActivate {
       return true;
     }
     const exige = this.reflector.getAllAndOverride<Permissao[]>(EXIGE, alvo);
-    if (!exige?.length || !s.organizationId) throw new Erro(403, "FORBIDDEN", "Você não tem permissão para esta ação.");
+    if ((!exige?.length && !this.reflector.getAllAndOverride<boolean>(MEMBRO, alvo)) || !s.organizationId) throw new Erro(403, "FORBIDDEN", "Você não tem permissão para esta ação.");
     const m = await this.prisma.organizationMembership.findFirst({ where: { userId: s.userId, organizationId: s.organizationId, status: "ACTIVE" }, include: { permissions: true, organization: { select: { status: true, internal: true, cnpj: true, restrictedRoots: true } } } });
     if (!m) throw new Erro(403, "FORBIDDEN", "Você não tem acesso a esta organização.");
     if (m.organization.status !== "ACTIVE") throw new Erro(403, "OFFICE_SUSPENDED", "O acesso deste escritório está suspenso. Fale com a Neeko.");
     if (!m.organization.internal && req.path.includes("/fiscal/dfe/")) throw new Erro(403, "MODULE_DISABLED", "Este módulo ainda não está liberado para o escritório.");
     const permissions = new Set(m.permissions.map((p) => p.permission));
-    if (!exige.every((p) => permissions.has(p))) throw new Erro(403, "FORBIDDEN", "Você não tem permissão para esta ação.");
+    if (!(exige ?? []).every((p) => permissions.has(p))) throw new Erro(403, "FORBIDDEN", "Você não tem permissão para esta ação.");
     req.contexto = { userId: s.userId, sessionId: s.id, organizationId: s.organizationId, membershipId: m.id, role: m.role, allCompanies: m.allCompanies, permissions, restritas: m.role === "ORG_OWNER" || permissions.has("companies.restricted") ? [] : raizesRestritas(m.organization) } satisfies Contexto;
     return true;
   }

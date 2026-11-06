@@ -2,10 +2,10 @@
 import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Building2, ChevronDown, FileBadge, FileStack, Handshake, Home, Landmark, LogOut, Mails, Menu, PieChart, Search, Settings, Wallet } from "lucide-react";
+import { Bell, Building2, ChevronDown, FileBadge, FileStack, Handshake, Home, Landmark, LogOut, Mails, Menu, MessageCircle, PieChart, Search, Settings, Wallet } from "lucide-react";
 import { Loading, Notice } from "@neeko/ui";
 import { formatarCnpj } from "@/lib/format";
-import { destinoApos, eu, sair, type Eu } from "@/services/conta";
+import { destinoApos, eu, sair, type Eu, resumoMensagens, type ResumoMensagens } from "@/services/conta";
 import { lerPainel, type Painel as DadosPainel } from "@/services/fiscal";
 import { telaEntrada } from "@/services/http";
 import { aplicarPaleta } from "@/features/paleta";
@@ -20,12 +20,13 @@ const MENU: Item[] = [
   { nome: "BPO Financeiro", icone: Wallet },
   { nome: "Contratos", icone: Handshake },
   { nome: "Memorandos", icone: Mails, href: "/memorandos", exige: "memoranda.read" },
+  { nome: "Mensagens", icone: MessageCircle, href: "/mensagens" },
   { nome: "Relatórios", icone: PieChart },
   { nome: "Neeko Gerencial", icone: Building2, plataforma: true, filhos: [{ href: "/plataforma/escritorios", nome: "Escritórios", exige: "" }, { href: "/plataforma/planos", nome: "Planos", exige: "" }] },
   { nome: "Administração", icone: Settings, filhos: [{ href: "/escritorio", nome: "Perfil do escritório", exige: "office.manage" }, { href: "/certificados", nome: "Certificados", exige: "fiscal.credentials.manage" }, { href: "/usuarios", nome: "Usuários", exige: "users.manage" }] },
 ];
 /** Por enquanto, escritórios usam só NFS-e, memorandos, usuários e administração. */
-const LIBERADOS = ["Início", "Documentos Fiscais", "Memorandos", "Administração"];
+const LIBERADOS = ["Início", "Documentos Fiscais", "Memorandos", "Mensagens", "Administração"];
 const doEscritorio = (m: Item): Item => ({ ...m, filhos: m.filhos?.filter((f) => f.href !== "/notas/nfe-cte") });
 const iniciais = (n: string) => { const p = n.trim().split(/\s+/); return ((p[0]?.[0] ?? "") + (p.length > 1 ? p[p.length - 1][0] : "")).toUpperCase(); };
 
@@ -38,6 +39,14 @@ export default function Painel({ children }: { children: ReactNode }) {
   const [busca, setBusca] = useState("");
   const [sino, setSino] = useState(false);
   const rota = usePathname();
+  const [msgs, setMsgs] = useState<ResumoMensagens | null>(null);
+  useEffect(() => {
+    if (!pessoa?.organization) return;
+    const ler = () => { resumoMensagens().then(setMsgs).catch(() => undefined); };
+    ler(); const t = setInterval(ler, 20000);
+    window.addEventListener("neeko:mensagens", ler);
+    return () => { clearInterval(t); window.removeEventListener("neeko:mensagens", ler); };
+  }, [pessoa?.organization]);
   useEffect(() => {
     eu().then((p) => { const d = destinoApos(p); if (d !== "/inicio") window.location.assign(d); else { setPessoa(p); if (p.permissions.includes("fiscal.documents.read")) lerPainel().then(setDados).catch(() => undefined); } }).catch(() => undefined);
   }, []);
@@ -47,6 +56,7 @@ export default function Painel({ children }: { children: ReactNode }) {
     window.addEventListener("neeko:perfil", atualizar);
     return () => window.removeEventListener("neeko:perfil", atualizar);
   }, []);
+  const avisos = (dados?.pendencias ?? 0) + (msgs?.total ?? 0);
   const achadas = useMemo(() => {
     const q = busca.trim().toLowerCase(); if (!q) return [];
     const n = q.replace(/\D/g, "");
@@ -79,7 +89,7 @@ export default function Painel({ children }: { children: ReactNode }) {
         </nav>
         <div className={styles.pessoa}>
           {pessoa.avatar ? <img src={pessoa.avatar} alt="" className={styles.avatar} /> : <span className={styles.avatar}>{iniciais(pessoa.name)}</span>}
-          <span><b>{pessoa.name}</b><small>{pessoa.jobTitle || pessoa.organization?.name}</small></span>
+          <span><b>{pessoa.name}</b><small>{pessoa.organization?.name}</small></span>
         </div>
         <Link href="/perfil" className={styles.acaoLateral}>Meu perfil</Link>
         <button type="button" className={styles.acaoLateral} onClick={() => { void sair().finally(() => window.location.assign(telaEntrada())); }}><LogOut size={18} /> Sair</button>
@@ -94,8 +104,12 @@ export default function Painel({ children }: { children: ReactNode }) {
           </div>
           <span className={styles.espaco} />
           <div className={styles.sino}>
-            <button type="button" aria-label={`Pendências: ${dados?.pendencias ?? 0}`} aria-expanded={sino} onClick={() => setSino(!sino)}><Bell size={22} />{!!dados?.pendencias && <i>{dados.pendencias > 99 ? "99+" : dados.pendencias}</i>}</button>
-            {sino && <div className={styles.resultados}>{dados?.pendenciasLista.length ? dados.pendenciasLista.map((p) => <Link key={p.texto} href={p.rota}>{p.texto}</Link>) : <p>Nenhuma pendência.</p>}</div>}
+            <button type="button" aria-label={`Notificações: ${avisos}`} aria-expanded={sino} onClick={() => setSino(!sino)}><Bell size={22} />{!!avisos && <i>{avisos > 99 ? "99+" : avisos}</i>}</button>
+            {sino && <div className={styles.resultados}>
+              {msgs?.avisos.map((a) => <Link key={a.conversa + a.em} href={`/mensagens?c=${a.conversa}`}><b>{a.mencao ? `${a.de} marcou você` : `Mensagem de ${a.de}`}</b><small>{a.texto}</small></Link>)}
+              {dados?.pendenciasLista.map((p) => <Link key={p.texto} href={p.rota}>{p.texto}</Link>)}
+              {!avisos && <p>Nenhuma notificação.</p>}
+            </div>}
           </div>
           <b className={styles.org}>{pessoa.organization?.name}</b>
           <Link href="/perfil" aria-label="Meu perfil">{pessoa.avatar ? <img src={pessoa.avatar} alt="" className={styles.avatarTopo} /> : <span className={styles.avatarTopo}>{iniciais(pessoa.name)}</span>}</Link>

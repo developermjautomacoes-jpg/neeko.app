@@ -22,3 +22,13 @@ export function Button({ variante = "secondary", tamanho = "md", icone, carregan
     </button>
   );
 }
+
+/** Botão só com ícone: a dica aparece ao passar o cursor ou focar pelo teclado. */
+export function IconButton({ dica, icone, variante = "secondary", carregando, disabled, className, ...rest }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & { dica: string; icone: ReactNode; variante?: Variante; carregando?: boolean }) {
+  return (
+    <button type="button" {...rest} aria-label={dica} data-dica={dica} disabled={disabled || carregando}
+      className={[styles.btn, styles[variante], styles.soIcone, carregando ? styles.carregando : "", className].filter(Boolean).join(" ")}>
+      {icone}
+    </button>
+  );
+}

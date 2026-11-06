@@ -1,7 +1,8 @@
 "use client";
+import { Eye, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AmbienteNfse, DocumentoDfe, EmpresaDfe, FalhaDfe, ServicoDfe, SituacaoDfe } from "@/types/nfse";
-import { Badge, Button, Card, ConfirmDialog, DataTable, Input, KpiCard, Loading, Notice, PageHeader, Select, useToast } from "@neeko/ui";
+import { Badge, Button, Card, ConfirmDialog, DataTable, Input, KpiCard, Loading, Notice, PageHeader, Select, useToast, IconButton } from "@neeko/ui";
 import { dataBr, dataHora, formatarCnpj } from "@/lib/format";
 import { baixarXmlsDfe, capturarDfe, definirCapturaAuto, definirCiencia, enviarCiencias, listarDocumentos, listarEmpresasDfe, marcarCiencia, reiniciarDfe } from "@/services/fiscal";
 import { ROTULO_PAPEL, ROTULO_SITUACAO, exportarExcelDfe, valido } from "./dfeExcel";
@@ -198,8 +199,8 @@ export function DfePage() {
               { chave: "cap", titulo: "Última captura", render: (e) => <>{estadoLinha(e).map(({ s, st }) => <div key={s.id}>{st.ultimoErro ? <span className={styles.erro}>{s.nome}: {st.ultimoErro}</span> : <small>{s.nome}: {st.ultimaCaptura ? dataHora(st.ultimaCaptura) : "nunca"}{st.proximaEm && Date.parse(st.proximaEm) > Date.now() ? ` · libera ${hora(Date.parse(st.proximaEm ?? "") / 1000)}` : ""}</small>}</div>)}</> },
               { chave: "doc", titulo: "Documentos", render: (e) => <small>NF-e {e.nfe.documentos}{e.nfe.resumos > 0 ? ` (${e.nfe.resumos} só resumo)` : ""}<br />CT-e {e.cte.documentos}{e.falhas > 0 && <><br /><Badge tom="perigo">{e.falhas} com falha</Badge></>}</small> },
               { chave: "ac", titulo: "", alinhar: "direita", render: (e) => <div className={styles.acoes}>
-                <Button tamanho="sm" disabled={!e.nfe.documentos && !e.cte.documentos} onClick={() => setCnpjVista(e.id)}>Ver</Button>
-                <Button tamanho="sm" disabled={ocupado || (!e.nfe.ultimoNsu && !e.cte.ultimoNsu)} onClick={() => setRecomecar(e)}>Recomeçar</Button>
+                <IconButton dica="Ver documentos" icone={<Eye size={16} />} disabled={!e.nfe.documentos && !e.cte.documentos} onClick={() => setCnpjVista(e.id)} />
+                <IconButton dica="Recomeçar a busca" icone={<RotateCcw size={16} />} disabled={ocupado || (!e.nfe.ultimoNsu && !e.cte.ultimoNsu)} onClick={() => setRecomecar(e)} />
               </div> },
             ]} />
         )}

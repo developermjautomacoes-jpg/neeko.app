@@ -74,6 +74,8 @@ model Organization {
   plan Plan? @relation(fields: [planId], references: [id], onDelete: SetNull)
 
   memberships  OrganizationMembership[]
+  messages     Message[]
+  messageReads MessageRead[]
   companies    Company[]
   certificates FiscalCertificate[]
   settings     FiscalSettings?
@@ -451,6 +453,34 @@ model PasswordReset {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+/// Mensagem interna. Sem destinatário, vai para o canal Geral do escritório.
+model Message {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  senderId       String   @db.Uuid
+  recipientId    String?  @db.Uuid
+  text           String
+  mentions       String[] @db.Uuid
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, recipientId, createdAt])
+}
+
+model MessageRead {
+  organizationId String   @db.Uuid
+  userId         String   @db.Uuid
+  /// "geral" ou o id da outra pessoa.
+  conversation   String
+  readAt         DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, userId, conversation])
 }
 
 /// Registro imutável de ações sensíveis.

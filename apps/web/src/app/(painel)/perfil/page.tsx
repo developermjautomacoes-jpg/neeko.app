@@ -9,7 +9,6 @@ export default function Perfil() {
   const avisar = useToast();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [jobTitle, setCargo] = useState("");
   const [phone, setFone] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [pronto, setPronto] = useState(false);
@@ -18,7 +17,7 @@ export default function Perfil() {
   const [recorte, setRecorte] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [chave, setChave] = useState(0);
-  useEffect(() => { eu().then((p) => { setEmail(p.email); setName(p.name); setCargo(p.jobTitle); setFone(p.phone); setAvatar(p.avatar); setPronto(true); }).catch((x: Error) => setErro(x.message)); }, []);
+  useEffect(() => { eu().then((p) => { setEmail(p.email); setName(p.name); setFone(p.phone); setAvatar(p.avatar); setPronto(true); }).catch((x: Error) => setErro(x.message)); }, []);
 
   function escolher(f?: File) {
     if (!f) return;
@@ -29,7 +28,7 @@ export default function Perfil() {
   function fechar() { if (original) URL.revokeObjectURL(original); setOriginal(""); setChave((k) => k + 1); }
   async function gravar(foto: string | null) {
     setSalvando(true);
-    try { await salvarPerfil({ name, jobTitle, phone, avatar: foto }); setAvatar(foto); window.dispatchEvent(new Event("neeko:perfil")); avisar("Perfil salvo.", "sucesso"); return true; }
+    try { await salvarPerfil({ name, phone, avatar: foto }); setAvatar(foto); window.dispatchEvent(new Event("neeko:perfil")); avisar("Perfil salvo.", "sucesso"); return true; }
     catch (x) { avisar(x instanceof Error ? x.message : "Não foi possível salvar.", "erro"); return false; }
     finally { setSalvando(false); }
   }
@@ -51,7 +50,6 @@ export default function Perfil() {
           <div className={styles.form}>
             <Input rotulo="Nome" value={name} onChange={(e) => setName(e.target.value)} />
             <Input rotulo="E-mail de acesso" value={email} disabled dica="Para trocar, fale com quem administra a organização." />
-            <Input rotulo="Cargo" value={jobTitle} onChange={(e) => setCargo(e.target.value)} />
             <Input rotulo="Telefone" value={phone} onChange={(e) => setFone(e.target.value)} />
             <div className={styles.acoes}><Link href="/trocar-senha">Trocar senha</Link><Button variante="primary" carregando={salvando} onClick={() => void gravar(avatar)}>Salvar</Button></div>
           </div>

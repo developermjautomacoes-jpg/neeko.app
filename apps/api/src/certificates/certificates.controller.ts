@@ -18,7 +18,16 @@ export class CertificatesController {
   constructor(private prisma: PrismaService, private certs: CertificadosService, private auditoria: AuditoriaService, private escopo: EscopoService) {}
 
   @Exige("fiscal.credentials.manage") @Get()
-  async listar(@Ctx() c: Contexto) { return { certificados: (await this.certs.listar(c.organizationId)).filter((x) => !this.escopo.restrita(c, x.document)).map(publico).sort((a, b) => a.holder.localeCompare(b.holder)) }; }
+  async listar(@Ctx() c: Contexto) {
+    const certs = (await this.certs.listar(c.organizationId)).filter((x) => !this.escopo.restrita(c, x.document));
+    const empresas = await this.prisma.company.findMany({ where: this.escopo.filtro(c), orderBy: { legalName: "asc" }, select: { cnpj: true, legalName: true, nfseMode: true } });
+    const daRaiz = (doc: string) => (doc.length === 14 ? empresas.filter((e) => e.cnpj.slice(0, 8) === doc.slice(0, 8)) : []);
+    const raizes = new Set(certs.filter((x) => x.document.length === 14).map((x) => x.document.slice(0, 8)));
+    return {
+      certificados: certs.map((x) => ({ ...publico(x), empresas: daRaiz(x.document).map((e) => ({ cnpj: e.cnpj, razao: e.legalName })) })).sort((a, b) => a.validUntil.localeCompare(b.validUntil)),
+      semCertificado: empresas.filter((e) => e.nfseMode !== "procuracao" && !raizes.has(e.cnpj.slice(0, 8))).map((e) => ({ cnpj: e.cnpj, razao: e.legalName })),
+    };
+  }
 
   @Exige("fiscal.credentials.manage") @Post() @HttpCode(200)
   async importar(@Ctx() c: Contexto, @Body() corpo: unknown) {

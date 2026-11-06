@@ -1,6 +1,7 @@
 "use client";
+import { KeyRound, Link2, PauseCircle, Pencil, PlayCircle, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Badge, Button, Card, ConfirmDialog, DataTable, Input, KpiCard, Loading, Modal, Notice, PageHeader, Select, useToast } from "@neeko/ui";
+import { Badge, Button, Card, ConfirmDialog, DataTable, Input, KpiCard, Loading, Modal, Notice, PageHeader, Select, useToast, IconButton } from "@neeko/ui";
 import { formatarCnpj } from "@/lib/format";
 import { alterarEscritorio, criarEscritorio, excluirEscritorio, listarEscritorios, listarPlanos, redefinirGestor, situacaoEscritorio, type Escritorio, type Plano } from "@/services/conta";
 import styles from "../../pagina.module.css";
@@ -51,11 +52,11 @@ export default function Escritorios() {
         { chave: "u", titulo: "Uso", render: (e) => <small>{e.empresas}{e.maxCompanies !== null ? ` de ${e.maxCompanies}` : ""} empresas<br />{e.usuarios} usuários<br />{e.emUso}{e.maxUsers !== null ? ` de ${e.maxUsers}` : ""} em uso agora</small> },
         { chave: "v", titulo: "Pago até", render: (e) => (e.paidUntil ? (e.paidUntil < hoje() && !e.internal && !semCobranca(e) ? <Badge tom="perigo">{dataBr(e.paidUntil)}</Badge> : dataBr(e.paidUntil)) : "—") },
         { chave: "s", titulo: "Situação", render: (e) => <Badge tom={e.status === "ACTIVE" ? "sucesso" : "perigo"}>{e.status === "ACTIVE" ? "ativo" : "suspenso"}</Badge> },
-        { chave: "a", titulo: "", alinhar: "direita", render: (e) => <div className={styles.acoes}><Button tamanho="sm" onClick={() => setF({ ...vazio, id: e.id, slug: e.slug, name: e.name, cnpj: e.cnpj, contactEmail: e.contactEmail, contactPhone: e.contactPhone, planId: e.planId ?? "", billingExempt: e.billingExempt, paidUntil: e.paidUntil, notes: e.notes })}>Editar</Button>
-          {!e.internal && <Button tamanho="sm" onClick={() => void copiar(e)}>Copiar link</Button>}
-          {!e.internal && <Button tamanho="sm" onClick={() => setReset(e)}>Reiniciar senha</Button>}
-          {!e.internal && (e.status === "ACTIVE" ? <Button tamanho="sm" variante="danger" onClick={() => setSuspender(e)}>Suspender</Button> : <Button tamanho="sm" onClick={() => void trocar(e, "ACTIVE")}>Reativar</Button>)}
-          {!e.internal && <Button tamanho="sm" variante="danger" onClick={() => setExcluir(e)}>Excluir</Button>}</div> },
+        { chave: "a", titulo: "", alinhar: "direita", render: (e) => <div className={styles.acoes}><IconButton dica="Editar" icone={<Pencil size={16} />} onClick={() => setF({ ...vazio, id: e.id, slug: e.slug, name: e.name, cnpj: e.cnpj, contactEmail: e.contactEmail, contactPhone: e.contactPhone, planId: e.planId ?? "", billingExempt: e.billingExempt, paidUntil: e.paidUntil, notes: e.notes })} />
+          {!e.internal && <IconButton dica="Copiar link do escritório" icone={<Link2 size={16} />} onClick={() => void copiar(e)} />}
+          {!e.internal && <IconButton dica="Reiniciar senha" icone={<KeyRound size={16} />} onClick={() => setReset(e)} />}
+          {!e.internal && (e.status === "ACTIVE" ? <IconButton dica="Suspender" variante="danger" icone={<PauseCircle size={16} />} onClick={() => setSuspender(e)} /> : <IconButton dica="Reativar" icone={<PlayCircle size={16} />} onClick={() => void trocar(e, "ACTIVE")} />)}
+          {!e.internal && <IconButton dica="Excluir" variante="danger" icone={<Trash2 size={16} />} onClick={() => setExcluir(e)} />}</div> },
       ]} />}</Card>
     <Modal aberto={!!f} largura="lg" titulo={f?.id ? "Editar escritório" : "Novo escritório"} onFechar={() => setF(null)} rodape={<><Button onClick={() => setF(null)}>Voltar</Button><Button variante="primary" onClick={salvar}>Salvar</Button></>}>
       {f && <div className={styles.form}><div className={styles.colunas}><Input rotulo="Nome do escritório" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /><Input rotulo="CNPJ" value={f.cnpj} onChange={(e) => setF({ ...f, cnpj: e.target.value })} /><Input rotulo="E-mail de contato" value={f.contactEmail} onChange={(e) => setF({ ...f, contactEmail: e.target.value })} /><Input rotulo="Telefone" value={f.contactPhone} onChange={(e) => setF({ ...f, contactPhone: e.target.value })} />

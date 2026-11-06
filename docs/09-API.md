@@ -43,6 +43,9 @@ Base `/api/v1`. Sessão por cookie httpOnly; a organização vem da sessão, nun
 - `GET /public/offices/:slug` (público: nome e logo do escritório ativo)
 - `POST /auth/login` aceita `escritorio` (slug): sem ele, só a equipe Neeko entra; com ele, só membros daquele escritório, e o Gerencial fica bloqueado.
 - `PUT /office` (logo e contatos do escritório; permissão `office.manage`)
+- `GET /messages`, `GET|POST /messages/:conversa`, `POST /messages/:conversa/read` (`geral` ou id da pessoa; só dentro do escritório)
+- `PUT /users/:id/job-title` (cargo, com `users.manage`); `PATCH /me` não altera mais o cargo
+- `GET /certificates` devolve também as empresas de cada certificado e `semCertificado`
 - `POST /office/import` (pacote cifrado de migração do app Facilitar, sempre para o escritório logado)
 - `POST /auth/forgot-password` e `POST /auth/reset-password` (código de 6 números por e-mail, válido por 15 minutos e 5 tentativas)
 - `/platform/plans`, `/platform/offices`, `/platform/offices/:id/status`, `/platform/offices/:id/reset-manager`
