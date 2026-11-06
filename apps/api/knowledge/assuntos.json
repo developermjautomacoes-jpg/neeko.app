@@ -1,9 +1,51 @@
 [
-  { "id": "especialista-efd-icms-ipi", "nome": "EFD ICMS/IPI", "descricao": "SPED Fiscal: registros, leiaute, validações do PVA e apuração" },
-  { "id": "especialista-nfe", "nome": "NF-e e NFC-e", "descricao": "Rejeições, campos do XML, eventos e Notas Técnicas" },
-  { "id": "simples-nacional-cgsn140", "nome": "Simples Nacional", "descricao": "Anexos, fator r, sublimite, MEI e Resolução CGSN 140" },
-  { "id": "especialista-reforma-tributaria", "nome": "Reforma Tributária", "descricao": "IBS, CBS, Imposto Seletivo, créditos e transição" },
-  { "id": "reforma-tributaria-simples", "nome": "Reforma no Simples", "descricao": "Transição do Simples: regime regular e híbrido" },
-  { "id": "especialista-invest-es", "nome": "INVEST-ES e FUNDAP", "descricao": "Benefícios, modalidades, apuração e vedações no ES" },
-  { "id": "lucro-presumido-in2305", "nome": "Lucro Presumido", "descricao": "Acréscimo de 10% na presunção de IRPJ/CSLL (IN 2305 e 2307)" }
+  {
+    "id": "especialista-efd-icms-ipi",
+    "nome": "EFD ICMS/IPI",
+    "descricao": "SPED Fiscal: registros, leiaute, validações do PVA e apuração",
+    "area": "Fiscal",
+    "icone": "arquivo"
+  },
+  {
+    "id": "especialista-nfe",
+    "nome": "NF-e e NFC-e",
+    "descricao": "Rejeições, campos do XML, eventos e Notas Técnicas",
+    "area": "Fiscal",
+    "icone": "nota"
+  },
+  {
+    "id": "simples-nacional-cgsn140",
+    "nome": "Simples Nacional",
+    "descricao": "Anexos, fator r, sublimite, MEI e Resolução CGSN 140",
+    "area": "Fiscal",
+    "icone": "calculo"
+  },
+  {
+    "id": "especialista-reforma-tributaria",
+    "nome": "Reforma Tributária",
+    "descricao": "IBS, CBS, Imposto Seletivo, créditos e transição",
+    "area": "Fiscal",
+    "icone": "balanca"
+  },
+  {
+    "id": "reforma-tributaria-simples",
+    "nome": "Reforma no Simples",
+    "descricao": "Transição do Simples: regime regular e híbrido",
+    "area": "Fiscal",
+    "icone": "transicao"
+  },
+  {
+    "id": "especialista-invest-es",
+    "nome": "INVEST-ES e FUNDAP",
+    "descricao": "Benefícios, modalidades, apuração e vedações no ES",
+    "area": "Fiscal",
+    "icone": "fabrica"
+  },
+  {
+    "id": "lucro-presumido-in2305",
+    "nome": "Lucro Presumido",
+    "descricao": "Acréscimo de 10% na presunção de IRPJ/CSLL (IN 2305 e 2307)",
+    "area": "Fiscal",
+    "icone": "percentual"
+  }
 ]

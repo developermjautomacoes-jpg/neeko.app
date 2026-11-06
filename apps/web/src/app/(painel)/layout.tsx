@@ -22,8 +22,8 @@ const MENU: Item[] = [
   { nome: "Contratos", icone: Handshake },
   { nome: "Mensagens", icone: MessageCircle, href: "/mensagens" },
   { nome: "Relatórios", icone: PieChart },
-  { nome: "Neeko Gerencial", icone: Building2, plataforma: true, filhos: [{ href: "/plataforma/escritorios", nome: "Escritórios", exige: "" }, { href: "/plataforma/planos", nome: "Planos", exige: "" }] },
-  { nome: "Administração", icone: Settings, filhos: [{ href: "/escritorio", nome: "Perfil do escritório", exige: "office.manage" }, { href: "/empresas", nome: "Empresas", exige: "memoranda.read" }, { href: "/certificados", nome: "Certificados", exige: "fiscal.credentials.manage" }, { href: "/usuarios", nome: "Usuários", exige: "users.manage" }] },
+  { nome: "Neeko Gerencial", icone: Building2, plataforma: true, filhos: [{ href: "/plataforma/escritorios", nome: "Escritórios", exige: "" }, { href: "/plataforma/planos", nome: "Planos", exige: "" }, { href: "/plataforma/solicitacoes", nome: "Solicitações", exige: "" }] },
+  { nome: "Administração", icone: Settings, filhos: [{ href: "/escritorio", nome: "Perfil do escritório", exige: "office.manage" }, { href: "/empresas", nome: "Empresas", exige: "memoranda.read" }, { href: "/atividades", nome: "Histórico de atividades", exige: "gestao" }, { href: "/certificados", nome: "Certificados", exige: "fiscal.credentials.manage" }, { href: "/usuarios", nome: "Usuários", exige: "users.manage" }] },
 ];
 /** Por enquanto, escritórios usam só NFS-e, memorandos, usuários e administração. */
 const LIBERADOS = ["Início", "Documentos Fiscais", "Mensagens", "Administração"];
@@ -69,7 +69,7 @@ export default function Painel({ children }: { children: ReactNode }) {
   }, [busca, dados]);
   if (!pessoa) return <Loading />;
   if (!pessoa.organization && !pessoa.platformAdmin) return <div className={styles.conteudo}><Notice tom="alerta">O acesso deste escritório está suspenso. Fale com a Neeko.</Notice></div>;
-  const pode = (p?: string) => !p || pessoa.permissions.includes(p);
+  const pode = (p?: string) => p === "gestao" ? pessoa?.organization?.role === "ORG_OWNER" || pessoa?.organization?.role === "ORG_ADMIN" : !p || pessoa.permissions.includes(p);
   return (
     <div className={styles.painel}>
       <aside className={[styles.lateral, menu ? styles.aberta : ""].join(" ")}>

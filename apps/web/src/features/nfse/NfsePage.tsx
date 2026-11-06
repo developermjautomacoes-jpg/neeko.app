@@ -7,6 +7,7 @@ import { arquivoParaBase64, dataBr, dataHora, formatarCnpj } from "@/lib/format"
 import { baixarXmls, buscarXmls, capturarLote, definirModo, definirProcurador, diagnosticar, enviarCertificado, lerAgenda, lerProcurador, listarEmpresas, listarNotas, reiniciarCaptura, salvarAgenda, verificarEventos } from "@/services/fiscal";
 import { ROTULO_RET_ISS, ROTULO_SITUACAO, exportarExcel, issRetido, valida } from "./nfseExcel";
 import { gerarDanfsePdf, mostrarPdf } from "./nfseDanfse";
+import Link from "next/link";
 import styles from "./NfsePage.module.css";
 
 const PAUSA_LOTES_MS = 2500;   // entre lotes: o ADN bloqueia consultas em sequência rápida (HTTP 429)
@@ -257,21 +258,22 @@ export function NfsePage() {
           {!vista ? <Card><p className={styles.vazio}>Selecione uma empresa na lista para ver as notas capturadas.</p></Card> : <>
             <Card>
               <div className={styles.cabecaEmpresa}>
-                <div><h2>{vista.razao || "(sem nome)"}</h2><small>{formatarCnpj(vista.cnpj)}</small></div>
+                <div><h2>{vista.razao || "(sem nome)"}</h2><small>{vista.fantasia && `${vista.fantasia} · `}{formatarCnpj(vista.cnpj)}{vista.cadastroId && <> · <Link href={`/empresas/${vista.cadastroId}`}>Ver cadastro</Link></>}</small></div>
                 <div className={styles.acoes}>
                   <IconButton dica="Diagnosticar conexão" icone={<Stethoscope size={16} />} disabled={ocupado || !vista.certificado} carregando={diagnosticando === vista.id} onClick={() => rodarDiagnostico(vista.id)} />
                   <IconButton dica="Recomeçar a busca" icone={<RotateCcw size={16} />} disabled={ocupado || vista.ultimoNsu === 0} onClick={() => setRecomecar(vista)} />
-                  <Button variante="primary" disabled={ocupado || !vista.certificado || certVencido(vista)} onClick={() => void capturar([vista.id])}>Capturar notas</Button>
+                  <Button variante="primary" disabled={ocupado || !vista.certificado || certVencido(vista)} onClick={() => void capturar([vista.id])}>Buscar novas notas</Button>
                 </div>
               </div>
               <div className={styles.dadosEmpresa}>
                 <Select rotulo="Buscar por" value={vista.modo} disabled={ocupado} onChange={(x) => void trocarModo(vista.id, x.target.value as ModoBuscaNfse)}><option value="certificado">Certificado da empresa</option><option value="procuracao">Procuração</option></Select>
                 <div><span>Certificado</span>{!vista.certificado ? <Badge tom="alerta">{vista.modo === "procuracao" ? "cadastre o procurador" : "sem certificado"}</Badge> : certVencido(vista) ? <Badge tom="perigo">vencido em {dataBr(vista.certificado.validade)}</Badge> : <p>{vista.certificado.nome}<small>até {dataBr(vista.certificado.validade)}</small></p>}</div>
                 <div><span>Última captura</span>{vista.ultimoErro ? <p className={styles.erro}>{vista.ultimoErro}</p> : vista.ultimaCaptura ? <p>{dataHora(vista.ultimaCaptura)}<small>NSU {vista.ultimoNsu}</small></p> : <p>Nunca</p>}</div>
+                <div><span>Regime</span><p>{vista.regime || "Não informado"}</p></div>
                 <div><span>Notas</span><p>{vista.notas}{vista.falhas > 0 && <> <Badge tom="perigo">{vista.falhas} com falha</Badge></>}</p></div>
               </div>
             </Card>
-            <div className={styles.notas}><Card titulo="Notas capturadas" descricao="Totais sem canceladas e substituídas.">
+            <div className={styles.notas}><Card titulo="Notas capturadas" descricao="Ficam disponíveis para toda a equipe depois de baixadas. Totais sem canceladas e substituídas.">
           <div className={styles.filtros}>
             <Select rotulo="Competência" value={competencia} disabled={!competencias.length} onChange={(e) => void carregarNotas(cnpjVista, e.target.value)}>
               {competencias.map((c) => <option key={c.competencia} value={c.competencia}>{c.competencia.split("-").reverse().join("/")} ({c.notas})</option>)}
@@ -296,7 +298,8 @@ export function NfsePage() {
               <Button tamanho="sm" disabled={ocupado} onClick={verificar}>{verificando ? `Verificando ${verificando}` : "Verificar cancelamentos"}</Button>
             </div>
           </>}
-          {cnpjVista && (
+          {cnpjVista && !notas.length && <p className={styles.vazio}>Nenhuma nota baixada para esta empresa ainda. Clique em Buscar novas notas.</p>}
+          {cnpjVista && notas.length > 0 && (
             <DataTable linhas={visiveis} chaveLinha={(n) => n.chave} vazio="Nenhuma nota com esses filtros."
               colunas={[
                 { chave: "sel", titulo: <input type="checkbox" aria-label="Selecionar todas" checked={todasVisiveis} onChange={alternarTodas} />, largura: "36px", render: (n) => <input type="checkbox" aria-label={`Selecionar nota ${n.numero}`} checked={selecao.has(n.chave)} onChange={() => alternarNota(n.chave)} /> },

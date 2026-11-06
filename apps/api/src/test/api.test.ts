@@ -281,11 +281,22 @@ test("administração faz tudo, menos excluir a proprietária", async () => {
 });
 test("assistente responde só com as bases cadastradas", async () => {
   assert.equal((await new Sessao().get("/assistant/topics")).status, 401, "exige login");
-  const t = (await ana.get("/assistant/topics")).corpo.assuntos; assert.equal(t.length, 7);
+  const t = (await ana.get("/assistant/topics")).corpo.assuntos; assert.equal(t.length, 7); assert.equal(t[0].area, "Fiscal");
   const r = (await ana.post("/assistant/ask", { pergunta: "fator r anexo III" })).corpo.resultados; assert.ok(r.length > 0); assert.equal(r[0].assunto, "Simples Nacional");
   const f = (await ana.post("/assistant/ask", { pergunta: "fator r", assunto: "especialista-invest-es" })).corpo.resultados; assert.ok(f.every((x: any) => x.assunto === "INVEST-ES e FUNDAP"));
   assert.deepEqual((await ana.post("/assistant/ask", { pergunta: "qual a receita de bolo de cenoura" })).corpo.resultados, [], "fora das bases não responde");
   assert.equal((await ana.post("/assistant/ask", { pergunta: "x".repeat(301) })).status, 400);
+});
+test("solicitação de assunto e histórico de atividades", async () => {
+  assert.equal((await ana.post("/assistant/requests", { texto: "  " })).status, 400);
+  assert.equal((await ana.post("/assistant/requests", { texto: "Folha de pagamento" })).status, 201);
+  const sol = (await ana.get("/platform/topic-requests")).corpo.solicitacoes; assert.equal(sol[0].texto, "Folha de pagamento");
+  await prisma.topicRequest.deleteMany({});
+  const a = (await ana.get("/office/activity")).corpo; assert.ok(a.atividades.length > 0); assert.ok(a.atividades.some((x: any) => x.acao === "Entrou no sistema")); assert.ok(a.pessoas.length > 0);
+  const senha = "Provisoria456"; await ana.post("/users", { name: "Sem Gestao", email: "sg@a.test", senhaProvisoria: senha, role: "STAFF", permissions: ["audit.read"], allCompanies: false, companyIds: [] });
+  await prisma.user.update({ where: { email: "sg@a.test" }, data: { mustChangePassword: false } });
+  const sg = await logar("sg@a.test", senha); assert.equal((await sg.get("/office/activity")).status, 403, "colaborador não vê o histórico"); assert.equal((await sg.get("/platform/topic-requests")).status, 403);
+  await prisma.user.delete({ where: { email: "sg@a.test" } });
 });
 test("redefinir senha por código enviado no e-mail", async () => {
   const c = new Sessao(), { hashSenha } = await import("../common/passwords");

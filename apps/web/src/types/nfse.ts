@@ -5,7 +5,7 @@ export type ModoBuscaNfse = "certificado" | "procuracao";
 export interface CertificadoNfse { id: string; nome: string; documento: string; validade: string }
 export interface EmpresaCert { cnpj: string; razao: string }
 export interface Certificado { id: string; holder: string; document: string; kind: string; validUntil: string; nickname: string; createdAt: string; empresas: EmpresaCert[] }
-export interface EmpresaNfse { id: string; cnpj: string; razao: string; certId: string; modo: ModoBuscaNfse; certificado: CertificadoNfse | null; ultimoNsu: number; ultimaCaptura: string | null; ultimoErro: string | null; notas: number; falhas: number }
+export interface EmpresaNfse { cadastroId: string; regime: string; fantasia: string; id: string; cnpj: string; razao: string; certId: string; modo: ModoBuscaNfse; certificado: CertificadoNfse | null; ultimoNsu: number; ultimaCaptura: string | null; ultimoErro: string | null; notas: number; falhas: number }
 /** Valores em centavos inteiros (a API devolve decimal em texto). */
 export interface NotaNfse {
   chave: string; nsu: number; papel: PapelNfse; competencia: string; emissao: string; numero: string; serie: string; prest_doc: string; prest_nome: string; toma_doc: string; toma_nome: string;

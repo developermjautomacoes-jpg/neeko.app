@@ -41,7 +41,7 @@
 .cabecaEmpresa { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
 .cabecaEmpresa h2 { margin: 0; font-size: var(--text-lg); }
 .cabecaEmpresa small { color: var(--color-text-muted); }
-.dadosEmpresa { display: grid; grid-template-columns: minmax(200px, 1.2fr) 1.2fr 1fr 0.6fr; gap: var(--space-4); margin-top: var(--space-4); }
+.dadosEmpresa { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
 .dadosEmpresa span { display: block; margin-bottom: 4px; color: var(--color-text-muted); font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .dadosEmpresa p { margin: 0; font-size: var(--text-sm); }
 .dadosEmpresa p small { display: block; color: var(--color-text-muted); }

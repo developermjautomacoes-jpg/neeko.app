@@ -64,3 +64,11 @@
 .vazio { margin: 0; color: var(--color-text-muted); font-size: var(--text-sm); }
 @media (max-width: 1280px) { .meio { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .meio > :first-child { grid-column: 1 / -1; } .indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 720px) { .hero, .meio, .fim, .indicadores { grid-template-columns: minmax(0, 1fr); } .meio > :first-child { grid-column: auto; } .hero { padding: var(--space-5); } .hero h1 { font-size: 1.8rem; } .ondas { display: none; } .saude { flex-direction: column; align-items: stretch; } .anel { align-self: center; } }
+
+button.indicador { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; }
+a.indicador { color: inherit; text-decoration: none; }
+.indicador { transition: transform 140ms ease, box-shadow 140ms ease; }
+.indicador:hover, .indicador:focus-visible { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.listaPendencias { display: flex; flex-direction: column; gap: var(--space-1); }
+.listaPendencias a { padding: var(--space-3); border-radius: var(--radius-sm); background: var(--color-surface-2); color: var(--color-text); text-decoration: none; }
+.listaPendencias a:hover { background: var(--color-brand-soft); }

@@ -76,6 +76,7 @@ model Organization {
   messages     Message[]
   messageReads MessageRead[]
   chats        Chat[]
+  topicRequests TopicRequest[]
   companies    Company[]
   certificates FiscalCertificate[]
   settings     FiscalSettings?
@@ -510,6 +511,19 @@ model MessageRead {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@id([organizationId, userId, conversation])
+}
+
+/// Pedido de novo assunto para o Assistente Neeko.
+model TopicRequest {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  userId         String   @db.Uuid
+  text           String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
 }
 
 /// Registro imutável de ações sensíveis.

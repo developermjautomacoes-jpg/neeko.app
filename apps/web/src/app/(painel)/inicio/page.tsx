@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowRight, ArrowUp, Building2, CheckCircle2, CircleAlert, CircleDollarSign, Clock3, FileSearch, FileText, Mail, ShieldCheck, TriangleAlert, Users, Zap, type LucideIcon } from "lucide-react";
-import { Loading, Notice } from "@neeko/ui";
+import { Loading, Modal, Notice } from "@neeko/ui";
 import { centavos, dataHora } from "@/lib/format";
 import { eu, type Eu } from "@/services/conta";
 import { lerPainel, type Painel } from "@/services/fiscal";
@@ -25,12 +25,13 @@ function Faisca({ valores, cor }: { valores: number[]; cor: string }) {
   const max = Math.max(...valores, 1), P = valores.map((v, i) => `${(i * 110) / (valores.length - 1)},${44 - (v / max) * 40}`);
   return <svg className={styles.faisca} viewBox="0 0 110 46" aria-hidden><polygon points={`0,46 ${P.join(" ")} 110,46`} fill={cor} opacity=".14" /><polyline points={P.join(" ")} fill="none" stroke={cor} strokeWidth="2" /></svg>;
 }
-function Indicador({ icone: I, cor, fundo, rotulo, valor, variacao, serie }: { icone: LucideIcon; cor: string; fundo: string; rotulo: string; valor: string; variacao?: number | null; serie?: number[] }) {
-  return <div className={styles.indicador}>
+function Indicador({ icone: I, cor, fundo, rotulo, valor, variacao, serie, href, onClick }: { icone: LucideIcon; cor: string; fundo: string; rotulo: string; valor: string; variacao?: number | null; serie?: number[]; href?: string; onClick?: () => void }) {
+  const miolo = <>
     <span className={styles.icone} style={{ color: cor, background: fundo }}><I size={28} /></span>
     <div className={styles.indTexto}><span>{rotulo}</span><b>{valor}</b>{variacao !== undefined && <Variacao v={variacao} />}</div>
     {serie && <Faisca valores={serie} cor={cor} />}
-  </div>;
+  </>;
+  return href ? <Link href={href} className={styles.indicador}>{miolo}</Link> : <button type="button" className={styles.indicador} onClick={onClick}>{miolo}</button>;
 }
 
 export default function Inicio() {
@@ -41,6 +42,7 @@ export default function Inicio() {
     eu().then((p) => { setPessoa(p); if (p.permissions.includes("fiscal.documents.read")) return lerPainel().then(setD); setErro("Peça a quem administra sua organização o acesso às notas."); }).catch((x: Error) => setErro(x.message));
   }, []);
   const nome = pessoa?.name.split(" ")[0] ?? "";
+  const [pendencias, setPendencias] = useState(false);
   if (erro) return <Notice tom="alerta">{erro}</Notice>;
   if (!d) return <Loading />;
   const pontos = d.serie.map((p) => ({ competencia: p.competencia, centavos: centavos(p.valor) }));
@@ -66,10 +68,10 @@ export default function Inicio() {
       </section>
 
       <section className={styles.indicadores} aria-label="Indicadores">
-        <Indicador icone={Building2} cor="var(--tom-1)" fundo="var(--tom-1-fundo)" rotulo="Empresas Atendidas" valor={String(d.empresas)} />
-        <Indicador icone={FileText} cor="var(--tom-2)" fundo="var(--tom-2-fundo)" rotulo="Notas Capturadas (Mês)" valor={d.notasMes.toLocaleString("pt-BR")} variacao={d.notasVariacao} serie={d.serie.map((p) => p.notas)} />
-        <Indicador icone={CircleDollarSign} cor="var(--tom-3)" fundo="var(--tom-3-fundo)" rotulo="Serviços Prestados (Mês)" valor={brl(centavos(d.servicosMes))} variacao={d.servicosVariacao} serie={pontos.map((p) => p.centavos)} />
-        <Indicador icone={TriangleAlert} cor="#F2780C" fundo="#FFE9D6" rotulo="Pendências Fiscais" valor={String(d.pendencias)} />
+        <Indicador icone={Building2} cor="var(--tom-1)" fundo="var(--tom-1-fundo)" rotulo="Empresas Atendidas" valor={String(d.empresas)} href="/empresas" />
+        <Indicador icone={FileText} cor="var(--tom-2)" fundo="var(--tom-2-fundo)" rotulo="Notas Capturadas (Mês)" valor={d.notasMes.toLocaleString("pt-BR")} variacao={d.notasVariacao} serie={d.serie.map((p) => p.notas)} href="/notas/nfse" />
+        <Indicador icone={CircleDollarSign} cor="var(--tom-3)" fundo="var(--tom-3-fundo)" rotulo="Serviços Prestados (Mês)" valor={brl(centavos(d.servicosMes))} variacao={d.servicosVariacao} serie={pontos.map((p) => p.centavos)} href="/notas/nfse" />
+        <Indicador icone={TriangleAlert} cor="#F2780C" fundo="#FFE9D6" rotulo="Pendências Fiscais" valor={String(d.pendencias)} onClick={() => setPendencias(true)} />
       </section>
 
       <section className={styles.meio}>
@@ -102,6 +104,9 @@ export default function Inicio() {
           {d.pendenciasLista.length ? <ul className={styles.atividade}>{d.pendenciasLista.slice(0, 5).map((p) => <li key={p.texto}><i className={styles.pontoAlerta} aria-hidden /><Link href={p.rota}>{p.texto}</Link></li>)}</ul> : <p className={styles.vazio}>Nenhuma pendência.</p>}
         </article>
       </section>
+      <Modal aberto={pendencias} titulo="Pendências" largura="sm" onFechar={() => setPendencias(false)}>
+        {d.pendenciasLista.length ? <div className={styles.listaPendencias}>{d.pendenciasLista.map((p) => <Link key={p.texto} href={p.rota}>{p.texto}</Link>)}</div> : <p>Nenhuma pendência.</p>}
+      </Modal>
     </div>
   );
 }

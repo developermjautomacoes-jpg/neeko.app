@@ -43,6 +43,7 @@ Base `/api/v1`. Sessão por cookie httpOnly; a organização vem da sessão, nun
 - `GET /public/offices/:slug` (público: nome e logo do escritório ativo)
 - `POST /auth/login` aceita `escritorio` (slug): sem ele, só a equipe Neeko entra; com ele, só membros daquele escritório, e o Gerencial fica bloqueado.
 - `PUT /office` (logo e contatos do escritório; permissão `office.manage`)
+- `GET /office/activity` (proprietária e administração), `POST /assistant/requests` e `GET /platform/topic-requests`
 - `GET /assistant/topics` e `POST /assistant/ask` (busca local nas bases de `apps/api/knowledge`; a pergunta não é guardada)
 - `PUT /office/theme` (`verde`, `azul`, `roxo`, `dourado` ou `marinho`)
 - `GET /messages`, `GET|POST /messages/:conversa`, `POST /messages/:conversa/read` (`geral` ou id da pessoa; só dentro do escritório)

@@ -78,6 +78,12 @@ export class PlataformaController {
     await this.prisma.$transaction([this.prisma.organization.update({ where: { id: o.id }, data: { status } }), this.prisma.session.deleteMany({ where: { organizationId: o.id } })]);
     await this.auditoria.registrar(null, r.sessao.userId, "platform.office.status", id, { status }); return { ok: true };
   }
+  @Plataforma() @Get("topic-requests")
+  async solicitacoes() {
+    const l = await this.prisma.topicRequest.findMany({ orderBy: { createdAt: "desc" }, take: 300, include: { organization: { select: { name: true } } } });
+    return { solicitacoes: l.map((x) => ({ id: x.id, escritorio: x.organization.name, texto: x.text, em: x.createdAt })) };
+  }
+
   /** Apaga o escritório e tudo dele. Exige repetir o nome; quem só pertence a ele perde o login. */
   @Plataforma() @Delete("offices/:id")
   async excluir(@Req() r: Req2, @Param("id") id: string, @Body() c: unknown) {

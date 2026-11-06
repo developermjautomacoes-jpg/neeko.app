@@ -74,7 +74,7 @@ function Conversas() {
     {erro && <Notice tom="erro">{erro}</Notice>}
     <div className={styles.grade}>
       <aside className={styles.lista}>
-        <button type="button" className={`${styles.item} ${styles.robo} ${conversa === "assistente" ? styles.atual : ""}`} onClick={() => setConversa("assistente")}><img src="/neeko-robo-rosto.png" alt="" width={36} height={36} /><span><b>Assistente Neeko</b><small>Tire dúvidas fiscais</small></span></button>
+        <button type="button" className={`${styles.item} ${styles.robo} ${conversa === "assistente" ? styles.atual : ""}`} onClick={() => setConversa("assistente")}><img src="/neeko-robo-rosto.png" alt="" width={36} height={36} /><span><b>Assistente Neeko</b><small>Tire dúvidas do escritório</small></span></button>
         {item("geral", "Geral", resumo?.geral.ultima?.texto ?? "Toda a equipe", resumo?.geral.naoLidas ?? 0)}
         <div className={styles.secao}><span>Grupos</span><IconButton dica="Novo grupo" icone={<Users size={15} />} onClick={() => setModal({ tipo: "novo", nome: "", privado: true, pessoas: [] })} /></div>
         {resumo?.grupos.map((g) => item(g.id, `${g.privado ? "🔒 " : ""}${g.nome}`, g.ultima?.texto ?? `${g.participantes.length} participante(s)`, g.participa ? g.naoLidas : 0))}

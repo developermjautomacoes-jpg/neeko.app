@@ -48,7 +48,11 @@ export const incluirNoGrupo = (id: string, pessoas: string[]) => api("POST", `me
 export const privacidadeGrupo = (id: string, privado: boolean) => api("PATCH", `messages/groups/${id.slice(2)}`, { privado });
 export const sairDoGrupo = (id: string) => api("POST", `messages/groups/${id.slice(2)}/leave`, {});
 export const encaminharMensagem = (conversa: string, id: string, destino: string) => api("POST", `messages/${conversa}/${id}/forward`, { destino });
-export interface AssuntoAssistente { id: string; nome: string; descricao: string }
+export interface AssuntoAssistente { id: string; nome: string; descricao: string; area: string; icone: string }
 export interface ResultadoAssistente { assunto: string; titulo: string; trecho: string }
 export const lerAssuntos = async () => (await api<{ assuntos: AssuntoAssistente[] }>("GET", "assistant/topics")).assuntos;
 export const perguntarAssistente = async (pergunta: string, assunto?: string) => (await api<{ resultados: ResultadoAssistente[] }>("POST", "assistant/ask", { pergunta, assunto })).resultados;
+export const solicitarAssunto = (texto: string) => api("POST", "assistant/requests", { texto });
+export interface Atividade { id: string; em: string; pessoa: string; acao: string }
+export const lerAtividades = (f: { pessoa?: string; de?: string; ate?: string }) => api<{ pessoas: { id: string; nome: string }[]; atividades: Atividade[] }>("GET", `office/activity?${new URLSearchParams(Object.entries(f).filter(([, v]) => v) as [string, string][])}`);
+export const lerSolicitacoes = async () => (await api<{ solicitacoes: { id: string; escritorio: string; texto: string; em: string }[] }>("GET", "platform/topic-requests")).solicitacoes;

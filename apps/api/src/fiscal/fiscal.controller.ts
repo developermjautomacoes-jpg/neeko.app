@@ -37,11 +37,12 @@ export class FiscalController {
   async listarNfse(@Ctx() c: Contexto, @Query("ambiente") a: unknown) {
     const environment = amb(a), lista_ = await this.empresas(c), ids = lista_.map((e) => e.id), org = c.organizationId;
     const onde = { organizationId: org, environment, companyId: { in: ids } };
+    const memos = await this.prisma.memorandum.findMany({ where: { organizationId: org, companyId: { in: ids }, status: "ativo" }, select: { id: true, companyId: true, data: true } });
     const [certs, procurador, estados, notas, falhas] = await Promise.all([this.certs.listar(org), this.certs.procurador(org), this.prisma.nfseState.findMany({ where: onde }),
       this.prisma.nfseDocument.groupBy({ by: ["companyId"], where: onde, _count: true }), this.prisma.nfseFailure.groupBy({ by: ["companyId"], where: onde, _count: true })]);
     return { empresas: lista_.map((e) => {
-      const st = estados.find((s) => s.companyId === e.id);
-      return { id: e.id, cnpj: e.cnpj, razao: e.legalName, certId: e.certificateId ?? "", modo: e.nfseMode, certificado: certPublico(e.nfseMode === "procuracao" ? procurador : this.certs.escolher(certs, e.cnpj, e.certificateId)),
+      const st = estados.find((s) => s.companyId === e.id), m = memos.find((x) => x.companyId === e.id), dm = (m?.data ?? {}) as Record<string, unknown>;
+      return { id: e.id, cadastroId: m?.id ?? "", regime: String(dm.t_regime ?? ""), fantasia: String(dm.e_fantasia ?? ""), cnpj: e.cnpj, razao: e.legalName, certId: e.certificateId ?? "", modo: e.nfseMode, certificado: certPublico(e.nfseMode === "procuracao" ? procurador : this.certs.escolher(certs, e.cnpj, e.certificateId)),
         ultimoNsu: Number(st?.lastNsu ?? 0), ultimaCaptura: st?.lastCaptureAt ?? null, ultimoErro: st?.lastError ?? null, notas: notas.find((n) => n.companyId === e.id)?._count ?? 0, falhas: falhas.find((n) => n.companyId === e.id)?._count ?? 0 };
     }) };
   }

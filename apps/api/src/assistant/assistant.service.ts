@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-interface Assunto { id: string; nome: string; descricao: string }
+interface Assunto { id: string; nome: string; descricao: string; area: string; icone: string }
 interface Bloco { assunto: string; titulo: string; texto: string; arquivo: string; termos: Map<string, number>; tamanho: number; tituloTermos: Set<string> }
 
 const RAIZ = join(process.cwd(), "knowledge");
