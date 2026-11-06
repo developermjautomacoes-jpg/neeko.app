@@ -30,7 +30,7 @@ export function NfsePage() {
   const [progresso, setProgresso] = useState<Progresso | null>(null);
   const [relatorio, setRelatorio] = useState<string[]>([]);
   const parar = useRef(false);
-  const [cnpjVista, setCnpjVista] = useState("");
+  const [cnpjVista, setCnpjVista] = useState(() => (typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("empresa") ?? ""));
   const [competencia, setCompetencia] = useState("");
   const [competencias, setCompetencias] = useState<{ competencia: string; notas: number }[]>([]);
   const [notas, setNotas] = useState<NotaNfse[]>([]);
@@ -244,7 +244,7 @@ export function NfsePage() {
         )}
         {relatorio.length > 0 && <ul className={styles.relatorio}>{relatorio.map((l) => <li key={l}>{l}</li>)}</ul>}
         {carregando ? <Loading /> : (
-          <DataTable linhas={empresas} chaveLinha={(e) => e.id} vazio="Nenhuma empresa. Importe um certificado na tela Certificados ou inclua um CNPJ."
+          <DataTable linhas={empresas} chaveLinha={(e) => e.id} vazio="Nenhuma empresa. Importe um certificado em Administração ou inclua um CNPJ."
             colunas={[
               { chave: "sel", titulo: "", largura: "36px", render: (e) => <input type="checkbox" aria-label={`Selecionar ${e.razao}`} checked={marcadas.has(e.id)} disabled={ocupado || !e.certificado || certVencido(e)} onChange={() => marcar(e.id)} /> },
               { chave: "emp", titulo: "Empresa", render: (e) => <><b>{e.razao || "(sem nome)"}</b><br /><small>{formatarCnpj(e.cnpj)}</small></> },

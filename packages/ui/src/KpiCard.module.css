@@ -1,7 +1,6 @@
 .kpi {
   display: flex; flex-direction: column; gap: 2px; min-width: 0;
-  background: var(--color-surface); border: var(--border-width) solid var(--color-border);
-  border-top: 3px solid var(--color-brand); border-radius: var(--radius-md);
+  background: var(--color-surface-2); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-md);
   padding: var(--space-4) var(--space-5); box-shadow: var(--shadow-sm);
 }
 .destaque { border-top-color: var(--color-brand); background: linear-gradient(180deg, var(--color-brand-soft), var(--color-surface) 60%); }

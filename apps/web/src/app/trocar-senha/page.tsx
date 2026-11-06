@@ -16,7 +16,7 @@ export default function TrocarSenha() {
     e.preventDefault();
     if (nova !== repetir) { setErro("As duas senhas novas não são iguais."); return; }
     setEnviando(true); setErro("");
-    try { await trocarSenha(atual, nova); window.location.assign("/notas/nfse"); }
+    try { await trocarSenha(atual, nova); window.location.assign("/inicio"); }
     catch (x) { setErro(x instanceof Error ? x.message : "Não foi possível trocar."); setEnviando(false); }
   }
   return (

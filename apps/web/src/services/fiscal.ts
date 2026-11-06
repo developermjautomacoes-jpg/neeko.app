@@ -44,3 +44,10 @@ export async function listarDocumentos(ambiente: AmbienteNfse, id: string, s: Se
 }
 export const reiniciarDfe = (ambiente: AmbienteNfse, id: string, s: ServicoDfe) => api("POST", `fiscal/dfe/${id}/${s}/restart`, {}, { ambiente });
 export const baixarXmlsDfe = (ambiente: AmbienteNfse, id: string, s: ServicoDfe, competencia: string, chaves?: string[]) => baixar(`fiscal/dfe/${id}/${s}/zip`, { competencia, chaves }, { ambiente });
+
+export interface Painel {
+  empresas: number; notasMes: number; notasVariacao: number | null; servicosMes: string; servicosVariacao: number | null; pendencias: number;
+  serie: { competencia: string; valor: string; notas: number }[]; pendenciasLista: { texto: string; rota: string }[]; empresasLista: { id: string; cnpj: string; razao: string }[];
+  saude: { percentual: number; itens: { nome: string; ok: boolean; detalhe: string }[] }; atividade: { id: string; texto: string; em: string }[];
+}
+export const lerPainel = () => api<Painel>("GET", "fiscal/dashboard");

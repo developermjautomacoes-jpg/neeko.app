@@ -188,7 +188,7 @@ export function DfePage() {
         {progresso && <div className={styles.progresso} role="status"><b>{progresso.empresa}</b> · empresa {progresso.indice} de {progresso.total}<small>{progresso.texto} Mantenha esta aba aberta.</small></div>}
         {relatorio.length > 0 && <ul className={styles.relatorio}>{relatorio.map((l) => <li key={l}>{l}</li>)}</ul>}
         {carregando ? <Loading /> : (
-          <DataTable linhas={empresas} chaveLinha={(e) => e.id} vazio="Nenhuma empresa. Importe um certificado na tela Certificados."
+          <DataTable linhas={empresas} chaveLinha={(e) => e.id} vazio="Nenhuma empresa. Importe um certificado em Administração."
             colunas={[
               { chave: "sel", titulo: "", largura: "36px", render: (e) => <input type="checkbox" aria-label={`Selecionar ${e.razao}`} checked={marcadas.has(e.id)} disabled={ocupado || !e.certificado || certVencido(e)} onChange={() => setMarcadas((m) => { const n = new Set(m); if (n.has(e.id)) n.delete(e.id); else n.add(e.id); return n; })} /> },
               { chave: "emp", titulo: "Empresa", render: (e) => <><b>{e.razao || "(sem nome)"}</b><br /><small>{formatarCnpj(e.cnpj)}</small></> },

@@ -8,6 +8,7 @@ import { FiltroErros } from "./common/errors";
 import { EscopoService } from "./common/scope.service";
 import { DfeService } from "./fiscal/dfe.service";
 import { FiscalController } from "./fiscal/fiscal.controller";
+import { PainelController } from "./fiscal/painel.controller";
 import { NfseService } from "./fiscal/nfse.service";
 import { AgendadorService } from "./fiscal/scheduler.service";
 import { HealthController } from "./health.controller";
@@ -16,7 +17,7 @@ import { UsersController } from "./identity/users.controller";
 import { PrismaService } from "./prisma.service";
 
 @Module({
-  controllers: [HealthController, AuthController, MeController, UsersController, CertificatesController, FiscalController],
+  controllers: [HealthController, AuthController, MeController, UsersController, CertificatesController, FiscalController, PainelController],
   providers: [PrismaService, AuditoriaService, EscopoService, CertificadosService, NfseService, DfeService, AgendadorService,
     { provide: APP_GUARD, useClass: GuardaAcesso }, { provide: APP_FILTER, useClass: FiltroErros }],
 })

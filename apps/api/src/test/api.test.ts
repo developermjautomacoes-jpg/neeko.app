@@ -192,6 +192,14 @@ test("isolamento entre organizações", async () => {
   const r = (await outra.post(`/fiscal/nfse/${empresaB}/capture`)).corpo; assert.match(r.mensagem, /Nenhum e-CNPJ/);
   assert.equal((await outra.post("/users", { name: "X", email: "x@b.test", senhaProvisoria: "Provisoria456", role: "STAFF", permissions: [], allCompanies: false, companyIds: [empresa] })).status, 400);
 });
+test("painel mostra só dados da organização", async () => {
+  const a = (await ana.get("/fiscal/dashboard")).corpo;
+  assert.equal(a.empresas, 1); assert.equal(a.serie.length, 12);
+  assert.equal(a.serie.find((p: any) => p.competencia === "2026-10").valor, "1000.10", "nota cancelada fica fora");
+  assert.equal(a.saude.percentual, 0);
+  const b = (await outra.get("/fiscal/dashboard")).corpo;
+  assert.equal(b.notasMes, 0); assert.ok(b.empresasLista.every((e: any) => e.id !== empresa)); assert.deepEqual(b.atividade, []);
+});
 test("certificado de uma organização não abre com a chave de outra", async () => {
   const { decifrar } = await import("../common/cipher");
   const c = await prisma.fiscalCertificate.findFirst({});

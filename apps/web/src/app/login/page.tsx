@@ -11,14 +11,13 @@ export default function Login() {
   const [enviando, setEnviando] = useState(false);
   async function enviar(e: FormEvent) {
     e.preventDefault(); setEnviando(true); setErro("");
-    try { const r = await entrar(email, senha); window.location.assign(r.mustChangePassword ? "/trocar-senha" : "/notas/nfse"); }
+    try { const r = await entrar(email, senha); window.location.assign(r.mustChangePassword ? "/trocar-senha" : "/inicio"); }
     catch (x) { setErro(x instanceof Error ? x.message : "Não foi possível entrar."); setEnviando(false); }
   }
   return (
     <div className={styles.fundo}>
       <form className={styles.caixa} onSubmit={enviar}>
-        <img src="/logo-escuro.png" alt="Neeko" className={`${styles.logo} ${styles.temaEscuro}`} width={170} height={55} />
-        <img src="/logo-claro.png" alt="Neeko" className={`${styles.logo} ${styles.temaClaro}`} width={170} height={55} />
+        <div className={styles.marca}><img src="/neeko-marca.png" alt="" width={58} height={41} /><div><b>Neeko</b><small>Tecnologia que impulsiona sua contabilidade</small></div></div>
         <h1 className={styles.titulo}>Entrar</h1>
         {erro && <Notice tom="erro">{erro}</Notice>}
         <Input rotulo="E-mail" type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />

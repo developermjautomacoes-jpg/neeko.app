@@ -15,7 +15,7 @@ A diretoria pediu que a captura de notas em uso no sistema da Facilitar fosse le
 - `.pfx` e senha cifrados com AES-256-GCM, com a organização como dado autenticado; chave em `CERT_ENCRYPTION_KEY`, fora do banco. A chave privada só existe em memória.
 - A verificação TLS do servidor nunca é desligada, ao contrário do sistema de origem. A raiz ICP-Brasil vem da cadeia do certificado ou de `FISCAL_CA_FILE`.
 - Prisma sem motor binário (`engineType = "client"`, adaptador `pg`); `migrate.ts` aplica `database/prisma/migrations` quando `RUN_MIGRATIONS=true`.
-- Interface com CSS Modules e tokens em `packages/ui`, usando a identidade do site Neeko, em vez de Tailwind e shadcn/ui: reaproveita as telas portadas com menos risco.
+- Interface com CSS Modules e tokens em `packages/ui`, seguindo o frontend aprovado pela diretoria (menu escuro, conteúdo claro, verde-menta), em vez de Tailwind e shadcn/ui: reaproveita as telas portadas com menos risco.
 - Agendador dentro da API, em uma só instância, enquanto não houver necessidade real de fila.
 
 ## Fora desta entrega

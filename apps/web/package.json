@@ -2,15 +2,27 @@
   "name": "@neeko/web",
   "version": "0.2.0",
   "private": true,
-  "scripts": { "dev": "next dev -p 3000", "build": "next build", "start": "next start", "typecheck": "tsc --noEmit" },
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
   "dependencies": {
     "@neeko/ui": "workspace:*",
     "exceljs": "4.4.0",
+    "lucide-react": "0.525.0",
     "next": "15.3.5",
     "pdf-lib": "1.17.1",
     "qrcode": "1.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
-  "devDependencies": { "@types/node": "22.13.10", "@types/qrcode": "1.5.5", "@types/react": "19.1.2", "@types/react-dom": "19.1.2", "typescript": "5.7.3" }
+  "devDependencies": {
+    "@types/node": "22.13.10",
+    "@types/qrcode": "1.5.5",
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2",
+    "typescript": "5.7.3"
+  }
 }
