@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowRight, ArrowUp, Building2, CheckCircle2, CircleAlert, CircleDollarSign, Clock3, FileSearch, FileText, Mail, ShieldCheck, TriangleAlert, Users, Zap, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Building2, CheckCircle2, CircleAlert, CircleDollarSign, FileSearch, FileText, Mail, ShieldCheck, TriangleAlert, Users, Zap, type LucideIcon } from "lucide-react";
 import { Loading, Modal, Notice } from "@neeko/ui";
-import { centavos, dataHora } from "@/lib/format";
+import { centavos } from "@/lib/format";
 import { eu, type Eu } from "@/services/conta";
 import { lerPainel, type Painel } from "@/services/fiscal";
 import { formatarCnpj } from "@/lib/format";
@@ -96,8 +96,8 @@ export default function Inicio() {
 
       <section className={styles.fim}>
         <article className={styles.cartao}>
-          <header className={styles.cab}><h2><Clock3 size={20} aria-hidden /> Atividade Recente</h2></header>
-          {d.atividade.length ? <ul className={styles.atividade}>{d.atividade.map((a) => <li key={a.id}><i aria-hidden /><span>{a.texto}</span><small>{dataHora(a.em)}</small></li>)}</ul> : <p className={styles.vazio}>Sem atividade para mostrar.</p>}
+          <header className={styles.cab}><h2><Users size={20} aria-hidden /> Equipe online</h2><span className={styles.periodo}>{d.online.length}</span></header>
+          {d.online.length ? <ul className={styles.online}>{d.online.map((u) => <li key={u.id}>{u.avatar ? <img src={u.avatar} alt="" /> : <span className={styles.iniciais}>{u.nome.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase()}</span>}<b>{u.nome}</b><i aria-label="online" /></li>)}</ul> : <p className={styles.vazio}>Ninguém online agora.</p>}
         </article>
         <article className={styles.cartao}>
           <header className={styles.cab}><h2><TriangleAlert size={20} aria-hidden /> Pendências</h2></header>

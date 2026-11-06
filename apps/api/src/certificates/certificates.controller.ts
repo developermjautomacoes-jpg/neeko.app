@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from "@nestjs/common";
 import { z } from "zod";
 import { AuditoriaService } from "../common/audit.service";
 import { Contexto, Ctx, Exige } from "../common/auth";
@@ -43,6 +43,27 @@ export class CertificatesController {
     const cert = await this.prisma.fiscalCertificate.upsert({ where: { organizationId_fingerprint: { organizationId: c.organizationId, fingerprint: i.fingerprint } }, create: { organizationId: c.organizationId, fingerprint: i.fingerprint, ...dados }, update: dados });
     await this.auditoria.registrar(c.organizationId, c.userId, "fiscal.certificate.imported", cert.id, { document: i.document, validUntil: i.validUntil });
     return { id: cert.id };
+  }
+
+  /** Troca o apelido e, se vier arquivo, renova o certificado do mesmo documento no mesmo registro. */
+  @Exige("fiscal.credentials.manage") @Patch(":id")
+  async alterar(@Ctx() c: Contexto, @Param("id") id: string, @Body() corpo: unknown) {
+    const d = validar(z.object({ apelido: z.string().trim().max(60).default(""), pfx: z.string().max(400000).optional(), senha: z.string().max(200).default("") }), corpo);
+    if (!/^[0-9a-f-]{36}$/i.test(id)) throw naoEncontrado("Certificado não encontrado.");
+    const atual = await this.prisma.fiscalCertificate.findFirst({ where: { id, organizationId: c.organizationId } });
+    if (!atual || this.escopo.restrita(c, atual.document)) throw naoEncontrado("Certificado não encontrado.");
+    if (!d.pfx) { await this.prisma.fiscalCertificate.update({ where: { id }, data: { nickname: d.apelido } }); return { id }; }
+    const pfx = Buffer.from(d.pfx, "base64");
+    if (!pfx.length || pfx.length > 200000) throw invalido("Arquivo de certificado inválido. Envie o .pfx ou .p12.");
+    const p = abrirPfx(pfx, d.senha);
+    if (!p) throw invalido("Não foi possível abrir o certificado com essa senha. Confira a senha e o arquivo (.pfx ou .p12).");
+    const i = infoCert(p.certPem);
+    if (i.document !== atual.document) throw invalido("O novo arquivo é de outro CNPJ/CPF. Para outro titular, use Importar certificado.");
+    if (i.validUntil < hoje()) throw invalido(`Certificado vencido em ${i.validUntil.split("-").reverse().join("/")}.`);
+    if (await this.prisma.fiscalCertificate.findFirst({ where: { organizationId: c.organizationId, fingerprint: i.fingerprint, id: { not: id } } })) throw invalido("Este arquivo já está cadastrado em outro certificado.");
+    await this.prisma.fiscalCertificate.update({ where: { id }, data: { nickname: d.apelido, holder: i.holder, kind: i.kind, validUntil: i.validUntil, fingerprint: i.fingerprint, pfxEncrypted: cifrar(pfx, c.organizationId), passEncrypted: cifrar(Buffer.from(d.senha, "utf8"), c.organizationId) } });
+    await this.auditoria.registrar(c.organizationId, c.userId, "fiscal.certificate.imported", id, { document: i.document, validUntil: i.validUntil, renovado: true });
+    return { id };
   }
 
   @Exige("fiscal.credentials.manage") @Delete(":id")

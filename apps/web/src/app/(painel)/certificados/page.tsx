@@ -1,10 +1,10 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FileSpreadsheet, FileText, Trash2 } from "lucide-react";
-import { Badge, Button, Card, ConfirmDialog, DataTable, IconButton, Input, KpiCard, Loading, Notice, PageHeader, Select, useToast } from "@neeko/ui";
+import { FileSpreadsheet, FileText, Pencil, Trash2 } from "lucide-react";
+import { Badge, Button, Card, ConfirmDialog, DataTable, IconButton, Input, KpiCard, Loading, Modal, Notice, PageHeader, Select, useToast } from "@neeko/ui";
 import { diasPara, exportarExcel, exportarPdf, situacao } from "@/features/certificados/relatorio";
 import { arquivoParaBase64, dataBr, dataHora, formatarCnpj } from "@/lib/format";
-import { enviarCertificado, lerCertificados, removerCertificado } from "@/services/fiscal";
+import { alterarCertificado, enviarCertificado, lerCertificados, removerCertificado } from "@/services/fiscal";
 import type { Certificado, EmpresaCert } from "@/types/nfse";
 import styles from "../pagina.module.css";
 
@@ -25,6 +25,8 @@ export default function Certificados() {
   const [erroImport, setErroImport] = useState("");
   const [removendo, setRemovendo] = useState<Certificado[] | null>(null);
   const [selecao, setSelecao] = useState<Set<string>>(new Set());
+  const [editando, setEditando] = useState<{ c: Certificado; apelido: string; arquivo: File | null; senha: string; erro: string } | null>(null);
+  const [salvandoEd, setSalvandoEd] = useState(false);
   const [vinculo, setVinculo] = useState("todos");
   const [venceAte, setVenceAte] = useState("");
   const [chave, setChave] = useState(0);
@@ -39,6 +41,14 @@ export default function Certificados() {
       avisar("Certificado importado.", "sucesso");
     } catch (e) { const m = e instanceof Error ? e.message : "Não foi possível importar."; setErroImport(m); avisar(m, "erro"); }
     finally { setEnviando(false); }
+  }
+  async function salvarEdicao() {
+    if (!editando) return;
+    setSalvandoEd(true);
+    try {
+      await alterarCertificado(editando.c.id, { apelido: editando.apelido.trim(), ...(editando.arquivo ? { pfx: await arquivoParaBase64(editando.arquivo), senha: editando.senha } : {}) });
+      setEditando(null); await carregar(); avisar(editando.arquivo ? "Certificado atualizado." : "Apelido salvo.", "sucesso");
+    } catch (e) { setEditando({ ...editando, erro: e instanceof Error ? e.message : "Não foi possível salvar." }); } finally { setSalvandoEd(false); }
   }
   async function remover() {
     if (!removendo) return;
@@ -105,10 +115,19 @@ export default function Certificados() {
               { chave: "s", titulo: "Situação", render: selo },
               { chave: "e", titulo: "Empresas", render: (c) => c.empresas.length },
               { chave: "i", titulo: "Importado em", render: (c) => dataHora(c.createdAt) },
-              { chave: "a", titulo: "", alinhar: "direita", render: (c) => <IconButton dica="Remover" variante="danger" icone={<Trash2 size={16} />} onClick={() => setRemovendo([c])} /> },
+              { chave: "a", titulo: "", alinhar: "direita", render: (c) => <div className={styles.acoes}><IconButton dica="Editar ou atualizar arquivo" icone={<Pencil size={16} />} onClick={() => setEditando({ c, apelido: c.nickname, arquivo: null, senha: "", erro: "" })} /><IconButton dica="Remover" variante="danger" icone={<Trash2 size={16} />} onClick={() => setRemovendo([c])} /></div> },
             ]} />}
         </Card>
       </div>
+      <Modal aberto={!!editando} titulo="Editar certificado" largura="sm" onFechar={() => setEditando(null)} rodape={<><Button onClick={() => setEditando(null)}>Voltar</Button><Button variante="primary" carregando={salvandoEd} onClick={() => void salvarEdicao()}>Salvar</Button></>}>
+        {editando && <div className={styles.form}>
+          <p><b>{editando.c.holder}</b><br /><small>{formatarCnpj(editando.c.document)} · válido até {dataBr(editando.c.validUntil)}</small></p>
+          <Input rotulo="Apelido" value={editando.apelido} onChange={(e) => setEditando({ ...editando, apelido: e.target.value })} />
+          <Input rotulo="Novo arquivo (opcional)" type="file" accept=".pfx,.p12" dica="Para renovar: envie o certificado novo do mesmo CNPJ/CPF." onChange={(e) => setEditando({ ...editando, arquivo: e.target.files?.[0] ?? null })} />
+          {editando.arquivo && <Input rotulo="Senha do novo certificado" type="password" autoComplete="new-password" value={editando.senha} onChange={(e) => setEditando({ ...editando, senha: e.target.value })} />}
+          {editando.erro && <Notice tom="erro">{editando.erro}</Notice>}
+        </div>}
+      </Modal>
       <ConfirmDialog aberto={!!removendo} titulo={removendo && removendo.length > 1 ? `Remover ${removendo.length} certificados` : "Remover certificado"} confirmar="Remover" perigo onConfirmar={remover} onCancelar={() => setRemovendo(null)}>
         <p>As capturas que usam <b>{removendo?.map((c) => c.nickname || c.holder).join(", ")}</b> param até um novo certificado ser importado. As notas guardadas continuam.</p>
       </ConfirmDialog>

@@ -511,7 +511,17 @@ test("painel mostra só dados da organização", async () => {
   assert.ok(a.empresas >= 1); assert.equal(a.serie.length, 12);
   assert.equal(a.serie.find((p: any) => p.competencia === "2026-10").valor, "1000.10", "nota cancelada fica fora");
   const b = (await outra.get("/fiscal/dashboard")).corpo;
-  assert.equal(b.notasMes, 0); assert.ok(b.empresasLista.every((e: any) => e.id !== empresa)); assert.deepEqual(b.atividade, []);
+  assert.equal(b.notasMes, 0); assert.ok(b.empresasLista.every((e: any) => e.id !== empresa)); assert.ok(b.online.every((u: any) => u.nome !== "Ana"), "online só do próprio escritório");
+});
+test("editar certificado: apelido e renovação do mesmo CNPJ", async () => {
+  const novo = gerarPfx(`EMPRESA A LTDA:${A}`, "nova123"), outro = gerarPfx("OUTRA LTDA:22333444000155", "x1");
+  const cert = (await ana.get("/certificates")).corpo.certificados.find((x: any) => x.document === A);
+  assert.equal((await ana.pedir("PATCH", `/certificates/${cert.id}`, { apelido: "Matriz" })).status, 200);
+  assert.equal((await ana.get("/certificates")).corpo.certificados.find((x: any) => x.id === cert.id).nickname, "Matriz");
+  assert.equal((await ana.pedir("PATCH", `/certificates/${cert.id}`, { apelido: "Matriz", pfx: outro.pfx.toString("base64"), senha: "x1" })).status, 400, "outro CNPJ");
+  assert.equal((await ana.pedir("PATCH", `/certificates/${cert.id}`, { apelido: "Matriz", pfx: novo.pfx.toString("base64"), senha: "errada" })).status, 400);
+  assert.equal((await ana.pedir("PATCH", `/certificates/${cert.id}`, { apelido: "Matriz", pfx: novo.pfx.toString("base64"), senha: "nova123" })).status, 200);
+  assert.equal((await outra.pedir("PATCH", `/certificates/${cert.id}`, { apelido: "x" })).status, 404, "outro escritório");
 });
 test("certificado de uma organização não abre com a chave de outra", async () => {
   const { decifrar } = await import("../common/cipher");

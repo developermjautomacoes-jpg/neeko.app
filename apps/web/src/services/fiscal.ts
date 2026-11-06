@@ -27,6 +27,7 @@ export async function definirProcurador(id: string | null) { return (await api<{
 
 export const lerCertificados = () => api<{ certificados: Certificado[]; semCertificado: EmpresaCert[] }>("GET", "certificates");
 export const enviarCertificado = (c: { pfx: string; senha: string; apelido: string }) => api<{ id: string }>("POST", "certificates", c);
+export const alterarCertificado = (id: string, c: { apelido: string; pfx?: string; senha?: string }) => api<{ id: string }>("PATCH", `certificates/${id}`, c);
 export const removerCertificado = (id: string) => api("DELETE", `certificates/${id}`);
 
 const doc = (d: Record<string, unknown>): DocumentoDfe => ({ ...(d as unknown as DocumentoDfe), emit_doc: String(d.emitDoc), emit_nome: String(d.emitNome), dest_doc: String(d.destDoc), v_total: centavos(String(d.vTotal)), ciencia_msg: String(d.cienciaMsg ?? "") });
@@ -46,7 +47,7 @@ export const baixarXmlsDfe = (ambiente: AmbienteNfse, id: string, s: ServicoDfe,
 export interface Painel {
   empresas: number; notasMes: number; notasVariacao: number | null; servicosMes: string; servicosVariacao: number | null; pendencias: number;
   serie: { competencia: string; valor: string; notas: number }[]; pendenciasLista: { texto: string; rota: string }[]; empresasLista: { id: string; cnpj: string; razao: string }[];
-  saude: { percentual: number; itens: { nome: string; ok: boolean; detalhe: string }[] }; atividade: { id: string; texto: string; em: string }[]; atencao: { total: number; lista: { id: string; razao: string; cnpj: string; grau: number; motivo: string }[] };
+  saude: { percentual: number; itens: { nome: string; ok: boolean; detalhe: string }[] }; online: { id: string; nome: string; avatar: string | null }[]; atencao: { total: number; lista: { id: string; razao: string; cnpj: string; grau: number; motivo: string }[] };
 }
 export const lerPainel = () => api<Painel>("GET", "fiscal/dashboard");
 

@@ -1,14 +1,10 @@
 import { Controller, Get } from "@nestjs/common";
 import { hoje, CertificadosService } from "../certificates/certificates.service";
-import { Contexto, Ctx, Exige } from "../common/auth";
+import { Contexto, Ctx, Exige, inicioJanela } from "../common/auth";
 import { EscopoService } from "../common/scope.service";
 import { PrismaService } from "../prisma.service";
 
 const AMB = "producao";
-const ROTULOS: Record<string, string> = {
-  "auth.login": "Entrou no sistema", "fiscal.certificate.imported": "Certificado importado", "fiscal.certificate.removed": "Certificado removido", "fiscal.nfse.exported": "XML de NFS-e baixado",
-  "fiscal.dfe.exported": "XML de NF-e/CT-e baixado", "fiscal.dfe.ciencia.sent": "Ciência da operação enviada", "users.created": "Usuário criado", "users.access.changed": "Acesso de usuário alterado", "memoranda.created": "Memorando criado", "memoranda.updated": "Memorando alterado", "memoranda.status": "Situação de memorando alterada", "memoranda.client": "Situação de cliente alterada",
-};
 function meses(n: number): string[] {
   const d = new Date(Date.now() - 3 * 3600 * 1000), s: string[] = [];
   for (let i = n - 1; i >= 0; i--) { const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - i, 1)); s.push(x.toISOString().slice(0, 7)); }
@@ -43,7 +39,9 @@ export class PainelController {
       { texto: `${errosN} erro(s) na captura de NFS-e`, n: errosN, rota: "/notas/nfse" }, { texto: `${errosD} erro(s) na captura de NF-e/CT-e`, n: errosD, rota: "/notas/nfe-cte" }, { texto: `${falhas} documento(s) não lidos`, n: falhas, rota: "/notas/nfse" }, { texto: `${ciencias} ciência(s) pendente(s)`, n: ciencias, rota: "/notas/nfe-cte" },
     ].filter((p) => p.n > 0);
     const aptas = certDe.reduce((t, x, i) => t + (x && x.validUntil >= dia && !nfseSt.some((s) => s.companyId === empresas[i].id && s.lastError) && !dfeSt.some((s) => s.companyId === empresas[i].id && s.lastError) ? 1 : 0), 0);
-    const atividade = c.permissions.has("audit.read") ? await this.prisma.auditEvent.findMany({ where: { organizationId: org, action: { in: Object.keys(ROTULOS) } }, orderBy: { createdAt: "desc" }, take: 5 }) : [];
+    // Quem usou o sistema nos últimos 15 minutos e não saiu.
+    const sessoes = await this.prisma.session.findMany({ where: { organizationId: org, expiresAt: { gt: new Date() }, lastSeenAt: { gte: inicioJanela() } }, distinct: ["userId"], select: { user: { select: { id: true, name: true, avatar: true } } } });
+    const online = sessoes.map((x) => x.user).sort((a, b) => a.name.localeCompare(b.name));
     const estado = (ok: boolean, sim: string, nao: string) => ({ ok, detalhe: ok ? sim : nao });
     // Carteira que pede ação, da mais grave para a mais leve.
     const dias = (d: Date | string) => Math.floor((Date.parse(dia) - Date.parse(String(typeof d === "string" ? d : d.toISOString()).slice(0, 10))) / 86400000);
@@ -62,7 +60,7 @@ export class PainelController {
         { nome: "Captura de NFS-e", ...estado(!errosN, "Sem erros", `${errosN} com erro`) }, { nome: "Captura de NF-e/CT-e", ...estado(!errosD, "Sem erros", `${errosD} com erro`) }, { nome: "Documentos lidos", ...estado(!falhas, "Sem falhas", `${falhas} com falha`) },
       ] },
       atencao: { total: atencao.length, lista: atencao.slice(0, 8) },
-      atividade: atividade.map((a) => ({ id: a.id, texto: ROTULOS[a.action], em: a.createdAt })),
+      online: online.map((u) => ({ id: u.id, nome: u.name, avatar: u.avatar })),
     };
   }
 }

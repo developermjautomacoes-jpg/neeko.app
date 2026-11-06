@@ -45,6 +45,7 @@ Base `/api/v1`. Sessão por cookie httpOnly; a organização vem da sessão, nun
 - `PUT /office` (logo e contatos do escritório; permissão `office.manage`)
 - `GET /office/activity` (proprietária e administração), `POST /assistant/requests` e `GET /platform/topic-requests`
 - `GET /assistant/topics` e `POST /assistant/ask` (busca local nas bases de `apps/api/knowledge`; a pergunta não é guardada)
+- `PATCH /certificates/:id` (apelido e renovação do arquivo do mesmo documento)
 - `PUT /office/theme` (`verde`, `azul`, `roxo`, `dourado` ou `marinho`)
 - `GET /messages`, `GET|POST /messages/:conversa`, `POST /messages/:conversa/read` (`geral` ou id da pessoa; só dentro do escritório)
 - `POST /messages/groups`, `PATCH /messages/groups/:id`, `POST /messages/groups/:id/members`, `POST /messages/groups/:id/leave` e `POST /messages/:conversa/:id/forward`, `PATCH` e `DELETE /messages/:conversa/:id` (só quem escreveu)
