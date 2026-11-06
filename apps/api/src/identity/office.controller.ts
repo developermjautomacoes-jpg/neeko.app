@@ -2,7 +2,8 @@ import { Body, Controller, Get, HttpCode, Param, Post, Put } from "@nestjs/commo
 import { z } from "zod";
 import { AuditoriaService } from "../common/audit.service";
 import { Contexto, Ctx, Exige, Publico } from "../common/auth";
-import { naoEncontrado } from "../common/errors";
+import { Erro, naoEncontrado } from "../common/errors";
+import { config } from "../config";
 import { validar } from "../common/validation";
 import { PrismaService } from "../prisma.service";
 import { MigracaoService } from "./migration.service";
@@ -44,6 +45,7 @@ export class EscritorioController {
   /** Importa para o próprio escritório logado: o pacote nunca escolhe o destino. */
   @Exige("office.manage") @Post("import") @HttpCode(200)
   importar(@Ctx() c: Contexto, @Body() corpo: unknown) {
+    if (config().OFFICE_IMPORT_ENABLED !== "true") throw new Erro(403, "MODULE_DISABLED", "A importação está desativada.");
     const d = validar(z.object({ pacote: z.string().min(10).max(58000000), frase: z.string().min(12, "A frase tem pelo menos 12 caracteres.").max(200) }), corpo);
     return this.migracao.importar(c, d.pacote, d.frase);
   }

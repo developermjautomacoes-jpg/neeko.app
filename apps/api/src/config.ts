@@ -19,6 +19,8 @@ const esquema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().optional(),
+  /** Liga a tela e a rota de importação de pacotes de migração. */
+  OFFICE_IMPORT_ENABLED: z.enum(["true", "false"]).default("false"),
   RUN_MIGRATIONS: z.enum(["true", "false"]).default("false"),
   MIGRATIONS_DIR: z.string().default("../../database/prisma/migrations"),
   SCHEDULER_ENABLED: z.enum(["true", "false"]).default("true"),

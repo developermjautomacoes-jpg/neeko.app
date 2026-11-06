@@ -29,6 +29,7 @@ export default function PerfilEscritorio() {
   const [email, setEmail] = useState("");
   const [fone, setFone] = useState("");
   const [tema, setTema] = useState("verde");
+  const [importacao, setImportacao] = useState(false);
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [frase, setFrase] = useState("");
   const [importando, setImportando] = useState(false);
@@ -36,7 +37,7 @@ export default function PerfilEscritorio() {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
-  useEffect(() => { eu().then((p) => { const o = p.organization; setNome(o?.name ?? ""); setLogo(o?.logo ?? null); setEmail(o?.contactEmail ?? ""); setFone(o?.contactPhone ?? ""); setTema(o?.theme ?? "verde"); }).catch((x: Error) => setErro(x.message)).finally(() => setCarregando(false)); }, []);
+  useEffect(() => { eu().then((p) => { const o = p.organization; setNome(o?.name ?? ""); setLogo(o?.logo ?? null); setEmail(o?.contactEmail ?? ""); setFone(o?.contactPhone ?? ""); setTema(o?.theme ?? "verde"); setImportacao(p.importacao); }).catch((x: Error) => setErro(x.message)).finally(() => setCarregando(false)); }, []);
   async function escolher(e: ChangeEvent<HTMLInputElement>) {
     const a = e.target.files?.[0]; e.target.value = ""; if (!a) return;
     try { setLogo(await prepararLogo(a)); } catch (x) { avisar(x instanceof Error ? x.message : "Imagem inválida.", "erro"); }
@@ -82,13 +83,13 @@ export default function PerfilEscritorio() {
         </div>
       </article>)}</div>
     </Card></div>
-    <div className={pagina.bloco}><Card titulo="Importar do app Facilitar"><div className={pagina.form}>
+    {importacao && <div className={pagina.bloco}><Card titulo="Importar do app Facilitar"><div className={pagina.form}>
       <p>Envie o pacote gerado no app Facilitar. Memorandos e certificados entram neste escritório, e repetir a importação não duplica nada.</p>
       <input type="file" accept=".neeko,.json" aria-label="Pacote de migração" onChange={(e) => setArquivo(e.target.files?.[0] ?? null)} />
       <Input rotulo="Frase do pacote" type="password" autoComplete="off" value={frase} onChange={(e) => setFrase(e.target.value)} />
       <div><Button variante="primary" disabled={!arquivo || frase.length < 12} carregando={importando} onClick={() => void importar()}>Importar</Button></div>
       {resultado && <Notice>{resultado.memorandos.importados} memorandos e {resultado.certificados.importados} certificados importados.</Notice>}
       {resultado && [...resultado.memorandos.pulados.map((p) => `${p.numero}: ${p.motivo}`), ...resultado.certificados.pulados.map((p) => `${p.nome}: ${p.motivo}`)].map((t) => <small key={t}>{t}</small>)}
-    </div></Card></div>
+    </div></Card></div>}
   </>;
 }

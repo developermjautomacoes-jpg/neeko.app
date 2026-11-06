@@ -285,6 +285,8 @@ test("importa pacote da Facilitar só para o próprio escritório", async () => 
     { seq: 73, ano: 2024, status: "ativo", e_cnpj: "123", e_razao: "Sem CNPJ" },
     { seq: 74, ano: 2024, status: "ativo", e_cnpj: "55.443.322/0001-70", e_razao: "Importada Ltda" },
   ], certificados: [{ id: "abc", apelido: "Matriz", pfx: p.pfx.toString("base64"), senha: "senhacert" }, { id: "ruim", pfx: "AAAA", senha: "x" }], nfse: { procurador: "abc", modos: { [cnpj]: "procuracao" } }, restritas: ["77665544"] }, "frase bem longa 123");
+  assert.equal((await ana.post("/office/import", { pacote, frase: "frase bem longa 123" })).corpo.code, "MODULE_DISABLED", "desligada por padrão");
+  process.env.OFFICE_IMPORT_ENABLED = "true"; limparConfig();
   assert.equal((await ana.post("/office/import", { pacote, frase: "frase errada 12345" })).status, 400);
   const r = await ana.post("/office/import", { pacote, frase: "frase bem longa 123" }); assert.equal(r.status, 200, JSON.stringify(r.corpo));
   assert.equal(r.corpo.memorandos.importados, 2); assert.equal(r.corpo.memorandos.pulados.length, 2); assert.equal(r.corpo.certificados.importados, 1); assert.equal(r.corpo.certificados.pulados.length, 1);
@@ -297,6 +299,7 @@ test("importa pacote da Facilitar só para o próprio escritório", async () => 
   assert.equal((await prisma.fiscalSettings.findUnique({ where: { organizationId: org } })).procuratorCertificateId, cert.id);
   assert.equal((await ana.post("/office/import", { pacote, frase: "frase bem longa 123" })).corpo.memorandos.importados, 0, "repetir não duplica");
   await prisma.organization.update({ where: { id: org }, data: { restrictedRoots: [] } });
+  delete process.env.OFFICE_IMPORT_ENABLED; limparConfig();
   assert.equal((await ana.get("/me")).corpo.organization.theme, "verde", "a Neeko começa no verde");
   assert.equal((await ana.pedir("PUT", "/office/theme", { tema: "rosa" })).status, 400);
   assert.equal((await ana.pedir("PUT", "/office/theme", { tema: "azul" })).status, 200);

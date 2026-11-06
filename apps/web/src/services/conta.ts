@@ -1,6 +1,6 @@
 import { api } from "./http";
 
-export interface Eu { id: string; name: string; email: string; platformAdmin: boolean; mfaEnabled: boolean; mfaPending: boolean; mfaSetupRequired: boolean; avatar: string | null; jobTitle: string; phone: string; mustChangePassword: boolean; organization: { slug: string; internal: boolean; theme: string; logo: string | null; contactEmail: string; contactPhone: string; id: string; name: string; role: string } | null; permissions: string[]; availablePermissions: string[] }
+export interface Eu { importacao: boolean; id: string; name: string; email: string; platformAdmin: boolean; mfaEnabled: boolean; mfaPending: boolean; mfaSetupRequired: boolean; avatar: string | null; jobTitle: string; phone: string; mustChangePassword: boolean; organization: { slug: string; internal: boolean; theme: string; logo: string | null; contactEmail: string; contactPhone: string; id: string; name: string; role: string } | null; permissions: string[]; availablePermissions: string[] }
 export interface Usuario { id: string; jobTitle: string; name: string; email: string; role: string; status: "ACTIVE" | "SUSPENDED"; allCompanies: boolean; permissions: string[]; companyIds: string[]; mustChangePassword: boolean }
 export const eu = () => api<Eu>("GET", "me");
 export const entrar = (email: string, senha: string, escritorio?: string) => api<{ mustChangePassword: boolean; mfaRequired: boolean }>("POST", "auth/login", { email, senha, escritorio });

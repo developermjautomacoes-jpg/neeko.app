@@ -14,6 +14,7 @@ Mudanças relevantes da Neeko Platform serão registradas aqui.
 - Criados monorepo, API NestJS, web Next.js, PostgreSQL com Prisma e testes.
 - Login e senha individuais, RBAC por organização e empresa, auditoria e gestão de usuários.
 - Mensagens entre usuários com canal Geral, menções e notificações; cargo definido pelo administrador; controle de certificados com filtros e relatórios; ações das tabelas em ícones com dica.
+- Importação de pacotes desligada por padrão; volta com `OFFICE_IMPORT_ENABLED=true`.
 - Quatro temas por escritório: Verde Corporativo (padrão), Azul Tech, Roxo Premium e Dourado Elegante, no lugar das cores livres.
 - A paleta do escritório passa a valer em todas as telas: fundos, menu, destaques, indicadores e gráficos.
 - Paleta de cores por escritório, redefinição de senha por código no e-mail e importação de memorandos e certificados do app Facilitar.
