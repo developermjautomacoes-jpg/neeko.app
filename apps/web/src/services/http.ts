@@ -5,6 +5,8 @@ async function falha(r: Response): Promise<never> {
   if (typeof window !== "undefined") {
     if (r.status === 401 && j.code === "UNAUTHENTICATED") window.location.assign("/login");
     if (j.code === "PASSWORD_CHANGE_REQUIRED") window.location.assign("/trocar-senha");
+    if (j.code === "MFA_REQUIRED") window.location.assign("/verificacao");
+    if (j.code === "MFA_SETUP_REQUIRED") window.location.assign("/ativar-verificacao");
   }
   throw new ErroApi(r.status, j.code ?? "ERRO", j.message ?? "Não foi possível concluir.");
 }

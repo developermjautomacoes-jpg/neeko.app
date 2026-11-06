@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, Patch, Post, Req, Res } from "@nestjs/
 import { randomBytes } from "node:crypto";
 import type { Request, Response } from "express";
 import { z } from "zod";
-import { COOKIE, PERMISSOES, Publico, SoLogado, hashToken, lerCookie } from "../common/auth";
+import { COOKIE, PERMISSOES, Publico, SemMfa, SoLogado, hashToken, lerCookie } from "../common/auth";
 import { AuditoriaService } from "../common/audit.service";
 import { Erro, invalido } from "../common/errors";
 import { HASH_FALSO, conferirSenha, hashSenha, senhaFraca } from "../common/passwords";
@@ -23,7 +23,7 @@ export class AuthController {
     const { email, senha } = validar(z.object({ email: z.string().email("Informe um e-mail válido.").transform((e) => e.trim().toLowerCase()), senha: z.string().min(1, "Informe a senha.").max(200) }), corpo);
     const f = falhas.get(email);
     if (f && f.n >= TENTATIVAS && f.ate > Date.now()) throw new Erro(429, "TOO_MANY_ATTEMPTS", "Muitas tentativas. Aguarde 15 minutos.");
-    const u = await this.prisma.user.findUnique({ where: { email }, include: { memberships: { where: { status: "ACTIVE" }, orderBy: { createdAt: "asc" } } } });
+    const u = await this.prisma.user.findUnique({ where: { email }, include: { memberships: { where: { status: "ACTIVE" }, orderBy: { createdAt: "asc" }, include: { organization: { select: { status: true } } } } } });
     const ok = await conferirSenha(senha, u?.passwordHash ?? HASH_FALSO);
     if (!u || !ok || !u.active) {
       const n = f && f.ate > Date.now() ? f.n + 1 : 1;
@@ -33,14 +33,16 @@ export class AuthController {
     }
     falhas.delete(email);
     const token = randomBytes(32).toString("base64url");
-    await this.prisma.session.create({ data: { userId: u.id, organizationId: u.memberships[0]?.organizationId ?? null, tokenHash: hashToken(token), expiresAt: new Date(Date.now() + DURACAO_MS) } });
+    const organizacao = u.memberships.find((m) => m.organization.status === "ACTIVE") ?? u.memberships[0];
+    const privilegio = u.globalRole === "NEEKO_SUPERADMIN" || u.memberships.some((m) => m.role === "ORG_OWNER" || m.role === "ORG_ADMIN");
+    await this.prisma.session.create({ data: { userId: u.id, organizationId: organizacao?.organizationId ?? null, tokenHash: hashToken(token), expiresAt: new Date(Date.now() + DURACAO_MS), mfaSetupRequired: privilegio && !u.mfaEnabled } });
     await this.prisma.session.deleteMany({ where: { userId: u.id, expiresAt: { lt: new Date() } } });
     res.cookie(COOKIE, token, { httpOnly: true, sameSite: "strict", secure: config().NODE_ENV === "production", maxAge: DURACAO_MS, path: "/" });
     await this.auditoria.registrar(u.memberships[0]?.organizationId ?? null, u.id, "auth.login");
-    return { ok: true, mustChangePassword: u.mustChangePassword };
+    return { ok: true, mustChangePassword: u.mustChangePassword, mfaRequired: u.mfaEnabled };
   }
 
-  @SoLogado() @Post("logout") @HttpCode(200)
+  @SemMfa() @Post("logout") @HttpCode(200)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const t = lerCookie(req, COOKIE);
     if (t) await this.prisma.session.deleteMany({ where: { tokenHash: hashToken(t) } });
@@ -65,11 +67,11 @@ export class AuthController {
 @Controller("me")
 export class MeController {
   constructor(private prisma: PrismaService, private auditoria: AuditoriaService) {}
-  @SoLogado() @Get()
-  async eu(@Req() req: Request & { sessao: { userId: string; organizationId: string | null } }) {
+  @SemMfa() @Get()
+  async eu(@Req() req: Request & { sessao: { userId: string; organizationId: string | null; mfaVerified: boolean; mfaSetupRequired: boolean } }) {
     const u = await this.prisma.user.findUniqueOrThrow({ where: { id: req.sessao.userId }, include: { memberships: { where: { status: "ACTIVE" }, include: { organization: true, permissions: true } } } });
-    const atual = u.memberships.find((m) => m.organizationId === req.sessao.organizationId);
-    return { id: u.id, name: u.name, email: u.email, avatar: u.avatar, jobTitle: u.jobTitle, phone: u.phone, mustChangePassword: u.mustChangePassword,
+    const atual = u.memberships.find((m) => m.organizationId === req.sessao.organizationId && m.organization.status === "ACTIVE");
+    return { id: u.id, name: u.name, email: u.email, platformAdmin: u.globalRole === "NEEKO_SUPERADMIN", mfaEnabled: u.mfaEnabled, mfaPending: u.mfaEnabled && !req.sessao.mfaVerified, mfaSetupRequired: req.sessao.mfaSetupRequired && !u.mfaEnabled, avatar: u.avatar, jobTitle: u.jobTitle, phone: u.phone, mustChangePassword: u.mustChangePassword,
       organization: atual ? { id: atual.organizationId, name: atual.organization.name, role: atual.role } : null,
       permissions: atual?.permissions.map((p) => p.permission) ?? [], availablePermissions: PERMISSOES };
   }

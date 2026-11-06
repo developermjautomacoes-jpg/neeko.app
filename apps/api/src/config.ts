@@ -11,6 +11,8 @@ const esquema = z.object({
   BOOTSTRAP_ADMIN_NAME: z.string().optional(),
   BOOTSTRAP_ADMIN_EMAIL: z.string().email().optional(),
   BOOTSTRAP_ADMIN_PASSWORD: z.string().min(10).optional(),
+  /** Emergência: limpa a verificação em duas etapas desse e-mail ao iniciar. Remova depois de usar. */
+  MFA_RESET_EMAIL: z.string().email().optional(),
   RUN_MIGRATIONS: z.enum(["true", "false"]).default("false"),
   MIGRATIONS_DIR: z.string().default("../../database/prisma/migrations"),
   SCHEDULER_ENABLED: z.enum(["true", "false"]).default("true"),

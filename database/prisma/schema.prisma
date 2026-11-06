@@ -27,10 +27,39 @@ enum MembershipStatus {
   SUSPENDED
 }
 
+enum OrgStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+/// Plano comercial. A cobrança é controlada manualmente pela Neeko.
+model Plan {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @unique
+  maxCompanies Int?
+  maxUsers     Int?
+  monthlyPrice Decimal  @default(0) @db.Decimal(12, 2)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  organizations Organization[]
+}
+
 model Organization {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String
-  createdAt DateTime @default(now())
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String
+  cnpj         String    @default("")
+  contactEmail String    @default("")
+  contactPhone String    @default("")
+  status       OrgStatus @default(ACTIVE)
+  /// Organização interna da Neeko: não é suspensa nem tem limites.
+  internal     Boolean   @default(false)
+  planId       String?   @db.Uuid
+  paidUntil    String    @default("")
+  notes        String    @default("")
+  createdAt    DateTime  @default(now())
+
+  plan Plan? @relation(fields: [planId], references: [id], onDelete: SetNull)
 
   memberships  OrganizationMembership[]
   companies    Company[]
@@ -50,6 +79,12 @@ model User {
   avatar             String?
   jobTitle           String     @default("")
   phone              String     @default("")
+  /// Segredo TOTP cifrado; verificação em duas etapas.
+  mfaSecret          Bytes?
+  mfaEnabled         Boolean    @default(false)
+  mfaLastStep        BigInt     @default(0)
+  /// SHA-256 dos códigos de recuperação ainda não usados.
+  mfaRecovery        Json       @default("[]")
   globalRole         GlobalRole @default(USER)
   active             Boolean    @default(true)
   createdAt          DateTime   @default(now())
@@ -64,6 +99,9 @@ model Session {
   userId         String   @db.Uuid
   organizationId String?  @db.Uuid
   tokenHash      String   @unique
+  mfaVerified    Boolean  @default(false)
+  /// Perfil privilegiado ainda sem verificação em duas etapas.
+  mfaSetupRequired Boolean @default(false)
   expiresAt      DateTime
   createdAt      DateTime @default(now())
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)

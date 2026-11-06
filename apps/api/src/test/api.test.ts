@@ -32,6 +32,8 @@ class Sessao {
   post = (r: string, c: unknown = {}) => this.pedir("POST", r, c);
 }
 async function logar(email: string, senha: string) { const s = new Sessao(); const r = await s.post("/auth/login", { email, senha }); assert.equal(r.status, 200); return s; }
+const b32d = (t: string) => { let bits = ""; for (const c of t) bits += "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567".indexOf(c).toString(2).padStart(5, "0"); return Buffer.from(bits.match(/.{8}/g)!.map((b) => parseInt(b, 2))); };
+async function ativarMfa(s: Sessao) { const { totp } = await import("../identity/mfa.controller"); const r = (await s.post("/auth/mfa/setup")).corpo, seg = b32d(r.chave); const a = await s.post("/auth/mfa/enable", { codigo: totp(seg, Math.floor(Date.now() / 30000)) }); assert.equal(a.status, 200); return { seg, codigos: a.corpo.codigos as string[] }; }
 
 before(async () => {
   const c = new Client({ connectionString: process.env.DATABASE_URL }); await c.connect();
@@ -51,6 +53,7 @@ before(async () => {
 });
 after(async () => { await app.close(); adn.close(); sefaz.close(); });
 
+let mfaAna: { seg: Buffer; codigos: string[] };
 let ana: Sessao, empresa: string, certOk: Buffer, memo: string;
 test("primeiro acesso exige trocar a senha provisória", async () => {
   ana = await logar("ana@a.test", "Provisoria123");
@@ -59,6 +62,10 @@ test("primeiro acesso exige trocar a senha provisória", async () => {
   assert.equal((await ana.post("/auth/password", { atual: "errada", nova: "NovaSenha123" })).status, 400);
   assert.equal((await ana.post("/auth/password", { atual: "Provisoria123", nova: "fraca" })).status, 400);
   assert.equal((await ana.post("/auth/password", { atual: "Provisoria123", nova: "NovaSenha123" })).status, 200);
+  assert.equal((await ana.get("/fiscal/companies")).corpo.code, "MFA_SETUP_REQUIRED", "perfil privilegiado ativa duas etapas");
+  ana = await logar("ana@a.test", "NovaSenha123");
+  assert.equal((await ana.get("/me")).corpo.mfaSetupRequired, true);
+  mfaAna = await ativarMfa(ana);
   assert.equal((await ana.get("/fiscal/companies")).status, 200);
   const antiga = new Sessao(); assert.equal((await antiga.post("/auth/login", { email: "ana@a.test", senha: "Provisoria123" })).status, 401);
 });
@@ -183,9 +190,57 @@ test("sem escalada: não concede o que não tem", async () => {
   assert.equal((await ana.post("/users", { name: "Carla", email: "c@a.test", senhaProvisoria: "Provisoria456", role: "STAFF", permissions: ["audit.read"], allCompanies: true, companyIds: [] })).status, 403);
   void o;
 });
+test("duas etapas: exige código e aceita recuperação uma vez", async () => {
+  const { totp } = await import("../identity/mfa.controller");
+  const s = await logar("ana@a.test", "NovaSenha123");
+  assert.equal((await s.get("/fiscal/companies")).corpo.code, "MFA_REQUIRED");
+  assert.equal((await s.post("/auth/password", { atual: "NovaSenha123", nova: "OutraSenha123" })).corpo.code, "MFA_REQUIRED");
+  assert.equal((await s.post("/auth/mfa/verify", { codigo: "000000" })).status, 400);
+  assert.equal((await s.post("/auth/mfa/verify", { codigo: mfaAna.codigos[0] })).status, 200);
+  assert.equal((await s.get("/fiscal/companies")).status, 200);
+  const s2 = await logar("ana@a.test", "NovaSenha123");
+  assert.equal((await s2.post("/auth/mfa/verify", { codigo: mfaAna.codigos[0] })).status, 400, "código de recuperação só vale uma vez");
+  await new Promise((r) => setTimeout(r, 0));
+  const passo = Math.floor(Date.now() / 30000) + 1;
+  const ok = await s2.post("/auth/mfa/verify", { codigo: totp(mfaAna.seg, passo) }); assert.equal(ok.status, 200);
+  const s3 = await logar("ana@a.test", "NovaSenha123");
+  assert.equal((await s3.post("/auth/mfa/verify", { codigo: totp(mfaAna.seg, passo) })).status, 400, "código usado não vale de novo");
+});
+test("plataforma: Neeko gerencia escritórios sem ver dados deles", async () => {
+  const u = await prisma.user.findUnique({ where: { email: "ana@a.test" } });
+  assert.equal(u.globalRole, "NEEKO_SUPERADMIN"); assert.equal((await prisma.organization.findFirst({ orderBy: { createdAt: "asc" } })).internal, true);
+  const p = await ana.post("/platform/plans", { name: "Básico", maxCompanies: 1, maxUsers: 2, monthlyPrice: "199.90" }); assert.equal(p.status, 201);
+  const es = await ana.post("/platform/offices", { name: "Escritório Beta", cnpj: "11.444.777/0001-61", planId: p.corpo.id, paidUntil: "2026-12-10", gestorNome: "Gestora Beta", gestorEmail: "gestora@beta.test", senhaProvisoria: "Provisoria789" });
+  assert.equal(es.status, 201);
+  assert.equal((await ana.post("/platform/offices", { name: "Dup", cnpj: "", planId: null, gestorNome: "Dup", gestorEmail: "gestora@beta.test", senhaProvisoria: "Provisoria789" })).status, 409);
+  const lista = (await ana.get("/platform/offices")).corpo.escritorios, beta = lista.find((o: any) => o.id === es.corpo.id);
+  assert.equal(beta.plano, "Básico"); assert.equal(beta.usuarios, 1); assert.equal(beta.gestorEmail, "gestora@beta.test");
+  assert.equal(JSON.stringify(lista).match(/xmlGz|pfx|data"/), null);
+  let g = await logar("gestora@beta.test", "Provisoria789"); await g.post("/auth/password", { atual: "Provisoria789", nova: "SenhaBeta1234" }); g = await logar("gestora@beta.test", "SenhaBeta1234"); await ativarMfa(g);
+  assert.equal((await g.get("/platform/offices")).status, 403, "gestor não acessa a plataforma");
+  assert.equal((await g.post("/memoranda", { memo: { e_cnpj: "11444777000161", e_razao: "Primeira" } })).status, 201);
+  const lim = await g.post("/memoranda", { memo: { e_cnpj: "11444777000242", e_razao: "Segunda" } }); assert.equal(lim.status, 403); assert.equal(lim.corpo.code, "LIMIT_COMPANIES");
+  const n = { role: "STAFF", permissions: [], allCompanies: false, companyIds: [], senhaProvisoria: "Provisoria456" };
+  assert.equal((await g.post("/users", { ...n, name: "Um", email: "um@beta.test" })).status, 201);
+  const lu = await g.post("/users", { ...n, name: "Dois", email: "dois@beta.test" }); assert.equal(lu.corpo.code, "LIMIT_USERS");
+  assert.equal((await ana.get(`/fiscal/nfse/${(await g.get("/memoranda")).corpo.memorandos[0].id}/documents`)).status, 404, "Neeko não entra nos dados do escritório");
+  assert.equal((await ana.post(`/platform/offices/${es.corpo.id}/status`, { status: "SUSPENDED" })).status, 200);
+  assert.equal((await g.get("/memoranda")).status, 401, "suspensão encerra as sessões");
+  const g2 = await logar("gestora@beta.test", "SenhaBeta1234");
+  const { totp } = await import("../identity/mfa.controller"); void totp;
+  await prisma.session.updateMany({ where: { user: { email: "gestora@beta.test" } }, data: { mfaVerified: true } });
+  assert.equal((await g2.get("/memoranda")).corpo.code, "OFFICE_SUSPENDED");
+  await ana.post(`/platform/offices/${es.corpo.id}/status`, { status: "ACTIVE" });
+  assert.equal((await g2.get("/memoranda")).status, 401, "reativar também pede novo login");
+  const g3 = await logar("gestora@beta.test", "SenhaBeta1234"); await prisma.session.updateMany({ where: { user: { email: "gestora@beta.test" } }, data: { mfaVerified: true } });
+  assert.equal((await g3.get("/memoranda")).status, 200);
+  const interna = lista.find((o: any) => o.internal); assert.equal((await ana.post(`/platform/offices/${interna.id}/status`, { status: "SUSPENDED" })).status, 400);
+  assert.equal((await ana.post(`/platform/offices/${es.corpo.id}/reset-manager`, { senhaProvisoria: "Provisoria555" })).status, 200);
+  assert.equal((await new Sessao().post("/auth/login", { email: "gestora@beta.test", senha: "Provisoria555" })).corpo.mustChangePassword, true);
+});
 test("isolamento entre organizações", async () => {
   const { hashSenha } = await import("../common/passwords");
-  await prisma.user.create({ data: { email: "o@b.test", name: "O", passwordHash: await hashSenha("SenhaOutra123"), mustChangePassword: false, memberships: { create: { role: "ORG_OWNER", allCompanies: true, organization: { create: { name: "Org B" } }, permissions: { create: ["companies.read", "companies.manage", "fiscal.documents.read", "fiscal.capture", "fiscal.credentials.manage", "fiscal.ciencia.send", "users.manage", "memoranda.read", "memoranda.manage"].map((permission) => ({ permission })) } } } } });
+  await prisma.user.create({ data: { email: "o@b.test", name: "O", passwordHash: await hashSenha("SenhaOutra123"), mustChangePassword: false, memberships: { create: { role: "STAFF", allCompanies: true, organization: { create: { name: "Org B" } }, permissions: { create: ["companies.read", "companies.manage", "fiscal.documents.read", "fiscal.capture", "fiscal.credentials.manage", "fiscal.ciencia.send", "users.manage", "memoranda.read", "memoranda.manage"].map((permission) => ({ permission })) } } } } });
   outra = await logar("o@b.test", "SenhaOutra123");
   assert.deepEqual((await outra.get("/fiscal/companies")).corpo.empresas, []);
   assert.deepEqual((await outra.get("/certificates")).corpo.certificados, []);

@@ -2,14 +2,14 @@
 import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, ChevronDown, FileBadge, FileStack, Handshake, Home, Landmark, LogOut, Mails, Menu, PieChart, Search, Settings, Wallet } from "lucide-react";
-import { Loading } from "@neeko/ui";
+import { Bell, Building2, ChevronDown, FileBadge, FileStack, Handshake, Home, Landmark, LogOut, Mails, Menu, PieChart, Search, Settings, Wallet } from "lucide-react";
+import { Loading, Notice } from "@neeko/ui";
 import { formatarCnpj } from "@/lib/format";
-import { eu, sair, type Eu } from "@/services/conta";
+import { destinoApos, eu, sair, type Eu } from "@/services/conta";
 import { lerPainel, type Painel as DadosPainel } from "@/services/fiscal";
 import styles from "./painel.module.css";
 
-interface Item { nome: string; icone: ComponentType<{ size?: number }>; href?: string; exige?: string; filhos?: { href: string; nome: string; exige: string }[] }
+interface Item { plataforma?: boolean; nome: string; icone: ComponentType<{ size?: number }>; href?: string; exige?: string; filhos?: { href: string; nome: string; exige: string }[] }
 const MENU: Item[] = [
   { nome: "Início", icone: Home, href: "/inicio" },
   { nome: "Fiscal", icone: Landmark },
@@ -19,6 +19,7 @@ const MENU: Item[] = [
   { nome: "Contratos", icone: Handshake },
   { nome: "Memorandos", icone: Mails, href: "/memorandos", exige: "memoranda.read" },
   { nome: "Relatórios", icone: PieChart },
+  { nome: "Neeko Gerencial", icone: Building2, plataforma: true, filhos: [{ href: "/plataforma/escritorios", nome: "Escritórios", exige: "" }, { href: "/plataforma/planos", nome: "Planos", exige: "" }] },
   { nome: "Administração", icone: Settings, filhos: [{ href: "/certificados", nome: "Certificados", exige: "fiscal.credentials.manage" }, { href: "/usuarios", nome: "Usuários", exige: "users.manage" }] },
 ];
 const iniciais = (n: string) => { const p = n.trim().split(/\s+/); return ((p[0]?.[0] ?? "") + (p.length > 1 ? p[p.length - 1][0] : "")).toUpperCase(); };
@@ -32,7 +33,7 @@ export default function Painel({ children }: { children: ReactNode }) {
   const [sino, setSino] = useState(false);
   const rota = usePathname();
   useEffect(() => {
-    eu().then((p) => { if (p.mustChangePassword) window.location.assign("/trocar-senha"); else { setPessoa(p); if (p.permissions.includes("fiscal.documents.read")) lerPainel().then(setDados).catch(() => undefined); } }).catch(() => undefined);
+    eu().then((p) => { const d = destinoApos(p); if (d !== "/inicio") window.location.assign(d); else { setPessoa(p); if (p.permissions.includes("fiscal.documents.read")) lerPainel().then(setDados).catch(() => undefined); } }).catch(() => undefined);
   }, []);
   useEffect(() => { setMenu(false); setSino(false); setBusca(""); }, [rota]);
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function Painel({ children }: { children: ReactNode }) {
     return (dados?.empresasLista ?? []).filter((e) => e.razao.toLowerCase().includes(q) || (n && e.cnpj.includes(n))).slice(0, 6);
   }, [busca, dados]);
   if (!pessoa) return <Loading />;
+  if (!pessoa.organization && !pessoa.platformAdmin) return <div className={styles.conteudo}><Notice tom="alerta">O acesso deste escritório está suspenso. Fale com a Neeko.</Notice></div>;
   const pode = (p?: string) => !p || pessoa.permissions.includes(p);
   return (
     <div className={styles.painel}>
@@ -53,6 +55,7 @@ export default function Painel({ children }: { children: ReactNode }) {
         <div className={styles.marca}><img src="/neeko-marca.png" alt="" width={54} height={38} /><div><b>Neeko</b><small>Tecnologia que impulsiona sua contabilidade</small></div></div>
         <nav aria-label="Menu principal" className={styles.nav}>
           {MENU.map((m) => {
+            if (m.plataforma && !pessoa.platformAdmin) return null;
             const I = m.icone;
             const filhos = m.filhos?.filter((f) => pode(f.exige));
             if (m.filhos && !filhos?.length) return null;

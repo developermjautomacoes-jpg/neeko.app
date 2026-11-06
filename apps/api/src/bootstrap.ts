@@ -10,7 +10,7 @@ export async function primeiraPessoa(prisma: PrismaClient) {
   if (await prisma.user.count()) return;
   const fraca = senhaFraca(c.BOOTSTRAP_ADMIN_PASSWORD);
   if (fraca) throw new Error(`BOOTSTRAP_ADMIN_PASSWORD: ${fraca}`);
-  await prisma.user.create({ data: { email: c.BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase(), name: c.BOOTSTRAP_ADMIN_NAME ?? "Administração", passwordHash: await hashSenha(c.BOOTSTRAP_ADMIN_PASSWORD), mustChangePassword: true,
-    memberships: { create: { role: "ORG_OWNER", allCompanies: true, organization: { create: { name: c.BOOTSTRAP_ORG_NAME } }, permissions: { create: PERMISSOES.map((permission) => ({ permission })) } } } } });
+  await prisma.user.create({ data: { email: c.BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase(), name: c.BOOTSTRAP_ADMIN_NAME ?? "Administração", passwordHash: await hashSenha(c.BOOTSTRAP_ADMIN_PASSWORD), mustChangePassword: true, globalRole: "NEEKO_SUPERADMIN",
+    memberships: { create: { role: "ORG_OWNER", allCompanies: true, organization: { create: { name: c.BOOTSTRAP_ORG_NAME, internal: true } }, permissions: { create: PERMISSOES.map((permission) => ({ permission })) } } } } });
   console.log("Organização e primeira pessoa criadas.");
 }

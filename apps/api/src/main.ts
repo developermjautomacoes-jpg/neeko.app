@@ -18,7 +18,9 @@ async function iniciar() {
   const c = config();
   if (c.RUN_MIGRATIONS === "true") await aplicarMigracoes(c.DATABASE_URL, c.MIGRATIONS_DIR);
   const app = await criarApp();
-  await primeiraPessoa(app.get(PrismaService));
+  const prisma = app.get(PrismaService);
+  await primeiraPessoa(prisma);
+  if (c.MFA_RESET_EMAIL) { await prisma.user.updateMany({ where: { email: c.MFA_RESET_EMAIL.toLowerCase() }, data: { mfaEnabled: false, mfaSecret: null, mfaRecovery: [] } }); console.warn("Verificação em duas etapas limpa por MFA_RESET_EMAIL."); }
   await app.listen(c.PORT);
 }
 if (require.main === module) iniciar().catch((e) => { console.error(e instanceof Error ? e.message : e); process.exit(1); });

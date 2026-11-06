@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button, Input, Notice } from "@neeko/ui";
-import { eu, trocarSenha } from "@/services/conta";
+import { destinoApos, eu, trocarSenha } from "@/services/conta";
 import styles from "../auth.module.css";
 
 export default function TrocarSenha() {
@@ -16,7 +16,7 @@ export default function TrocarSenha() {
     e.preventDefault();
     if (nova !== repetir) { setErro("As duas senhas novas não são iguais."); return; }
     setEnviando(true); setErro("");
-    try { await trocarSenha(atual, nova); window.location.assign("/inicio"); }
+    try { await trocarSenha(atual, nova); window.location.assign(destinoApos(await eu())); }
     catch (x) { setErro(x instanceof Error ? x.message : "Não foi possível trocar."); setEnviando(false); }
   }
   return (

@@ -59,12 +59,19 @@ export class MemorandosService {
     if (!legalName) throw invalido("Informe a razão social.");
     return { cnpj, legalName };
   }
+  private async conferirReativacao(c: Contexto, m: Memorandum, status: string, clientStatus: string) {
+    if (!this.ativa(status, clientStatus) || this.ativa(m.status, m.clientStatus)) return;
+    const { maxCompanies } = await this.escopo.limites(c.organizationId);
+    if (maxCompanies !== null && (await this.prisma.company.count({ where: { organizationId: c.organizationId, active: true } })) >= maxCompanies) throw new Erro(403, "LIMIT_COMPANIES", `O plano deste escritório permite ${maxCompanies} empresa(s). Fale com a Neeko para ampliar.`);
+  }
   private ativa(status: string, clientStatus: string) { return status === "ativo" && clientStatus === "ativa"; }
 
   /** O número é editável; sem número, usa o próximo do ano. */
   async criar(c: Contexto, d: Record<string, unknown>, numero: { seq: number; ano: number } | null) {
     const { cnpj, legalName } = this.dadosEmpresa(d), org = c.organizationId, por = await this.nome(c);
     const ano = numero?.ano ?? +String(d.m_data || hoje()).slice(0, 4);
+    const { maxCompanies } = await this.escopo.limites(org);
+    if (maxCompanies !== null && !(await this.prisma.company.findFirst({ where: { organizationId: org, cnpj, active: true } })) && (await this.prisma.company.count({ where: { organizationId: org, active: true } })) >= maxCompanies) throw new Erro(403, "LIMIT_COMPANIES", `O plano deste escritório permite ${maxCompanies} empresa(s). Fale com a Neeko para ampliar.`);
     if (!c.allCompanies) { const j = await this.prisma.company.findFirst({ where: { organizationId: org, cnpj } }); if (j && !(await this.prisma.companyAccess.findFirst({ where: { membershipId: c.membershipId, companyId: j.id } }))) throw new Erro(409, "EM_USO", "Esta empresa já está cadastrada. Peça acesso a quem administra."); }
     try {
       return await this.prisma.$transaction(async (tx) => {
@@ -96,6 +103,7 @@ export class MemorandosService {
   /** Cancelar ou registrar a saída tira a empresa das capturas; as notas guardadas continuam. */
   async situacao(c: Contexto, id: string, status: "ativo" | "cancelado") {
     const m = await this.um(c, id), por = await this.nome(c);
+    await this.conferirReativacao(c, m, status, m.clientStatus);
     if (status === "ativo" && (await this.prisma.memorandum.findFirst({ where: { organizationId: c.organizationId, companyId: m.companyId, status: "ativo", id: { not: m.id } } }))) throw new Erro(409, "JA_CADASTRADA", "A empresa já tem outro memorando ativo.");
     return this.prisma.$transaction(async (tx) => {
       await tx.company.update({ where: { id: m.companyId }, data: { active: this.ativa(status, m.clientStatus) } });
@@ -104,6 +112,7 @@ export class MemorandosService {
   }
   async cliente(c: Contexto, id: string, s: { situacao: "ativa" | "inativa"; dataSaida?: string; motivo?: string; obs?: string }) {
     const m = await this.um(c, id), por = await this.nome(c), saiu = s.situacao === "inativa";
+    await this.conferirReativacao(c, m, m.status, s.situacao);
     if (saiu && !/^\d{4}-\d{2}-\d{2}$/.test(s.dataSaida ?? "")) throw invalido("Data de saída inválida.");
     const acao = saiu ? `Registrou a saída do cliente (${s.dataSaida!.split("-").reverse().join("/")}${s.motivo ? ` · ${s.motivo}` : ""})` : "Reativou o cliente";
     return this.prisma.$transaction(async (tx) => {

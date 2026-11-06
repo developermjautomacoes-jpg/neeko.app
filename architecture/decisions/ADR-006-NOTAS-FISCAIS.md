@@ -24,10 +24,9 @@ O memorando é o único lugar de cadastro: salvá-lo cria ou atualiza a `Company
 
 ## Fora desta entrega
 
-Emissão de notas; NFC-e e notas emitidas pela SEFAZ-ES; referência de emissão própria; portal por empresa; MFA.
+Emissão de notas; NFC-e e notas emitidas pela SEFAZ-ES; referência de emissão própria; portal por empresa.
 
 ## Consequências
 
-- MFA para perfis privilegiados continua obrigatório antes de abrir a plataforma a outros escritórios (ADR-003).
 - Regras fiscais vieram do sistema em operação e das NTs citadas no código; a validação com certificado real é feita em homologação antes de produção.
 - O mesmo CNPJ em dois sistemas disputa a sequência de NSU da SEFAZ: a captura noturna de NF-e/CT-e nasce desligada por empresa.

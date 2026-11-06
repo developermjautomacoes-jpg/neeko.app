@@ -24,7 +24,7 @@ export class AgendadorService implements OnModuleInit, OnModuleDestroy {
   async conferir(agora = new Date()) {
     const br = new Date(agora.getTime() - 3 * 3600 * 1000);
     const dia = br.toISOString().slice(0, 10), ontem = new Date(br.getTime() - 86400000).toISOString().slice(0, 10);
-    for (const s of await this.prisma.fiscalSettings.findMany({ where: { scheduleActive: true } })) {
+    for (const s of await this.prisma.fiscalSettings.findMany({ where: { scheduleActive: true, organization: { status: "ACTIVE" } } })) {
       if (this.rodando.has(s.organizationId)) continue;
       for (const d of [dia, ontem]) { // a noite pertence ao dia em que o horário cai
         const inicio = Date.parse(`${d}T${s.scheduleTime}:00-03:00`), limite = inicio + JANELA_MS;

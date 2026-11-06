@@ -1,7 +1,7 @@
 "use client";
 import { useState, type FormEvent } from "react";
 import { Button, Input, Notice } from "@neeko/ui";
-import { entrar } from "@/services/conta";
+import { destinoApos, entrar, eu } from "@/services/conta";
 import styles from "../auth.module.css";
 
 export default function Login() {
@@ -11,7 +11,7 @@ export default function Login() {
   const [enviando, setEnviando] = useState(false);
   async function enviar(e: FormEvent) {
     e.preventDefault(); setEnviando(true); setErro("");
-    try { const r = await entrar(email, senha); window.location.assign(r.mustChangePassword ? "/trocar-senha" : "/inicio"); }
+    try { await entrar(email, senha); window.location.assign(destinoApos(await eu())); }
     catch (x) { setErro(x instanceof Error ? x.message : "Não foi possível entrar."); setEnviando(false); }
   }
   return (

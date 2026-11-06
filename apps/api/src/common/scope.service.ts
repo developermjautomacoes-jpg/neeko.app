@@ -6,6 +6,11 @@ import { naoEncontrado } from "./errors";
 
 @Injectable()
 export class EscopoService {
+  /** null = sem limite. Conta o que já existe contra o plano do escritório. */
+  async limites(organizationId: string) {
+    const o = await this.prisma.organization.findUniqueOrThrow({ where: { id: organizationId }, include: { plan: true } });
+    return { maxCompanies: o.internal ? null : o.plan?.maxCompanies ?? null, maxUsers: o.internal ? null : o.plan?.maxUsers ?? null };
+  }
   constructor(private prisma: PrismaService) {}
   /** Filtro das empresas que a pessoa pode ver, sempre dentro da organização da sessão. */
   filtro(c: Contexto): Prisma.CompanyWhereInput {

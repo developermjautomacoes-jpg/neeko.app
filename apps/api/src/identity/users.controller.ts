@@ -4,6 +4,7 @@ import { AuditoriaService } from "../common/audit.service";
 import { Contexto, Ctx, Exige, PERMISSOES } from "../common/auth";
 import { Erro, invalido, naoEncontrado } from "../common/errors";
 import { hashSenha, senhaFraca } from "../common/passwords";
+import { EscopoService } from "../common/scope.service";
 import { validar } from "../common/validation";
 import { PrismaService } from "../prisma.service";
 
@@ -18,7 +19,7 @@ const novo = acesso.extend({ name: z.string().trim().min(2, "Informe o nome.").m
 /** Pessoas da organização. Cada uma tem e-mail e senha próprios; quem administra só define a senha provisória. */
 @Controller("users")
 export class UsersController {
-  constructor(private prisma: PrismaService, private auditoria: AuditoriaService) {}
+  constructor(private prisma: PrismaService, private auditoria: AuditoriaService, private escopo: EscopoService) {}
 
   private async vinculo(c: Contexto, id: string) {
     const m = await this.prisma.organizationMembership.findFirst({ where: { id, organizationId: c.organizationId } });
@@ -30,6 +31,10 @@ export class UsersController {
     if (n !== new Set(ids).size) throw invalido("Há empresa fora desta organização.");
   }
   /** Ninguém concede a si ou a outra pessoa o que não tem: impede escalada de privilégio. */
+  private async conferirLimite(c: Contexto) {
+    const { maxUsers } = await this.escopo.limites(c.organizationId);
+    if (maxUsers !== null && (await this.prisma.organizationMembership.count({ where: { organizationId: c.organizationId, status: "ACTIVE" } })) >= maxUsers) throw new Erro(403, "LIMIT_USERS", `O plano deste escritório permite ${maxUsers} usuário(s). Fale com a Neeko para ampliar.`);
+  }
   private conferirConcessao(c: Contexto, p: string[]) {
     if (p.some((x) => !c.permissions.has(x))) throw new Erro(403, "FORBIDDEN", "Você só pode conceder permissões que já tem.");
   }
@@ -45,6 +50,7 @@ export class UsersController {
   async criar(@Ctx() c: Contexto, @Body() corpo: unknown) {
     const d = validar(novo, corpo);
     const fraca = senhaFraca(d.senhaProvisoria); if (fraca) throw invalido(fraca);
+    await this.conferirLimite(c);
     this.conferirConcessao(c, d.permissions); await this.conferirEmpresas(c, d.companyIds);
     if (await this.prisma.user.findUnique({ where: { email: d.email } })) throw new Erro(409, "EMAIL_IN_USE", "Este e-mail já tem cadastro.");
     const u = await this.prisma.user.create({ data: { email: d.email, name: d.name, passwordHash: await hashSenha(d.senhaProvisoria), mustChangePassword: true,
@@ -61,6 +67,7 @@ export class UsersController {
     const m = await this.vinculo(c, id);
     if (m.role === "ORG_OWNER") throw new Erro(403, "FORBIDDEN", "A pessoa proprietária não é alterada por aqui.");
     if (m.id === c.membershipId) throw new Erro(403, "FORBIDDEN", "Você não pode alterar o próprio acesso.");
+    if (m.status === "SUSPENDED" && d.status === "ACTIVE") await this.conferirLimite(c);
     this.conferirConcessao(c, d.permissions); await this.conferirEmpresas(c, d.companyIds);
     await this.prisma.$transaction([
       this.prisma.organizationMembership.update({ where: { id }, data: { role: d.role, status: d.status, allCompanies: d.allCompanies } }),
