@@ -9,11 +9,11 @@ import styles from "../pagina.module.css";
 
 const NOMES: Record<string, string> = {
   "companies.read": "Ver empresas", "companies.manage": "Gerenciar empresas", "fiscal.documents.read": "Ver e baixar notas", "fiscal.capture": "Capturar notas", "fiscal.credentials.manage": "Gerenciar certificados",
-  "fiscal.ciencia.send": "Registrar ciência da operação", "fiscal.schedule.manage": "Configurar captura noturna", "users.manage": "Gerenciar usuários", "audit.read": "Ver auditoria",
+  "fiscal.ciencia.send": "Registrar ciência da operação", "fiscal.schedule.manage": "Configurar captura noturna", "users.manage": "Gerenciar usuários", "audit.read": "Ver auditoria", "memoranda.read": "Ver memorandos", "memoranda.manage": "Gerenciar memorandos",
 };
 const PAPEIS: Record<string, string> = { ORG_OWNER: "Proprietária", ORG_ADMIN: "Administração", STAFF: "Colaborador", COMPANY_USER: "Usuário de empresa" };
 interface Form { id?: string; name: string; email: string; senhaProvisoria: string; role: string; status: string; permissions: string[]; allCompanies: boolean; companyIds: string[] }
-const vazio: Form = { name: "", email: "", senhaProvisoria: "", role: "STAFF", status: "ACTIVE", permissions: ["companies.read", "fiscal.documents.read"], allCompanies: false, companyIds: [] };
+const vazio: Form = { name: "", email: "", senhaProvisoria: "", role: "STAFF", status: "ACTIVE", permissions: ["companies.read", "fiscal.documents.read", "memoranda.read"], allCompanies: false, companyIds: [] };
 const alternar = (l: string[], v: string) => (l.includes(v) ? l.filter((x) => x !== v) : [...l, v]);
 
 export default function Usuarios() {

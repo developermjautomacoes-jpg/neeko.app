@@ -14,11 +14,13 @@ import { AgendadorService } from "./fiscal/scheduler.service";
 import { HealthController } from "./health.controller";
 import { AuthController, MeController } from "./identity/auth.controller";
 import { UsersController } from "./identity/users.controller";
+import { MemorandosController } from "./memoranda/memoranda.controller";
+import { MemorandosService } from "./memoranda/memoranda.service";
 import { PrismaService } from "./prisma.service";
 
 @Module({
-  controllers: [HealthController, AuthController, MeController, UsersController, CertificatesController, FiscalController, PainelController],
-  providers: [PrismaService, AuditoriaService, EscopoService, CertificadosService, NfseService, DfeService, AgendadorService,
+  controllers: [HealthController, AuthController, MeController, UsersController, CertificatesController, FiscalController, PainelController, MemorandosController],
+  providers: [PrismaService, AuditoriaService, EscopoService, CertificadosService, NfseService, DfeService, AgendadorService, MemorandosService,
     { provide: APP_GUARD, useClass: GuardaAcesso }, { provide: APP_FILTER, useClass: FiltroErros }],
 })
 export class AppModule {}

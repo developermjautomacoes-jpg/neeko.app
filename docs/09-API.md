@@ -41,7 +41,8 @@ Base `/api/v1`. Sessão por cookie httpOnly; a organização vem da sessão, nun
 - `POST /auth/login`, `/auth/logout`, `/auth/password`; `GET /me`
 - `GET|POST /users`, `PATCH /users/:id`, `POST /users/:id/reset-password`
 - `GET|POST /certificates`, `DELETE /certificates/:id`
-- `POST /companies`, `DELETE /companies/:id`, `PATCH /companies/:id/nfse-mode`
+- `GET|POST /memoranda`, `GET|PUT /memoranda/:id`, `POST /memoranda/:id/status`, `POST /memoranda/:id/client`, `GET /memoranda/team`, `GET /memoranda/lookup/cnpj/:cnpj`, `GET /memoranda/lookup/ie/:cnpj`
+- `PATCH /companies/:id/nfse-mode`
 - `GET /fiscal/companies`, `GET|PUT /fiscal/procurator`, `GET|PUT /fiscal/schedule`
 - `/fiscal/nfse/:id/`: `capture`, `documents`, `verify`, `diagnose`, `restart`, `xmls`, `zip`
 - `/fiscal/dfe/`: `companies`, `:id/auto-capture`, `:id/auto-ciencia`, `:id/ciencia/mark`, `:id/ciencia/send`, `:id/:servico/capture|documents|restart|zip`

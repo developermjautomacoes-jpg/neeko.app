@@ -11,6 +11,8 @@
   "dependencies": {
     "@neeko/ui": "workspace:*",
     "exceljs": "4.4.0",
+    "jspdf": "2.5.2",
+    "jszip": "3.10.1",
     "lucide-react": "0.525.0",
     "next": "15.3.5",
     "pdf-lib": "1.17.1",

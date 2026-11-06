@@ -1,11 +1,11 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Put, Query, Res } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Param, Patch, Post, Put, Query, Res } from "@nestjs/common";
 import type { Company } from "@prisma/client";
 import type { Response } from "express";
 import { z } from "zod";
 import { CertificadosService } from "../certificates/certificates.service";
 import { AuditoriaService } from "../common/audit.service";
 import { Contexto, Ctx, Exige } from "../common/auth";
-import { invalido, naoEncontrado } from "../common/errors";
+import { naoEncontrado } from "../common/errors";
 import { EscopoService } from "../common/scope.service";
 import { validar } from "../common/validation";
 import { PrismaService } from "../prisma.service";
@@ -44,27 +44,6 @@ export class FiscalController {
       return { id: e.id, cnpj: e.cnpj, razao: e.legalName, certId: e.certificateId ?? "", modo: e.nfseMode, certificado: certPublico(e.nfseMode === "procuracao" ? procurador : this.certs.escolher(certs, e.cnpj, e.certificateId)),
         ultimoNsu: Number(st?.lastNsu ?? 0), ultimaCaptura: st?.lastCaptureAt ?? null, ultimoErro: st?.lastError ?? null, notas: notas.find((n) => n.companyId === e.id)?._count ?? 0, falhas: falhas.find((n) => n.companyId === e.id)?._count ?? 0 };
     }) };
-  }
-  @Exige("companies.manage") @Post("companies")
-  async criar(@Ctx() c: Contexto, @Body() corpo: unknown) {
-    const d = validar(z.object({ cnpj: z.string().transform((v) => v.replace(/[^0-9A-Za-z]/g, "").toUpperCase()).pipe(z.string().regex(/^[0-9A-Z]{12}\d{2}$/, "CNPJ inválido.")), razao: z.string().trim().max(150).default(""), certId: z.string().uuid().or(z.literal("")).default("") }), corpo);
-    if (d.certId) await this.conferirCert(c, d.cnpj, d.certId);
-    const e = await this.prisma.company.upsert({ where: { organizationId_cnpj: { organizationId: c.organizationId, cnpj: d.cnpj } }, create: { organizationId: c.organizationId, cnpj: d.cnpj, legalName: d.razao, certificateId: d.certId || null }, update: { active: true, legalName: d.razao, certificateId: d.certId || null } });
-    if (!c.allCompanies) await this.prisma.companyAccess.upsert({ where: { membershipId_companyId: { membershipId: c.membershipId, companyId: e.id } }, create: { organizationId: c.organizationId, membershipId: c.membershipId, companyId: e.id }, update: {} });
-    await this.auditoria.registrar(c.organizationId, c.userId, "companies.saved", e.id);
-    return { id: e.id };
-  }
-  private async conferirCert(c: Contexto, cnpj: string, id: string) {
-    const x = await this.prisma.fiscalCertificate.findFirst({ where: { id, organizationId: c.organizationId } });
-    if (!x || x.document.slice(0, 8) !== cnpj.slice(0, 8)) throw invalido("O certificado escolhido não tem a mesma raiz desse CNPJ.");
-  }
-  /** Tira da carteira; notas e último NSU continuam guardados. */
-  @Exige("companies.manage") @Delete("companies/:id")
-  async remover(@Ctx() c: Contexto, @Param("id") id: string) {
-    const e = await this.escopo.empresa(c, id);
-    await this.prisma.company.update({ where: { id: e.id }, data: { active: false } });
-    await this.auditoria.registrar(c.organizationId, c.userId, "companies.removed", e.id);
-    return { ok: true };
   }
   @Exige("companies.manage") @Patch("companies/:id/nfse-mode")
   async modo(@Ctx() c: Contexto, @Param("id") id: string, @Body() corpo: unknown) {

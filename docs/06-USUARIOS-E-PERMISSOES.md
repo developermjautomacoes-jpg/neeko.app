@@ -36,4 +36,4 @@ A baseline de papéis e escopos está registrada no [ADR-005](../architecture/de
 
 ## Permissões implementadas
 
-`companies.read`, `companies.manage`, `fiscal.documents.read`, `fiscal.capture`, `fiscal.credentials.manage`, `fiscal.ciencia.send`, `fiscal.schedule.manage`, `users.manage`, `audit.read`. Ninguém concede o que não tem. A matriz final por papel segue pendente (ADR-005).
+`companies.read`, `companies.manage`, `fiscal.documents.read`, `fiscal.capture`, `fiscal.credentials.manage`, `fiscal.ciencia.send`, `fiscal.schedule.manage`, `users.manage`, `audit.read`, `memoranda.read`, `memoranda.manage`. Ninguém concede o que não tem. A matriz final por papel segue pendente (ADR-005).

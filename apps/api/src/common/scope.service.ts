@@ -11,6 +11,10 @@ export class EscopoService {
   filtro(c: Contexto): Prisma.CompanyWhereInput {
     return { organizationId: c.organizationId, active: true, ...(c.allCompanies ? {} : { access: { some: { membershipId: c.membershipId } } }) };
   }
+  /** Carteira completa, incluindo empresas que saíram: usada só pelos memorandos. */
+  carteira(c: Contexto): Prisma.CompanyWhereInput {
+    return { organizationId: c.organizationId, ...(c.allCompanies ? {} : { access: { some: { membershipId: c.membershipId } } }) };
+  }
   /** Id de outra organização ou sem acesso responde igual a id inexistente. */
   async empresa(c: Contexto, id: string): Promise<Company> {
     if (!/^[0-9a-f-]{36}$/i.test(id)) throw naoEncontrado("Empresa não encontrada.");

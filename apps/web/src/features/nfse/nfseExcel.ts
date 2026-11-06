@@ -98,6 +98,7 @@ export async function exportarExcel(razao: string, cnpj: string, competencia: st
   resumo.addRow(["Fonte: XML das NFS-e no Ambiente de Dados Nacional, sem recálculo. Situacao ISS conforme tpRetISSQN (LC 116/2003, art. 6º). PIS e COFINS como informados na nota: só entram em Tot Ret quando retidos."]).getCell(1).font = { italic: true, size: 9 };
   resumo.getColumn(1).width = 40;
   contam.forEach((_, k) => { resumo.getColumn(k + 2).width = 18; });
+  try { const img = wb.addImage({ buffer: await (await fetch("/logo-relatorio.png")).arrayBuffer() as never, extension: "png" }); resumo.addImage(img, { tl: { col: 2.2, row: 0 }, ext: { width: 150, height: 41 } }); } catch { /* relatório sai sem logo */ }
   const buffer = await wb.xlsx.writeBuffer();
   const url = URL.createObjectURL(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
   const a = document.createElement("a");

@@ -40,7 +40,7 @@ export default function Certificados() {
     <>
       <PageHeader titulo="Certificados digitais" descricao="Certificados A1 da organização. Arquivo e senha ficam cifrados e nunca voltam para a tela." />
       {erro && <Notice tom="erro">{erro}</Notice>}
-      <Card titulo="Importar certificado" descricao="Um e-CNPJ importado inclui a empresa na carteira.">
+      <Card titulo="Importar certificado" descricao="O certificado é ligado à empresa pela raiz do CNPJ. A empresa é cadastrada no memorando.">
         <div className={styles.form4}>
           <Input key={chave} rotulo="Arquivo (.pfx ou .p12)" type="file" accept=".pfx,.p12" onChange={(e) => setArquivo(e.target.files?.[0] ?? null)} />
           <Input rotulo="Senha do certificado" type="password" autoComplete="new-password" value={senha} onChange={(e) => setSenha(e.target.value)} />

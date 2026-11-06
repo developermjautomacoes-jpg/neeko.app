@@ -32,6 +32,7 @@ export async function exportarExcelDfe(razao: string, cnpj: string, servico: Ser
     total.getCell(ic).value = { formula: `SUM(${letra}4:${letra}${u})`, result: aba.linhas.reduce((s, d) => s + d.v_total / 100, 0) };
     total.font = { bold: true };
   }
+  try { const img = wb.addImage({ buffer: await (await fetch("/logo-relatorio.png")).arrayBuffer() as never, extension: "png" }); wb.worksheets[0]?.addImage(img, { tl: { col: 8, row: 0 }, ext: { width: 110, height: 30 } }); } catch { /* relatório sai sem logo */ }
   const blob = new Blob([await wb.xlsx.writeBuffer()], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob); a.download = `${servico.toUpperCase()}-${cnpj.replace(/\D/g, "")}-${competencia}.xlsx`; a.click();

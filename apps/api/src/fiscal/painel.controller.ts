@@ -7,7 +7,7 @@ import { PrismaService } from "../prisma.service";
 const AMB = "producao";
 const ROTULOS: Record<string, string> = {
   "auth.login": "Entrou no sistema", "fiscal.certificate.imported": "Certificado importado", "fiscal.certificate.removed": "Certificado removido", "fiscal.nfse.exported": "XML de NFS-e baixado",
-  "fiscal.dfe.exported": "XML de NF-e/CT-e baixado", "fiscal.dfe.ciencia.sent": "Ciência da operação enviada", "users.created": "Usuário criado", "users.access.changed": "Acesso de usuário alterado", "companies.saved": "Empresa salva",
+  "fiscal.dfe.exported": "XML de NF-e/CT-e baixado", "fiscal.dfe.ciencia.sent": "Ciência da operação enviada", "users.created": "Usuário criado", "users.access.changed": "Acesso de usuário alterado", "memoranda.created": "Memorando criado", "memoranda.updated": "Memorando alterado", "memoranda.status": "Situação de memorando alterada", "memoranda.client": "Situação de cliente alterada",
 };
 function meses(n: number): string[] {
   const d = new Date(Date.now() - 3 * 3600 * 1000), s: string[] = [];

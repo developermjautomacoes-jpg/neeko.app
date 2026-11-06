@@ -13,6 +13,7 @@ Mudanças relevantes da Neeko Platform serão registradas aqui.
 
 - Criados monorepo, API NestJS, web Next.js, PostgreSQL com Prisma e testes.
 - Login e senha individuais, RBAC por organização e empresa, auditoria e gestão de usuários.
+- Memorando como cadastro único das empresas, com PDF, Word e histórico.
 - Captura de NFS-e, NF-e e CT-e, certificados cifrados, Ciência da Operação, agendamento, Excel, XML e DANFSe (ADR-006).
 
 - Consolidada a baseline da Fase 0 para stack, tenancy, identidade e autorização contextual.

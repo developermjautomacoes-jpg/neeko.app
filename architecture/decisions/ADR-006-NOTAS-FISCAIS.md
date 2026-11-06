@@ -18,6 +18,10 @@ A diretoria pediu que a captura de notas em uso no sistema da Facilitar fosse le
 - Interface com CSS Modules e tokens em `packages/ui`, seguindo o frontend aprovado pela diretoria (menu escuro, conteúdo claro, verde-menta), em vez de Tailwind e shadcn/ui: reaproveita as telas portadas com menos risco.
 - Agendador dentro da API, em uma só instância, enquanto não houver necessidade real de fila.
 
+## Memorando como cadastro único
+
+O memorando é o único lugar de cadastro: salvá-lo cria ou atualiza a `Company`. Certificado não cria empresa. Cancelar o memorando ou registrar a saída tira a empresa das capturas, e as notas guardadas continuam. Cada empresa tem um memorando ativo por vez, e a numeração é por organização e ano.
+
 ## Fora desta entrega
 
 Emissão de notas; NFC-e e notas emitidas pela SEFAZ-ES; referência de emissão própria; portal por empresa; MFA.

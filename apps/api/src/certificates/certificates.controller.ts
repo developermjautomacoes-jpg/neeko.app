@@ -30,7 +30,6 @@ export class CertificatesController {
     if (i.validUntil < hoje()) throw invalido(`Certificado vencido em ${i.validUntil.split("-").reverse().join("/")}.`);
     const dados = { holder: i.holder, document: i.document, kind: i.kind, validUntil: i.validUntil, nickname: d.apelido, pfxEncrypted: cifrar(pfx, c.organizationId), passEncrypted: cifrar(Buffer.from(d.senha, "utf8"), c.organizationId), createdById: c.userId };
     const cert = await this.prisma.fiscalCertificate.upsert({ where: { organizationId_fingerprint: { organizationId: c.organizationId, fingerprint: i.fingerprint } }, create: { organizationId: c.organizationId, fingerprint: i.fingerprint, ...dados }, update: dados });
-    if (i.document.length === 14) await this.prisma.company.upsert({ where: { organizationId_cnpj: { organizationId: c.organizationId, cnpj: i.document } }, create: { organizationId: c.organizationId, cnpj: i.document, legalName: i.holder }, update: { active: true } });
     await this.auditoria.registrar(c.organizationId, c.userId, "fiscal.certificate.imported", cert.id, { document: i.document, validUntil: i.validUntil });
     return { id: cert.id };
   }

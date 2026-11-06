@@ -121,6 +121,7 @@ model Company {
   dfeDocs      DfeDocument[]
   dfeEvents    DfeEvent[]
   dfeFailures  DfeFailure[]
+  memoranda    Memorandum[]
 
   @@unique([organizationId, cnpj])
   @@unique([organizationId, id])
@@ -354,6 +355,33 @@ model DfeFailure {
   company Company @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
 
   @@id([organizationId, companyId, environment, servico, nsu])
+}
+
+/// Cadastro da empresa. Salvar o memorando cria ou atualiza a Company; é o único lugar de cadastro.
+model Memorandum {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  companyId      String   @db.Uuid
+  seq            Int
+  ano            Int
+  /// ativo | cancelado
+  status         String   @default("ativo")
+  /// ativa | inativa (saída do cliente)
+  clientStatus   String   @default("ativa")
+  exitDate       String   @default("")
+  exitReason     String   @default("")
+  exitNotes      String   @default("")
+  data           Json
+  history        Json     @default("[]")
+  createdByName  String   @default("")
+  updatedByName  String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  company Company @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+
+  @@unique([organizationId, ano, seq])
+  @@index([organizationId, companyId])
 }
 
 /// Registro imutável de ações sensíveis.

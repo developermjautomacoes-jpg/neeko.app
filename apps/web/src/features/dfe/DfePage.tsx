@@ -176,7 +176,7 @@ export function DfePage() {
       {ambiente === "restrita" && <Notice tom="alerta">Homologação: os documentos deste ambiente não têm validade fiscal e ficam separados dos de produção.</Notice>}
       <Notice tom="alerta">Etapa 1: documentos recebidos. NF-e e CT-e emitidos pela empresa e NFC-e não saem do Ambiente Nacional e virão pela SEFAZ-ES. Só ficam disponíveis os últimos 90 dias, e o sistema guarda a partir de 2 meses antes da primeira captura.</Notice>
 
-      <Card titulo="Empresas" descricao="Vêm da Captura de NFS-e. Aqui vale só o certificado da empresa, de mesma raiz do CNPJ; a procuração da NFS-e não serve. Sem novidade, a SEFAZ só aceita nova consulta após 1 hora. Ligue a captura noturna só onde nenhum outro sistema captura o mesmo CNPJ. Para adiantar, use “Antecipar busca noturna” e capture." semPadding>
+      <Card titulo="Empresas" descricao="Vêm dos memorandos ativos. Aqui vale só o certificado da empresa, de mesma raiz do CNPJ; a procuração da NFS-e não serve. Sem novidade, a SEFAZ só aceita nova consulta após 1 hora. Ligue a captura noturna só onde nenhum outro sistema captura o mesmo CNPJ. Para adiantar, use “Antecipar busca noturna” e capture." semPadding>
         <div className={styles.barra}>
           <Button tamanho="sm" onClick={() => setMarcadas(new Set(aptas.map((e) => e.id)))} disabled={ocupado || !aptas.length}>Marcar todas aptas</Button>
           <Button tamanho="sm" onClick={() => setMarcadas(new Set())} disabled={ocupado}>Limpar</Button>
@@ -188,7 +188,7 @@ export function DfePage() {
         {progresso && <div className={styles.progresso} role="status"><b>{progresso.empresa}</b> · empresa {progresso.indice} de {progresso.total}<small>{progresso.texto} Mantenha esta aba aberta.</small></div>}
         {relatorio.length > 0 && <ul className={styles.relatorio}>{relatorio.map((l) => <li key={l}>{l}</li>)}</ul>}
         {carregando ? <Loading /> : (
-          <DataTable linhas={empresas} chaveLinha={(e) => e.id} vazio="Nenhuma empresa. Importe um certificado em Administração."
+          <DataTable linhas={empresas} chaveLinha={(e) => e.id} vazio="Nenhuma empresa. Crie um memorando para cadastrar a primeira empresa."
             colunas={[
               { chave: "sel", titulo: "", largura: "36px", render: (e) => <input type="checkbox" aria-label={`Selecionar ${e.razao}`} checked={marcadas.has(e.id)} disabled={ocupado || !e.certificado || certVencido(e)} onChange={() => setMarcadas((m) => { const n = new Set(m); if (n.has(e.id)) n.delete(e.id); else n.add(e.id); return n; })} /> },
               { chave: "emp", titulo: "Empresa", render: (e) => <><b>{e.razao || "(sem nome)"}</b><br /><small>{formatarCnpj(e.cnpj)}</small></> },

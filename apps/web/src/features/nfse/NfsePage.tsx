@@ -1,9 +1,9 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { AgendaNfse, AmbienteNfse, CertificadoNfse, ModoBuscaNfse, Certificado, EmpresaNfse, FalhaNfse, NotaNfse, PapelNfse, SituacaoNfse } from "@/types/nfse";
+import type { AgendaNfse, AmbienteNfse, CertificadoNfse, ModoBuscaNfse, EmpresaNfse, FalhaNfse, NotaNfse, PapelNfse, SituacaoNfse } from "@/types/nfse";
 import { Badge, Button, Card, ConfirmDialog, DataTable, Input, KpiCard, Loading, Modal, Notice, PageHeader, Select, useToast } from "@neeko/ui";
 import { arquivoParaBase64, dataBr, dataHora, formatarCnpj } from "@/lib/format";
-import { baixarXmls, buscarXmls, capturarLote, definirModo, definirProcurador, diagnosticar, enviarCertificado, excluirEmpresa, lerAgenda, lerProcurador, listarCertificados, listarEmpresas, listarNotas, reiniciarCaptura, salvarAgenda, salvarEmpresa, verificarEventos } from "@/services/fiscal";
+import { baixarXmls, buscarXmls, capturarLote, definirModo, definirProcurador, diagnosticar, enviarCertificado, lerAgenda, lerProcurador, listarEmpresas, listarNotas, reiniciarCaptura, salvarAgenda, verificarEventos } from "@/services/fiscal";
 import { ROTULO_RET_ISS, ROTULO_SITUACAO, exportarExcel, issRetido, valida } from "./nfseExcel";
 import { gerarDanfsePdf, mostrarPdf } from "./nfseDanfse";
 import styles from "./NfsePage.module.css";
@@ -23,7 +23,6 @@ export function NfsePage() {
   const avisar = useToast();
   const [ambiente, setAmbiente] = useState<AmbienteNfse>("producao");
   const [empresas, setEmpresas] = useState<EmpresaNfse[]>([]);
-  const [certs, setCerts] = useState<Certificado[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [marcadas, setMarcadas] = useState<Set<string>>(new Set());
@@ -39,7 +38,6 @@ export function NfsePage() {
   const [busca, setBusca] = useState("");
   const [baixando, setBaixando] = useState("");
   const [verificando, setVerificando] = useState("");
-  const [nova, setNova] = useState<{ cnpj: string; razao: string; certId: string } | null>(null);
   const [recomecar, setRecomecar] = useState<EmpresaNfse | null>(null);
   const [procurador, setProcurador] = useState<CertificadoNfse | null>(null);
   const [procArquivo, setProcArquivo] = useState<File | null>(null);
@@ -56,8 +54,7 @@ export function NfsePage() {
   const carregar = useCallback(async () => {
     setCarregando(true);
     try {
-      const [e, c] = await Promise.all([listarEmpresas(ambiente), listarCertificados().catch(() => [] as Certificado[])]);
-      setEmpresas(e); setCerts(c); setErro("");
+      setEmpresas(await listarEmpresas(ambiente)); setErro("");
     } catch (x) { setErro(x instanceof Error ? x.message : "Não foi possível carregar."); }
     finally { setCarregando(false); }
   }, [ambiente]);
@@ -170,11 +167,6 @@ export function NfsePage() {
     finally { setSalvandoAgenda(false); }
   }
 
-  async function salvarNova() {
-    if (!nova) return;
-    try { await salvarEmpresa(nova); await carregar(); setNova(null); avisar("Empresa incluída.", "sucesso"); }
-    catch (x) { avisar(x instanceof Error ? x.message : "Não foi possível salvar.", "erro"); }
-  }
   async function confirmarRecomeco() {
     if (!recomecar) return;
     try { await reiniciarCaptura(ambiente, recomecar.id); await carregar(); avisar("A próxima captura começa do início.", "sucesso"); }
@@ -226,11 +218,10 @@ export function NfsePage() {
       {erro && <Notice tom="erro">{erro}</Notice>}
       {ambiente === "restrita" && <Notice tom="alerta">Produção restrita: as notas deste ambiente não têm validade fiscal e ficam separadas das de produção.</Notice>}
 
-      <Card titulo="Empresas" descricao="Vêm dos certificados importados e dos CNPJs incluídos aqui. Escolha em cada empresa a busca pelo certificado dela (mesma raiz do CNPJ) ou por procuração." semPadding>
+      <Card titulo="Empresas" descricao="Vêm dos memorandos ativos. Escolha em cada empresa a busca pelo certificado dela (mesma raiz do CNPJ) ou por procuração." semPadding>
         <div className={styles.barra}>
           <Button tamanho="sm" onClick={() => setMarcadas(new Set(aptas.map((e) => e.id)))} disabled={ocupado || !aptas.length}>Marcar todas aptas</Button>
           <Button tamanho="sm" onClick={() => setMarcadas(new Set())} disabled={ocupado}>Limpar</Button>
-          <Button tamanho="sm" onClick={() => setNova({ cnpj: "", razao: "", certId: "" })} disabled={ocupado}>Incluir CNPJ</Button>
           <span className={styles.espaco} />
           {progresso
             ? <Button variante="danger" onClick={() => { parar.current = true; }}>Interromper</Button>
@@ -244,7 +235,7 @@ export function NfsePage() {
         )}
         {relatorio.length > 0 && <ul className={styles.relatorio}>{relatorio.map((l) => <li key={l}>{l}</li>)}</ul>}
         {carregando ? <Loading /> : (
-          <DataTable linhas={empresas} chaveLinha={(e) => e.id} vazio="Nenhuma empresa. Importe um certificado em Administração ou inclua um CNPJ."
+          <DataTable linhas={empresas} chaveLinha={(e) => e.id} vazio="Nenhuma empresa. Crie um memorando para cadastrar a primeira."
             colunas={[
               { chave: "sel", titulo: "", largura: "36px", render: (e) => <input type="checkbox" aria-label={`Selecionar ${e.razao}`} checked={marcadas.has(e.id)} disabled={ocupado || !e.certificado || certVencido(e)} onChange={() => marcar(e.id)} /> },
               { chave: "emp", titulo: "Empresa", render: (e) => <><b>{e.razao || "(sem nome)"}</b><br /><small>{formatarCnpj(e.cnpj)}</small></> },
@@ -261,7 +252,6 @@ export function NfsePage() {
                   <Button tamanho="sm" disabled={!e.notas} onClick={() => setCnpjVista(e.id)}>Ver notas</Button>
                   <Button tamanho="sm" disabled={ocupado || !e.certificado} carregando={diagnosticando === e.id} onClick={() => rodarDiagnostico(e.id)}>Diagnosticar</Button>
                   <Button tamanho="sm" disabled={ocupado || e.ultimoNsu === 0} onClick={() => setRecomecar(e)}>Recomeçar</Button>
-                  {<Button tamanho="sm" variante="danger" disabled={ocupado} onClick={() => { void excluirEmpresa(e.id).then(carregar); }}>Tirar</Button>}
                 </div>
               ) },
             ]} />
@@ -344,17 +334,6 @@ export function NfsePage() {
         </Card>
       </div>
 
-      <Modal aberto={!!nova} titulo="Incluir CNPJ" onFechar={() => setNova(null)}>
-        {nova && <div className={styles.form}>
-          <Input rotulo="CNPJ" value={nova.cnpj} onChange={(e) => setNova({ ...nova, cnpj: e.target.value })} dica="Use para filiais ou clientes sem certificado próprio." />
-          <Input rotulo="Razão social" value={nova.razao} onChange={(e) => setNova({ ...nova, razao: e.target.value })} />
-          <Select rotulo="Certificado" value={nova.certId} onChange={(e) => setNova({ ...nova, certId: e.target.value })}>
-            <option value="">Automático (mesma raiz do CNPJ)</option>
-            {certs.filter((c) => c.kind === "e-CNPJ").map((c) => <option key={c.id} value={c.id}>{c.nickname || c.holder}</option>)}
-          </Select>
-          <Button variante="primary" onClick={salvarNova}>Salvar</Button>
-        </div>}
-      </Modal>
       <Modal aberto={!!diagnostico} titulo="Diagnóstico da conexão" largura="lg" onFechar={() => setDiagnostico(null)}
         rodape={<Button onClick={() => { void navigator.clipboard.writeText((diagnostico ?? []).join("\n")); avisar("Diagnóstico copiado.", "sucesso"); }}>Copiar</Button>}>
         <pre className={styles.diagnostico}>{(diagnostico ?? []).join("\n")}</pre>

@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, ChevronDown, FileBadge, FileStack, FileText, Handshake, Home, Landmark, LogOut, Mails, Menu, PieChart, Search, Settings, Users, Wallet } from "lucide-react";
+import { Bell, ChevronDown, FileBadge, FileStack, Handshake, Home, Landmark, LogOut, Mails, Menu, PieChart, Search, Settings, Wallet } from "lucide-react";
 import { Loading } from "@neeko/ui";
 import { formatarCnpj } from "@/lib/format";
 import { eu, sair, type Eu } from "@/services/conta";
@@ -17,8 +17,7 @@ const MENU: Item[] = [
   { nome: "Emissão de NFS-e", icone: FileBadge },
   { nome: "BPO Financeiro", icone: Wallet },
   { nome: "Contratos", icone: Handshake },
-  { nome: "Memorandos", icone: Mails },
-  { nome: "Clientes", icone: Users, href: "/notas/nfse", exige: "companies.read" },
+  { nome: "Memorandos", icone: Mails, href: "/memorandos", exige: "memoranda.read" },
   { nome: "Relatórios", icone: PieChart },
   { nome: "Administração", icone: Settings, filhos: [{ href: "/certificados", nome: "Certificados", exige: "fiscal.credentials.manage" }, { href: "/usuarios", nome: "Usuários", exige: "users.manage" }] },
 ];
@@ -65,7 +64,7 @@ export default function Painel({ children }: { children: ReactNode }) {
               </div>;
             }
             if (!m.href || !pode(m.exige)) return <span key={m.nome} className={styles.embreve} aria-disabled="true"><I size={20} /><span>{m.nome}</span><small>em breve</small></span>;
-            const ativo = rota === m.href && m.nome !== "Clientes";
+            const ativo = !!rota.startsWith(m.href);
             return <Link key={m.nome} href={m.href} className={ativo ? styles.ativo : styles.item} aria-current={ativo ? "page" : undefined}><I size={20} /><span>{m.nome}</span></Link>;
           })}
         </nav>

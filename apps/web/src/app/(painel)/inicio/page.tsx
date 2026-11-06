@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowRight, ArrowUp, Building2, CheckCircle2, CircleAlert, CircleDollarSign, Clock3, FileSearch, FileText, ShieldCheck, TriangleAlert, Users, Zap, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Building2, CheckCircle2, CircleAlert, CircleDollarSign, Clock3, FileSearch, FileText, Mail, ShieldCheck, TriangleAlert, Users, Zap, type LucideIcon } from "lucide-react";
 import { Loading, Notice } from "@neeko/ui";
 import { centavos, dataHora } from "@/lib/format";
 import { eu, type Eu } from "@/services/conta";
@@ -11,6 +11,7 @@ import styles from "./inicio.module.css";
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const ATALHOS: { href: string; nome: string; icone: LucideIcon; exige: string }[] = [
+  { href: "/memorandos/novo", nome: "Novo memorando", icone: Mail, exige: "memoranda.manage" },
   { href: "/notas/nfse", nome: "Capturar NFS-e", icone: FileText, exige: "fiscal.capture" }, { href: "/notas/nfe-cte", nome: "NF-e e CT-e", icone: FileSearch, exige: "fiscal.documents.read" },
   { href: "/certificados", nome: "Certificados", icone: ShieldCheck, exige: "fiscal.credentials.manage" }, { href: "/usuarios", nome: "Usuários", icone: Users, exige: "users.manage" },
 ];

@@ -8,8 +8,6 @@ const nota = (n: NotaApi): NotaNfse => ({ ...(n as unknown as NotaNfse), prest_d
   v_serv: centavos(n.vServ), v_bc: centavos(n.vBc), v_iss: centavos(n.vIss), v_ret_cp: centavos(n.vRetCp), v_ret_irrf: centavos(n.vRetIrrf), v_ret_csll: centavos(n.vRetCsll), v_pis: centavos(n.vPis), v_cofins: centavos(n.vCofins), v_total_ret: centavos(n.vTotalRet), v_liq: centavos(n.vLiq) });
 
 export async function listarEmpresas(ambiente: AmbienteNfse) { return (await api<{ empresas: EmpresaNfse[] }>("GET", "fiscal/companies", undefined, { ambiente })).empresas; }
-export const salvarEmpresa = (e: { cnpj: string; razao: string; certId: string }) => api("POST", "companies", e);
-export const excluirEmpresa = (id: string) => api("DELETE", `companies/${id}`);
 export const definirModo = (id: string, modo: ModoBuscaNfse) => api("PATCH", `companies/${id}/nfse-mode`, { modo });
 export const reiniciarCaptura = (ambiente: AmbienteNfse, id: string) => api("POST", `fiscal/nfse/${id}/restart`, {}, { ambiente });
 /** Busca um lote (até 50 documentos). Quem repete, com pausa, é a tela. */
@@ -51,3 +49,16 @@ export interface Painel {
   saude: { percentual: number; itens: { nome: string; ok: boolean; detalhe: string }[] }; atividade: { id: string; texto: string; em: string }[];
 }
 export const lerPainel = () => api<Painel>("GET", "fiscal/dashboard");
+
+export interface MemorandoResumo { id: string; seq: number; ano: number; numero: string; status: "ativo" | "cancelado"; clientStatus: "ativa" | "inativa"; exitDate: string; exitReason: string; cnpj: string; razao: string; fantasia: string; regime: string; data: string; responsaveis: string[]; atualizadoEm: string }
+export interface MemorandoCompleto { id: string; seq: number; ano: number; status: string; clientStatus: string; data: Record<string, unknown>; history: { acao: string; campos?: string[]; por: string; em: string }[]; createdByName: string }
+type Num = { seq: number; ano: number } | null;
+export const listarMemorandos = () => api<{ memorandos: MemorandoResumo[]; semMemorando: { cnpj: string; legalName: string }[] }>("GET", "memoranda");
+export const lerMemorando = (id: string) => api<MemorandoCompleto>("GET", `memoranda/${id}`);
+export const criarMemorando = (memo: unknown, numero: Num) => api<MemorandoCompleto>("POST", "memoranda", { memo, numero });
+export const alterarMemorando = (id: string, memo: unknown, numero: Num) => api<MemorandoCompleto>("PUT", `memoranda/${id}`, { memo, numero });
+export const situacaoMemorando = (id: string, status: "ativo" | "cancelado") => api("POST", `memoranda/${id}/status`, { status });
+export const situacaoCliente = (id: string, s: { situacao: "ativa" | "inativa"; dataSaida?: string; motivo?: string; obs?: string }) => api("POST", `memoranda/${id}/client`, s);
+export const equipe = async () => (await api<{ equipe: string[] }>("GET", "memoranda/team")).equipe;
+export const consultarCnpj = (cnpj: string) => api<Record<string, unknown>>("GET", `memoranda/lookup/cnpj/${cnpj}`);
+export const consultarIe = (cnpj: string, uf: string) => api<{ cStat: string; xMotivo: string; cadastros: { ie: string; situacao: string; regime: string }[] }>("GET", `memoranda/lookup/ie/${cnpj}`, undefined, { uf });

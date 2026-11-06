@@ -51,7 +51,7 @@ before(async () => {
 });
 after(async () => { await app.close(); adn.close(); sefaz.close(); });
 
-let ana: Sessao, empresa: string, certOk: Buffer;
+let ana: Sessao, empresa: string, certOk: Buffer, memo: string;
 test("primeiro acesso exige trocar a senha provisória", async () => {
   ana = await logar("ana@a.test", "Provisoria123");
   assert.equal((await ana.get("/fiscal/companies")).corpo.code, "PASSWORD_CHANGE_REQUIRED");
@@ -71,7 +71,7 @@ test("bloqueia depois de 5 senhas erradas", async () => {
   for (let i = 0; i < 5; i++) assert.equal((await s.post("/auth/login", { email: "x@y.test", senha: "n" })).status, 401);
   assert.equal((await s.post("/auth/login", { email: "x@y.test", senha: "n" })).status, 429);
 });
-test("importa certificado cifrado e cria a empresa", async () => {
+test("importa certificado cifrado; a empresa nasce do memorando", async () => {
   const g = gerarPfx(`EMPRESA A LTDA:${A}`, "abc123"); certOk = g.pfx;
   assert.equal((await ana.post("/certificates", { pfx: g.pfx.toString("base64"), senha: "errada" })).status, 400);
   const r = await ana.post("/certificates", { pfx: g.pfx.toString("base64"), senha: "abc123" });
@@ -80,6 +80,9 @@ test("importa certificado cifrado e cria a empresa", async () => {
   assert.ok(!Buffer.from(salvo.pfxEncrypted).includes(g.pfx.subarray(0, 64)));
   const lista = (await ana.get("/certificates")).corpo.certificados;
   assert.equal(JSON.stringify(lista).includes("Encrypted"), false);
+  assert.deepEqual((await ana.get("/fiscal/companies")).corpo.empresas, [], "certificado não cadastra empresa");
+  const m = await ana.post("/memoranda", { numero: null, memo: { e_cnpj: "11.222.333/0001-81", e_razao: "EMPRESA A LTDA", m_data: "2026-11-05", deps: [{ nome: "Fiscal", on: true, resp: "Ana" }] } });
+  assert.equal(m.status, 201); assert.equal(m.corpo.seq, 1); assert.equal(m.corpo.ano, 2026); memo = m.corpo.id;
   const l = (await ana.get("/fiscal/companies")).corpo.empresas;
   assert.equal(l[0].cnpj, A); assert.equal(l[0].certificado.documento, A); empresa = l[0].id;
 });
@@ -182,7 +185,7 @@ test("sem escalada: não concede o que não tem", async () => {
 });
 test("isolamento entre organizações", async () => {
   const { hashSenha } = await import("../common/passwords");
-  await prisma.user.create({ data: { email: "o@b.test", name: "O", passwordHash: await hashSenha("SenhaOutra123"), mustChangePassword: false, memberships: { create: { role: "ORG_OWNER", allCompanies: true, organization: { create: { name: "Org B" } }, permissions: { create: ["companies.read", "companies.manage", "fiscal.documents.read", "fiscal.capture", "fiscal.credentials.manage", "fiscal.ciencia.send", "users.manage"].map((permission) => ({ permission })) } } } } });
+  await prisma.user.create({ data: { email: "o@b.test", name: "O", passwordHash: await hashSenha("SenhaOutra123"), mustChangePassword: false, memberships: { create: { role: "ORG_OWNER", allCompanies: true, organization: { create: { name: "Org B" } }, permissions: { create: ["companies.read", "companies.manage", "fiscal.documents.read", "fiscal.capture", "fiscal.credentials.manage", "fiscal.ciencia.send", "users.manage", "memoranda.read", "memoranda.manage"].map((permission) => ({ permission })) } } } } });
   outra = await logar("o@b.test", "SenhaOutra123");
   assert.deepEqual((await outra.get("/fiscal/companies")).corpo.empresas, []);
   assert.deepEqual((await outra.get("/certificates")).corpo.certificados, []);
@@ -192,19 +195,48 @@ test("isolamento entre organizações", async () => {
   assert.equal((await outra.post(`/fiscal/dfe/${empresa}/ciencia/send`)).status, 404);
   const certA = (await ana.get("/certificates")).corpo.certificados[0].id;
   assert.equal((await outra.pedir("DELETE", `/certificates/${certA}`)).status, 404);
-  assert.equal((await outra.pedir("DELETE", `/companies/${empresa}`)).status, 404);
+  assert.equal((await outra.get(`/memoranda/${memo}`)).status, 404);
+  assert.deepEqual((await outra.get("/memoranda")).corpo.memorandos, []);
+  assert.equal((await outra.post(`/memoranda/${memo}/status`, { status: "cancelado" })).status, 404);
+  assert.equal((await outra.pedir("PUT", `/memoranda/${memo}`, { memo: { e_cnpj: A, e_razao: "Invadida" } })).status, 404);
   assert.equal((await outra.pedir("PUT", "/fiscal/procurator", { id: certA })).status, 404);
-  const mesmo = await outra.post("/companies", { cnpj: A, razao: "Mesmo CNPJ noutra org" }); assert.equal(mesmo.status, 201); empresaB = mesmo.corpo.id;
+  const mesmo = await outra.post("/memoranda", { numero: null, memo: { e_cnpj: A, e_razao: "Mesmo CNPJ noutra org", m_data: "2026-11-05" } }); assert.equal(mesmo.status, 201); assert.equal(mesmo.corpo.seq, 1, "numeração é por organização"); empresaB = mesmo.corpo.companyId;
   assert.notEqual(empresaB, empresa);
   assert.equal((await outra.get(`/fiscal/nfse/${empresaB}/documents`)).corpo.notas.length, 0);
   const r = (await outra.post(`/fiscal/nfse/${empresaB}/capture`)).corpo; assert.match(r.mensagem, /Nenhum e-CNPJ/);
   assert.equal((await outra.post("/users", { name: "X", email: "x@b.test", senhaProvisoria: "Provisoria456", role: "STAFF", permissions: [], allCompanies: false, companyIds: [empresa] })).status, 400);
 });
+test("memorando é o cadastro único", async () => {
+  const dup = await ana.post("/memoranda", { numero: null, memo: { e_cnpj: A, e_razao: "Dup" } }); assert.equal(dup.status, 409); assert.match(dup.corpo.message, /01\/2026/);
+  assert.equal((await ana.post("/memoranda", { numero: null, memo: { e_cnpj: "11222333000182", e_razao: "X" } })).status, 400, "CNPJ inválido");
+  assert.equal((await ana.post("/memoranda", { numero: { seq: 1, ano: 2026 }, memo: { e_cnpj: "11444777000161", e_razao: "Outra" } })).status, 409, "número em uso");
+  const b = await ana.post("/memoranda", { numero: { seq: 7, ano: 2026 }, memo: { e_cnpj: "11.444.777/0001-61", e_razao: "Segunda Ltda" } }); assert.equal(b.status, 201);
+  const cA = (await ana.post("/memoranda", { numero: null, memo: { e_cnpj: "11444777000242", e_razao: "Terceira" } })); assert.equal(cA.status, 201); assert.equal(cA.corpo.seq, 8, "continua do maior número");
+  const atual = (await ana.get(`/memoranda/${memo}`)).corpo;
+  assert.equal((await ana.pedir("PUT", `/memoranda/${memo}`, { numero: null, memo: { ...atual.data, e_cnpj: "11444777000161" } })).status, 400, "CNPJ não muda");
+  const ed = await ana.pedir("PUT", `/memoranda/${memo}`, { numero: { seq: 3, ano: 2026 }, memo: { ...atual.data, e_razao: "EMPRESA A NOVA LTDA", e_ie: "123" } }); assert.equal(ed.status, 200);
+  const h = ed.corpo.history.at(-1); assert.match(h.acao, /Renumerou de 01\/2026 para 03\/2026/); assert.ok(h.campos.includes("Razão social")); assert.ok(h.campos.includes("Inscrição estadual"));
+  assert.equal((await ana.get("/fiscal/companies")).corpo.empresas.find((e: any) => e.id === empresa).razao, "EMPRESA A NOVA LTDA");
+  assert.equal((await ana.post(`/memoranda/${b.corpo.id}/client`, { situacao: "inativa", dataSaida: "2026-11-01", motivo: "Inadimplência" })).status, 200);
+  assert.equal((await ana.post(`/fiscal/nfse/${b.corpo.companyId}/capture`)).status, 404, "quem saiu não captura");
+  assert.equal((await ana.get("/fiscal/companies")).corpo.empresas.some((e: any) => e.id === b.corpo.companyId), false);
+  assert.equal((await ana.get("/memoranda")).corpo.memorandos.find((m: any) => m.id === b.corpo.id).clientStatus, "inativa");
+  await ana.post(`/memoranda/${b.corpo.id}/client`, { situacao: "ativa" }); assert.ok((await ana.get("/fiscal/companies")).corpo.empresas.some((e: any) => e.id === b.corpo.companyId));
+  await ana.post(`/memoranda/${b.corpo.id}/status`, { status: "cancelado" }); assert.equal((await ana.get("/fiscal/companies")).corpo.empresas.some((e: any) => e.id === b.corpo.companyId), false);
+  const de = await ana.post("/memoranda", { numero: null, memo: { e_cnpj: "11444777000161", e_razao: "Segunda de volta" } }); assert.equal(de.status, 201, "cancelado libera a empresa");
+  assert.equal((await ana.post(`/memoranda/${b.corpo.id}/status`, { status: "ativo" })).status, 409, "um ativo por empresa");
+});
+test("colaborador sem permissão não vê memorandos", async () => {
+  const novo = await ana.post("/users", { name: "Carla", email: "carla@a.test", senhaProvisoria: "Provisoria456", role: "STAFF", permissions: ["memoranda.read"], allCompanies: false, companyIds: [] });
+  let s = await logar("carla@a.test", "Provisoria456"); await s.post("/auth/password", { atual: "Provisoria456", nova: "SenhaCarla123" }); s = await logar("carla@a.test", "SenhaCarla123");
+  assert.deepEqual((await s.get("/memoranda")).corpo.memorandos, []); assert.equal((await s.get(`/memoranda/${memo}`)).status, 404);
+  assert.equal((await s.post("/memoranda", { memo: { e_cnpj: A, e_razao: "X" } })).status, 403);
+  void novo;
+});
 test("painel mostra só dados da organização", async () => {
   const a = (await ana.get("/fiscal/dashboard")).corpo;
-  assert.equal(a.empresas, 1); assert.equal(a.serie.length, 12);
+  assert.ok(a.empresas >= 1); assert.equal(a.serie.length, 12);
   assert.equal(a.serie.find((p: any) => p.competencia === "2026-10").valor, "1000.10", "nota cancelada fica fora");
-  assert.equal(a.saude.percentual, 0);
   const b = (await outra.get("/fiscal/dashboard")).corpo;
   assert.equal(b.notasMes, 0); assert.ok(b.empresasLista.every((e: any) => e.id !== empresa)); assert.deepEqual(b.atividade, []);
 });
