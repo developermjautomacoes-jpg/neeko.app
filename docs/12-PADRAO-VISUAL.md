@@ -2,7 +2,7 @@
 
 ## Direção de marca
 
-Neeko: tecnologia contábil, automação e gestão. Identidade sugerida: verde escuro, preto/grafite, branco/off-white e acentos verde-limão com moderação. Visual corporativo, limpo, sofisticado e funcional.
+Neeko: tecnologia contábil, automação e gestão. A plataforma usa a identidade do site Neeko: fundo #0B0F19, verde #00E676, Poppins e Inter, com tema claro opcional (`packages/ui/src/tokens.css`). Visual corporativo, limpo, sofisticado e funcional.
 
 ## Princípios
 

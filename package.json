@@ -1,0 +1,21 @@
+{
+  "name": "neeko-platform",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @neeko/api test",
+    "dev:api": "pnpm --filter @neeko/api dev",
+    "dev:web": "pnpm --filter @neeko/web dev",
+    "db:migrate": "pnpm --filter @neeko/api exec prisma migrate deploy",
+    "db:generate": "pnpm --filter @neeko/api exec prisma generate"
+  },
+  "devDependencies": {
+    "@prisma/client": "6.19.0",
+    "prisma": "6.19.0"
+  }
+}

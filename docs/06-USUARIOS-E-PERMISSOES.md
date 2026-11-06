@@ -33,3 +33,7 @@ Exemplos de ações: `companies.read`, `companies.manage`, `fiscal.documents.rea
 ## Matriz
 
 A baseline de papéis e escopos está registrada no [ADR-005](../architecture/decisions/ADR-005-AUTORIZACAO-RBAC.md). A matriz definitiva por módulo/ação deve ser configurável, testada e aprovada antes do MVP. Não assumir que todo gestor pode emitir/cancelar ou que todo cliente pode ver todos os dados financeiros. Emissão, cancelamento e configuração de credenciais fiscais são permissões separadas.
+
+## Permissões implementadas
+
+`companies.read`, `companies.manage`, `fiscal.documents.read`, `fiscal.capture`, `fiscal.credentials.manage`, `fiscal.ciencia.send`, `fiscal.schedule.manage`, `users.manage`, `audit.read`. Ninguém concede o que não tem. A matriz final por papel segue pendente (ADR-005).

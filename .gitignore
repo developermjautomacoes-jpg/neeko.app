@@ -30,3 +30,9 @@ Thumbs.db
 # Local data
 *.sqlite
 *.db
+node_modules/
+dist/
+.next/
+*.tsbuildinfo
+next-env.d.ts
+.env

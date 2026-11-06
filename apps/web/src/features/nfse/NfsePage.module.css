@@ -1,0 +1,22 @@
+.barra { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; padding: var(--space-3) var(--space-4); }
+.espaco { flex: 1; }
+.progresso { display: flex; flex-direction: column; gap: 4px; margin: 0 var(--space-4) var(--space-3); padding: var(--space-3); border-radius: var(--radius-sm); background: var(--color-info-bg); color: var(--color-info); font-size: var(--text-sm); }
+.relatorio { margin: 0 var(--space-4) var(--space-3); padding-left: var(--space-5); font-size: var(--text-sm); }
+.erro { color: var(--color-danger); font-size: var(--text-sm); }
+.acoes { display: flex; gap: var(--space-2); justify-content: flex-end; flex-wrap: wrap; }
+.notas { margin-top: var(--space-5); }
+.filtros { display: grid; grid-template-columns: 2fr 1fr 1fr 2fr; gap: var(--space-3); margin-bottom: var(--space-4); }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); margin-bottom: var(--space-2); }
+.kpis + .barra { position: sticky; top: 0; z-index: 2; padding-left: 0; padding-right: 0; background: var(--color-surface); }
+.form { display: flex; flex-direction: column; gap: var(--space-4); }
+@media (max-width: 960px) { .filtros, .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .filtros, .kpis { grid-template-columns: 1fr; } }
+.diagnostico { margin: 0; font-family: var(--font-mono); font-size: var(--text-xs); white-space: pre-wrap; word-break: break-word; }
+.agenda { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: flex-end; }
+.check { display: inline-flex; gap: var(--space-2); align-items: center; font-size: var(--text-sm); font-weight: var(--weight-semibold); min-height: 40px; }
+.agendaInfo { margin: var(--space-3) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+.relatorioAgenda { margin: var(--space-2) 0 0; padding-left: var(--space-5); font-size: var(--text-sm); max-height: 180px; overflow-y: auto; }
+.modo { font: inherit; font-size: var(--text-sm); padding: 4px 6px; border: var(--border-width) solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); }
+.procurador { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin: 0 0 var(--space-3); font-size: var(--text-sm); }
+.procForm { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: var(--space-3); align-items: end; margin-top: var(--space-3); }
+@media (max-width: 960px) { .procForm { grid-template-columns: 1fr; } }

@@ -33,3 +33,15 @@ O contexto de organização/empresa deve ser validado no backend. O identificado
 - Persistir evento recebido antes de processar.
 - Reprocessamento seguro e fila de falhas.
 - Não aceitar comandos arbitrários em payload.
+
+## Rotas implementadas
+
+Base `/api/v1`. Sessão por cookie httpOnly; a organização vem da sessão, nunca da requisição.
+
+- `POST /auth/login`, `/auth/logout`, `/auth/password`; `GET /me`
+- `GET|POST /users`, `PATCH /users/:id`, `POST /users/:id/reset-password`
+- `GET|POST /certificates`, `DELETE /certificates/:id`
+- `POST /companies`, `DELETE /companies/:id`, `PATCH /companies/:id/nfse-mode`
+- `GET /fiscal/companies`, `GET|PUT /fiscal/procurator`, `GET|PUT /fiscal/schedule`
+- `/fiscal/nfse/:id/`: `capture`, `documents`, `verify`, `diagnose`, `restart`, `xmls`, `zip`
+- `/fiscal/dfe/`: `companies`, `:id/auto-capture`, `:id/auto-ciencia`, `:id/ciencia/mark`, `:id/ciencia/send`, `:id/:servico/capture|documents|restart|zip`

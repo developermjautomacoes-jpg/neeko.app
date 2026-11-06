@@ -1,0 +1,368 @@
+// Neeko Platform. Regras: ADR-002 (escopo por organização), ADR-004 (identidade) e ADR-005 (RBAC).
+// Toda tabela de negócio carrega organizationId; as filhas repetem a organização na chave estrangeira.
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GlobalRole {
+  NEEKO_SUPERADMIN
+  USER
+}
+
+enum OrgRole {
+  ORG_OWNER
+  ORG_ADMIN
+  STAFF
+  COMPANY_USER
+}
+
+enum MembershipStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+model Organization {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  createdAt DateTime @default(now())
+
+  memberships  OrganizationMembership[]
+  companies    Company[]
+  certificates FiscalCertificate[]
+  settings     FiscalSettings?
+  auditEvents  AuditEvent[]
+}
+
+/// Identidade global da pessoa. A senha é individual e só existe como hash scrypt.
+model User {
+  id                 String     @id @default(uuid()) @db.Uuid
+  email              String     @unique
+  name               String
+  passwordHash       String
+  mustChangePassword Boolean    @default(true)
+  globalRole         GlobalRole @default(USER)
+  active             Boolean    @default(true)
+  createdAt          DateTime   @default(now())
+
+  memberships OrganizationMembership[]
+  sessions    Session[]
+}
+
+/// O cookie guarda só o token aleatório; aqui fica o SHA-256 dele.
+model Session {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @db.Uuid
+  organizationId String?  @db.Uuid
+  tokenHash      String   @unique
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model OrganizationMembership {
+  id             String           @id @default(uuid()) @db.Uuid
+  userId         String           @db.Uuid
+  organizationId String           @db.Uuid
+  role           OrgRole
+  status         MembershipStatus @default(ACTIVE)
+  /// Grant explícito para toda a carteira; sem ele vale CompanyAccess.
+  allCompanies   Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions  MembershipPermission[]
+  companies    CompanyAccess[]
+
+  @@unique([userId, organizationId])
+  @@unique([organizationId, id])
+}
+
+model MembershipPermission {
+  membershipId String                 @db.Uuid
+  permission   String
+  membership   OrganizationMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@id([membershipId, permission])
+}
+
+model Company {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  cnpj           String
+  legalName      String
+  active         Boolean  @default(true)
+  /// certificado | procuracao (a procuração vale só para NFS-e)
+  nfseMode       String   @default("certificado")
+  certificateId  String?  @db.Uuid
+  dfeAutoCapture Boolean  @default(false)
+  dfeAutoCiencia Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  access       CompanyAccess[]
+  nfseStates   NfseState[]
+  nfseDocs     NfseDocument[]
+  nfseEvents   NfseEvent[]
+  nfseFailures NfseFailure[]
+  dfeStates    DfeState[]
+  dfeDocs      DfeDocument[]
+  dfeEvents    DfeEvent[]
+  dfeFailures  DfeFailure[]
+
+  @@unique([organizationId, cnpj])
+  @@unique([organizationId, id])
+}
+
+model CompanyAccess {
+  organizationId String                 @db.Uuid
+  membershipId   String                 @db.Uuid
+  companyId      String                 @db.Uuid
+  membership     OrganizationMembership @relation(fields: [organizationId, membershipId], references: [organizationId, id], onDelete: Cascade)
+  company        Company                @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+
+  @@id([membershipId, companyId])
+}
+
+/// .pfx e senha ficam cifrados com AES-256-GCM (CERT_ENCRYPTION_KEY, fora do banco).
+model FiscalCertificate {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  fingerprint    String
+  holder         String
+  document       String
+  kind           String
+  validUntil     String
+  nickname       String   @default("")
+  pfxEncrypted   Bytes
+  passEncrypted  Bytes
+  createdById    String   @db.Uuid
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, fingerprint])
+  @@unique([organizationId, id])
+}
+
+model FiscalSettings {
+  organizationId          String    @id @db.Uuid
+  procuratorCertificateId String?   @db.Uuid
+  scheduleActive          Boolean   @default(false)
+  scheduleTime            String    @default("02:00")
+  lastRunDay              String    @default("")
+  runStatus               String    @default("")
+  runStartedAt            DateTime?
+  runFinishedAt           DateTime?
+  runLines                Json      @default("[]")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model NfseState {
+  organizationId String    @db.Uuid
+  companyId      String    @db.Uuid
+  environment    String
+  lastNsu        BigInt    @default(0)
+  blockedUntil   DateTime?
+  attempts       Int       @default(0)
+  lastCaptureAt  DateTime?
+  lastError      String?
+  leaseUntil     DateTime?
+
+  company Company @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+
+  @@id([organizationId, companyId, environment])
+}
+
+model NfseDocument {
+  organizationId  String    @db.Uuid
+  companyId       String    @db.Uuid
+  environment     String
+  chave           String
+  nsu             BigInt
+  papel           String
+  competencia     String
+  dataCompetencia String
+  emissao         String
+  numero          String
+  serie           String
+  nDps            String
+  cstat           String
+  prestDoc        String
+  prestNome       String
+  tomaDoc         String
+  tomaNome        String
+  intermDoc       String
+  opSimples       String
+  tribNac         String
+  tribMun         String
+  descNac         String
+  descricao       String
+  cNbs            String
+  xNbs            String
+  cLocIncid       String
+  cnoObra         String
+  munIncid        String
+  tribIssqn       String
+  tpRetIss        String
+  aliq            String
+  tpRetPis        String
+  vServ           Decimal   @db.Decimal(15, 2)
+  vBc             Decimal   @db.Decimal(15, 2)
+  vIss            Decimal   @db.Decimal(15, 2)
+  vRetCp          Decimal   @db.Decimal(15, 2)
+  vRetIrrf        Decimal   @db.Decimal(15, 2)
+  vRetCsll        Decimal   @db.Decimal(15, 2)
+  vPis            Decimal   @db.Decimal(15, 2)
+  vCofins         Decimal   @db.Decimal(15, 2)
+  vTotalRet       Decimal   @db.Decimal(15, 2)
+  vLiq            Decimal   @db.Decimal(15, 2)
+  vIbs            Decimal   @db.Decimal(15, 2)
+  vCbs            Decimal   @db.Decimal(15, 2)
+  situacao        String    @default("normal")
+  eventsCheckedAt DateTime?
+  xmlGz           Bytes
+
+  company Company @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+
+  @@id([organizationId, companyId, environment, chave])
+  @@index([organizationId, companyId, environment, competencia])
+}
+
+model NfseEvent {
+  organizationId String  @db.Uuid
+  companyId      String  @db.Uuid
+  environment    String
+  id             String
+  chave          String
+  nsu            BigInt?
+  codigo         String
+  tipo           String
+  data           String
+  xmlGz          Bytes
+
+  company Company @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+
+  @@id([organizationId, companyId, environment, id])
+  @@index([organizationId, companyId, environment, chave])
+}
+
+model NfseFailure {
+  organizationId String   @db.Uuid
+  companyId      String   @db.Uuid
+  environment    String
+  nsu            BigInt
+  chave          String
+  motivo         String
+  em             DateTime
+
+  company Company @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+
+  @@id([organizationId, companyId, environment, nsu])
+}
+
+model DfeState {
+  organizationId String    @db.Uuid
+  companyId      String    @db.Uuid
+  environment    String
+  servico        String
+  lastNsu        BigInt    @default(0)
+  maxNsu         BigInt    @default(0)
+  nextAt         DateTime?
+  corte          String
+  lastCaptureAt  DateTime?
+  lastError      String?
+  leaseUntil     DateTime?
+
+  company Company @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+
+  @@id([organizationId, companyId, environment, servico])
+}
+
+model DfeDocument {
+  organizationId String    @db.Uuid
+  companyId      String    @db.Uuid
+  environment    String
+  servico        String
+  chave          String
+  nsu            BigInt
+  conteudo       String
+  modelo         String
+  papel          String
+  numero         String
+  serie          String
+  emissao        String
+  competencia    String
+  emitDoc        String
+  emitNome       String
+  destDoc        String
+  destNome       String
+  tpNf           String
+  vTotal         Decimal   @db.Decimal(15, 2)
+  situacao       String    @default("normal")
+  ciencia        String    @default("")
+  cienciaEm      DateTime?
+  cienciaMsg     String    @default("")
+  xmlGz          Bytes
+
+  company Company @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+
+  @@id([organizationId, companyId, environment, servico, chave])
+  @@index([organizationId, companyId, environment, servico, competencia])
+  @@index([organizationId, companyId, environment, ciencia])
+}
+
+model DfeEvent {
+  organizationId String  @db.Uuid
+  companyId      String  @db.Uuid
+  environment    String
+  servico        String
+  chave          String
+  tipo           String
+  seq            String
+  nsu            BigInt
+  data           String
+  xmlGz          Bytes
+
+  company Company @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+
+  @@id([organizationId, companyId, environment, servico, chave, tipo, seq])
+}
+
+model DfeFailure {
+  organizationId String   @db.Uuid
+  companyId      String   @db.Uuid
+  environment    String
+  servico        String
+  nsu            BigInt
+  motivo         String
+  em             DateTime
+
+  company Company @relation(fields: [organizationId, companyId], references: [organizationId, id], onDelete: Cascade)
+
+  @@id([organizationId, companyId, environment, servico, nsu])
+}
+
+/// Registro imutável de ações sensíveis.
+model AuditEvent {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String?   @db.Uuid
+  userId         String?   @db.Uuid
+  action         String
+  target         String    @default("")
+  detail         Json      @default("{}")
+  createdAt      DateTime  @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+}

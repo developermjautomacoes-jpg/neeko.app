@@ -1,0 +1,23 @@
+.painel { display: flex; min-height: 100vh; }
+.lateral { width: var(--sidebar-width); flex: none; background: var(--color-surface); border-right: var(--border-width) solid var(--color-border); padding: var(--space-5) var(--space-4); display: flex; flex-direction: column; gap: var(--space-5); position: sticky; top: 0; height: 100vh; }
+.logo { width: 150px; height: auto; object-fit: contain; }
+.org { display: flex; flex-direction: column; margin: 0; padding: var(--space-3); border-radius: var(--radius-sm); background: var(--color-surface-2); font-size: var(--text-sm); }
+.lateral nav { display: flex; flex-direction: column; gap: var(--space-1); }
+.item, .ativo { padding: 10px var(--space-3); border-radius: var(--radius-sm); text-decoration: none; font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--color-text-muted); }
+.item:hover { color: var(--color-text); background: var(--color-surface-2); }
+.ativo { color: var(--color-brand-text); background: var(--color-brand-soft); }
+.area { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topo { display: flex; align-items: center; gap: var(--space-3); min-height: var(--header-height); padding: var(--space-2) var(--space-5); border-bottom: var(--border-width) solid var(--color-border); background: var(--color-surface); flex-wrap: wrap; }
+.espaco { flex: 1; }
+.pessoa { display: flex; flex-direction: column; text-align: right; font-size: var(--text-sm); line-height: 1.25; }
+.link { font-size: var(--text-xs); font-weight: var(--weight-semibold); }
+.abrir { display: none; background: none; border: var(--border-width) solid var(--color-border); border-radius: var(--radius-sm); padding: 6px 12px; cursor: pointer; }
+.conteudo { flex: 1; width: 100%; max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) var(--space-5); }
+.rodape { padding: var(--space-4) var(--space-5); font-size: var(--text-xs); color: var(--color-text-muted); text-align: center; }
+@media (max-width: 860px) {
+  .lateral { position: fixed; left: 0; z-index: var(--z-sidebar); transform: translateX(-100%); transition: transform var(--transition); box-shadow: var(--shadow-lg); }
+  .aberta { transform: none; }
+  .abrir { display: inline-flex; }
+  .pessoa { display: none; }
+  .conteudo { padding: var(--space-4); }
+}

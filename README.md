@@ -44,13 +44,19 @@ Entregar um ambiente único no qual a Neeko administra a plataforma, escritório
 
 A estrutura detalhada está em [`docs/04-ESTRUTURA-DO-PROJETO.md`](docs/04-ESTRUTURA-DO-PROJETO.md).
 
-Pré-requisitos sugeridos:
-- Node.js LTS
-- pnpm
-- Docker e Docker Compose
-- Git
+Pré-requisitos: Node.js 22, pnpm 9 e PostgreSQL 16 (`docker compose up -d`).
 
-Os comandos definitivos devem ser adicionados após a criação dos projetos Next.js e NestJS. Não execute migrações em produção sem revisão e backup.
+```bash
+pnpm install
+cp .env.example .env          # preencha CERT_ENCRYPTION_KEY e BOOTSTRAP_*
+pnpm --filter @neeko/api build
+pnpm dev:api                  # http://localhost:4000/api/v1/health
+pnpm dev:web                  # http://localhost:3000
+```
+
+Testes da API: `pnpm test`, com um banco vazio em `TEST_DATABASE_URL`. Deploy: [`docs/14-DEPLOY.md`](docs/14-DEPLOY.md).
+
+Não execute migrações em produção sem revisão e backup.
 
 ## Documentação essencial
 
@@ -70,11 +76,3 @@ Os comandos definitivos devem ser adicionados após a criação dos projetos Nex
 - [Deploy](docs/14-DEPLOY.md)
 - [Roadmap](docs/15-ROADMAP.md)
 - [Plano de implementação inicial](docs/16-PLANO-IMPLEMENTACAO.md)
-
-## Como usar no Antigravity
-
-1. Extraia o ZIP.
-2. Abra a pasta `neeko-platform-starter` como workspace.
-3. Leia primeiro `AGENTS.md` e `README.md`.
-4. Peça ao agente para executar somente a Fase 0 e Fase 1 do roadmap, sem implementar integrações fiscais reais.
-5. Revise arquitetura, permissões e modelo de dados antes de autorizar implementação de módulos.

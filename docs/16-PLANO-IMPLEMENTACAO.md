@@ -2,7 +2,7 @@
 
 ## Estado
 
-O repositório está na Fase 0: documentação e decisões-base. Ainda não contém aplicações executáveis. A baseline de arquitetura está definida, mas não equivale a uma aprovação de produto para regras fiscais ou acessos sensíveis.
+O repositório saiu da Fase 0: tem API, web, banco, autenticação individual e o módulo de notas antecipado pelo [ADR-006](../architecture/decisions/ADR-006-NOTAS-FISCAIS.md). A baseline de arquitetura está definida, mas não equivale a uma aprovação de produto para regras fiscais ou acessos sensíveis.
 
 ## Decisões consolidadas
 
