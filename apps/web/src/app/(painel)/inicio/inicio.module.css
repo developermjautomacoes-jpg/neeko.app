@@ -72,3 +72,13 @@ a.indicador { color: inherit; text-decoration: none; }
 .listaPendencias { display: flex; flex-direction: column; gap: var(--space-1); }
 .listaPendencias a { padding: var(--space-3); border-radius: var(--radius-sm); background: var(--color-surface-2); color: var(--color-text); text-decoration: none; }
 .listaPendencias a:hover { background: var(--color-brand-soft); }
+
+.atencao { display: flex; flex-direction: column; gap: 2px; margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.atencao a { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); color: var(--color-text); text-decoration: none; }
+.atencao a:hover { background: var(--color-surface-2); }
+.atencao span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.atencao b { overflow: hidden; font-size: var(--text-sm); text-overflow: ellipsis; white-space: nowrap; }
+.atencao small { color: var(--color-text-muted); }
+.atencao i { flex: none; width: 10px; height: 10px; border-radius: 50%; }
+.grau1 { background: var(--color-danger); } .grau2 { background: #F2780C; } .grau3 { background: #E8A33D; } .grau4, .grau5 { background: var(--color-text-muted); }
+.verTodas { display: inline-block; margin-top: var(--space-3); color: var(--color-brand-text); font-size: var(--text-sm); font-weight: 600; }

@@ -6,7 +6,7 @@ import { Loading, Modal, Notice } from "@neeko/ui";
 import { centavos, dataHora } from "@/lib/format";
 import { eu, type Eu } from "@/services/conta";
 import { lerPainel, type Painel } from "@/services/fiscal";
-import { GraficoArea } from "./GraficoArea";
+import { formatarCnpj } from "@/lib/format";
 import styles from "./inicio.module.css";
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -46,7 +46,6 @@ export default function Inicio() {
   if (erro) return <Notice tom="alerta">{erro}</Notice>;
   if (!d) return <Loading />;
   const pontos = d.serie.map((p) => ({ competencia: p.competencia, centavos: centavos(p.valor) }));
-  const total = pontos.reduce((t, p) => t + p.centavos, 0);
   const r = 44, volta = 2 * Math.PI * r;
   return (
     <div className={styles.inicio}>
@@ -76,10 +75,11 @@ export default function Inicio() {
 
       <section className={styles.meio}>
         <article className={styles.cartao}>
-          <header className={styles.cab}><h2>Visão Geral de Serviços</h2><span className={styles.periodo}>Últimos 12 meses</span></header>
-          <p className={styles.grande}>{brl(total)}</p>
-          <small>Total das NFS-e prestadas, sem canceladas e substituídas.</small>
-          <GraficoArea pontos={pontos} />
+          <header className={styles.cab}><h2>Empresas que pedem atenção</h2><span className={styles.periodo}>{d.atencao.total} de {d.empresas}</span></header>
+          {d.atencao.lista.length ? <ul className={styles.atencao}>{d.atencao.lista.map((e) => <li key={e.id}><Link href={`/notas/nfse?empresa=${e.id}`}>
+            <i className={styles[`grau${e.grau}`]} aria-hidden /><span><b>{e.razao || formatarCnpj(e.cnpj)}</b><small>{e.motivo}</small></span><ArrowRight size={16} aria-hidden />
+          </Link></li>)}</ul> : <p className={styles.vazio}>Tudo em dia: certificados válidos e capturas recentes em todas as empresas.</p>}
+          {d.atencao.total > d.atencao.lista.length && <Link href="/notas/nfse" className={styles.verTodas}>Ver todas na captura de NFS-e</Link>}
         </article>
         <article className={styles.escuro}>
           <header className={styles.cab}><h2>Saúde da Captura</h2><Link href="/notas/nfse">Ver todas <ArrowRight size={14} /></Link></header>

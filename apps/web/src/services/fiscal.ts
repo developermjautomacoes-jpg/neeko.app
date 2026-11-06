@@ -46,7 +46,7 @@ export const baixarXmlsDfe = (ambiente: AmbienteNfse, id: string, s: ServicoDfe,
 export interface Painel {
   empresas: number; notasMes: number; notasVariacao: number | null; servicosMes: string; servicosVariacao: number | null; pendencias: number;
   serie: { competencia: string; valor: string; notas: number }[]; pendenciasLista: { texto: string; rota: string }[]; empresasLista: { id: string; cnpj: string; razao: string }[];
-  saude: { percentual: number; itens: { nome: string; ok: boolean; detalhe: string }[] }; atividade: { id: string; texto: string; em: string }[];
+  saude: { percentual: number; itens: { nome: string; ok: boolean; detalhe: string }[] }; atividade: { id: string; texto: string; em: string }[]; atencao: { total: number; lista: { id: string; razao: string; cnpj: string; grau: number; motivo: string }[] };
 }
 export const lerPainel = () => api<Painel>("GET", "fiscal/dashboard");
 

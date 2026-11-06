@@ -16,6 +16,7 @@ Mudanças relevantes da Neeko Platform serão registradas aqui.
 - Mensagens entre usuários com canal Geral, menções e notificações; cargo definido pelo administrador; controle de certificados com filtros e relatórios; ações das tabelas em ícones com dica.
 - Empresas em Administração: cadastro e memorando na mesma tela. Mensagens com emoticons, grupos privados ou abertos e encaminhamento.
 - Importação de pacotes desligada por padrão; volta com `OFFICE_IMPORT_ENABLED=true`.
+- Tela inicial: o gráfico de serviços deu lugar à lista de empresas que pedem atenção.
 - Editar e apagar as próprias mensagens no chat.
 - Histórico de atividades para proprietária e administração, cartões da tela inicial clicáveis e pedido de novos assuntos no assistente.
 - Assistente Neeko no chat: busca sem IA nas bases das skills, com lista dos assuntos atendidos.
