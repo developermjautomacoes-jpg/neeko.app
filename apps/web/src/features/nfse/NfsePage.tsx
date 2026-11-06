@@ -1,5 +1,5 @@
 "use client";
-import { FileText, RotateCcw, Settings, Stethoscope } from "lucide-react";
+import { FileText, PanelRightClose, PanelRightOpen, RotateCcw, Settings, Stethoscope } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AgendaNfse, AmbienteNfse, CertificadoNfse, ModoBuscaNfse, EmpresaNfse, FalhaNfse, NotaNfse, PapelNfse, SituacaoNfse } from "@/types/nfse";
 import { Badge, Button, Card, ConfirmDialog, DataTable, Input, KpiCard, Loading, Modal, Notice, PageHeader, Select, useToast, IconButton } from "@neeko/ui";
@@ -44,6 +44,8 @@ export function NfsePage() {
   const [procurador, setProcurador] = useState<CertificadoNfse | null>(null);
   const [filtroEmpresa, setFiltroEmpresa] = useState("");
   const [config, setConfig] = useState(false);
+  const [listaAberta, setListaAberta] = useState(() => { try { return localStorage.getItem("neeko:nfse:lista") !== "0"; } catch { return true; } });
+  const alternarLista = (v: boolean) => { setListaAberta(v); try { localStorage.setItem("neeko:nfse:lista", v ? "1" : "0"); } catch { /* sem armazenamento */ } };
   const [procArquivo, setProcArquivo] = useState<File | null>(null);
   const [procSenha, setProcSenha] = useState("");
   const [procApelido, setProcApelido] = useState("");
@@ -233,9 +235,10 @@ export function NfsePage() {
         </div>
       )}
       {relatorio.length > 0 && <ul className={styles.relatorio}>{relatorio.map((l) => <li key={l}>{l}</li>)}</ul>}
-      <div className={styles.grade}>
-        <aside className={styles.lateral}>
-          <Input rotulo="Empresas" type="search" placeholder="Buscar por nome ou CNPJ" value={filtroEmpresa} onChange={(e) => setFiltroEmpresa(e.target.value)} />
+      <div className={`${styles.grade} ${listaAberta ? "" : styles.semLista}`}>
+        {listaAberta && <aside className={styles.lateral}>
+          <div className={styles.topoLista}><b>Empresas</b><IconButton dica="Ocultar lista de empresas" icone={<PanelRightClose size={16} />} onClick={() => alternarLista(false)} /></div>
+          <Input rotulo="Buscar empresa" type="search" placeholder="Buscar por nome ou CNPJ" value={filtroEmpresa} onChange={(e) => setFiltroEmpresa(e.target.value)} />
           <small className={styles.total}>{listadas.length} de {empresas.length} empresas</small>
           <div className={styles.barraLista}>
             <Button tamanho="sm" onClick={() => setMarcadas(new Set(aptas.map((e) => e.id)))} disabled={ocupado || !aptas.length}>Marcar aptas</Button>
@@ -255,8 +258,9 @@ export function NfsePage() {
               </li>
             ))}</ul>
           )}
-        </aside>
+        </aside>}
         <div className={styles.detalhe}>
+          {!listaAberta && <div className={styles.abrirLista}><Button tamanho="sm" icone={<PanelRightOpen size={16} />} onClick={() => alternarLista(true)}>Mostrar empresas ({empresas.length})</Button></div>}
           {!vista ? <Card><p className={styles.vazio}>Selecione uma empresa na lista para ver as notas capturadas.</p></Card> : <>
             <Card>
               <div className={styles.cabecaEmpresa}>

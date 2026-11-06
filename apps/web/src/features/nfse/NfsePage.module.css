@@ -22,7 +22,7 @@
 @media (max-width: 960px) { .procForm { grid-template-columns: 1fr; } }
 
 .topoAcoes { display: flex; align-items: flex-end; gap: var(--space-2); }
-.grade { display: grid; grid-template-columns: 300px minmax(0, 1fr); align-items: start; gap: var(--space-4); }
+.grade { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; gap: var(--space-4); }
 .lateral { position: sticky; top: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); max-height: calc(100vh - 24px); padding: var(--space-3); background: var(--color-surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
 .total { color: var(--color-text-muted); }
 .barraLista { display: flex; gap: var(--space-2); }
@@ -47,3 +47,10 @@
 .dadosEmpresa p { margin: 0; font-size: var(--text-sm); }
 .dadosEmpresa p small { display: block; color: var(--color-text-muted); }
 @media (max-width: 960px) { .grade { grid-template-columns: 1fr; } .lateral { position: static; max-height: 340px; } .dadosEmpresa { grid-template-columns: 1fr 1fr; } }
+
+.lateral { order: 2; }
+.detalhe { order: 1; }
+.semLista { grid-template-columns: minmax(0, 1fr); }
+.topoLista { display: flex; align-items: center; justify-content: space-between; }
+.abrirLista { display: flex; justify-content: flex-end; margin-bottom: var(--space-3); }
+@media (max-width: 960px) { .lateral { order: 0; } }
