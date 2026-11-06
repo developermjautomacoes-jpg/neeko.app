@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowRight, ArrowUp, Building2, CheckCircle2, CircleAlert, CircleDollarSign, FileSearch, FileText, Mail, ShieldCheck, TriangleAlert, Users, Zap, type LucideIcon } from "lucide-react";
+import { ClipboardList, ArrowDown, ArrowRight, ArrowUp, Building2, CheckCircle2, CircleAlert, CircleDollarSign, FileSearch, FileText, Mail, ShieldCheck, TriangleAlert, Users, Zap, type LucideIcon } from "lucide-react";
 import { Loading, Modal, Notice } from "@neeko/ui";
 import { centavos } from "@/lib/format";
 import { eu, type Eu } from "@/services/conta";
@@ -95,6 +95,11 @@ export default function Inicio() {
       </section>
 
       <section className={styles.fim}>
+        <article className={styles.cartao}>
+          <header className={styles.cab}><h2><ClipboardList size={20} aria-hidden /> Cadastros a finalizar</h2><span className={styles.periodo}>{d.cadastros.total}</span></header>
+          {d.cadastros.lista.length ? <ul className={styles.atencao}>{d.cadastros.lista.map((e) => <li key={e.id}><Link href={`/empresas/${e.id}`}><i className={styles.grau3} aria-hidden /><span><b>{e.razao}</b><small>Falta: {e.falta.join(", ")}</small></span><ArrowRight size={16} aria-hidden /></Link></li>)}</ul> : <p className={styles.vazio}>Todos os cadastros estão completos.</p>}
+          {d.cadastros.total > d.cadastros.lista.length && <Link href="/empresas" className={styles.verTodas}>Ver todas as empresas</Link>}
+        </article>
         <article className={styles.cartao}>
           <header className={styles.cab}><h2><Users size={20} aria-hidden /> Equipe online</h2><span className={styles.periodo}>{d.online.length}</span></header>
           {d.online.length ? <ul className={styles.online}>{d.online.map((u) => <li key={u.id}>{u.avatar ? <img src={u.avatar} alt="" /> : <span className={styles.iniciais}>{u.nome.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase()}</span>}<b>{u.nome}</b><i aria-label="online" /></li>)}</ul> : <p className={styles.vazio}>Ninguém online agora.</p>}

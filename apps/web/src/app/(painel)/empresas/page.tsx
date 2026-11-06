@@ -1,13 +1,14 @@
 "use client";
 import { Ban, Eye, FileText, FileType, LogOut, Pencil, RotateCcw, Undo2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Card, ConfirmDialog, DataTable, Input, Loading, Modal, Notice, PageHeader, Select, useToast, IconButton } from "@neeko/ui";
 import { baixarMemo } from "@/features/memorandos/documentos";
+import { importarPlanilha, prepararPlanilha, type LinhaPlanilha, type Relatorio } from "@/features/memorandos/importarPlanilha";
 import { MOTIVOS_SAIDA, br, fmtCnpj, hojeISO, type Memo } from "@/features/memorandos/regras";
 import { eu } from "@/services/conta";
-import { lerMemorando, listarMemorandos, situacaoCliente, situacaoMemorando, type MemorandoResumo } from "@/services/fiscal";
+import { equipe, lerMemorando, listarMemorandos, situacaoCliente, situacaoMemorando, type MemorandoResumo } from "@/services/fiscal";
 import styles from "../pagina.module.css";
 
 type Filtro = "ativos" | "inativos" | "cancelado" | "";
@@ -28,6 +29,20 @@ export default function Empresas() {
   const [saida, setSaida] = useState<MemorandoResumo | null>(null);
   const [form, setForm] = useState({ dataSaida: hojeISO(), motivo: MOTIVOS_SAIDA[0], obs: "" });
   const [salvando, setSalvando] = useState("");
+  const [imp, setImport] = useState<{ linhas: LinhaPlanilha[] | null; receita: boolean; feitas: number; atual: string; rel: Relatorio | null; erro: string; rodando?: boolean } | null>(null);
+  const parar = useRef(false);
+  async function lerArquivo(f: File | undefined) {
+    if (!f || !imp) return;
+    try { setImport({ ...imp, linhas: prepararPlanilha(await f.text(), await equipe()), erro: "", rel: null }); }
+    catch (x) { setImport({ ...imp, linhas: null, erro: x instanceof Error ? x.message : "Não foi possível ler a planilha." }); }
+  }
+  const existentes = useMemo(() => new Set([...lista.map((m) => m.cnpj), ...sem.map((e) => e.cnpj)].map((c) => String(c).replace(/\D/g, ""))), [lista, sem]);
+  async function rodarImportacao() {
+    if (!imp?.linhas) return;
+    parar.current = false; setImport({ ...imp, rodando: true });
+    const rel = await importarPlanilha(imp.linhas, existentes, imp.receita, (feitas, atual) => setImport((x) => x && { ...x, feitas, atual }), () => parar.current);
+    setImport((x) => x && { ...x, rodando: false, rel }); await carregar();
+  }
   const carregar = useCallback(async () => {
     try { const r = await listarMemorandos(); setLista(r.memorandos); setSem(r.semMemorando); setErro(""); }
     catch (x) { setErro(x instanceof Error ? x.message : "Não foi possível carregar."); }
@@ -54,7 +69,7 @@ export default function Empresas() {
   return (
     <>
       <PageHeader titulo="Empresas" descricao="Cadastro único: o preenchimento gera o memorando, coloca a empresa na carteira e libera a captura de notas."
-        acoes={pode && <Link href="/empresas/nova" className={styles.botao}>Nova empresa</Link>} />
+        acoes={pode && <div className={styles.acoes}><Button onClick={() => setImport({ linhas: null, receita: true, feitas: 0, atual: "", rel: null, erro: "" })}>Importar planilha</Button><Link href="/empresas/nova" className={styles.botao}>Nova empresa</Link></div>} />
       {erro && <Notice tom="erro">{erro}</Notice>}
       {sem.length > 0 && <Notice tom="alerta">{sem.length} empresa(s) com cadastro incompleto: {sem.slice(0, 5).map((e, i) => <span key={e.cnpj}>{i > 0 && ", "}{pode ? <Link href={`/empresas/nova?cnpj=${e.cnpj}`}>{e.legalName || fmtCnpj(e.cnpj)}</Link> : e.legalName}</span>)}{sem.length > 5 ? "…" : ""}</Notice>}
       <div className={styles.filtros}>
@@ -89,6 +104,19 @@ export default function Empresas() {
           <Select rotulo="Motivo" value={form.motivo} onChange={(e) => setForm({ ...form, motivo: e.target.value })}>{MOTIVOS_SAIDA.map((m) => <option key={m}>{m}</option>)}</Select>
           <Input rotulo="Observação" value={form.obs} onChange={(e) => setForm({ ...form, obs: e.target.value })} />
         </div>
+      </Modal>
+      <Modal aberto={!!imp} titulo="Importar planilha de empresas" largura="lg" onFechar={() => { if (!imp?.rodando) setImport(null); }}
+        rodape={imp?.rodando ? <Button variante="danger" onClick={() => { parar.current = true; }}>Interromper</Button> : <><Button onClick={() => setImport(null)}>Fechar</Button>{imp?.linhas && !imp.rel && <Button variante="primary" onClick={() => void rodarImportacao()}>Importar {imp.linhas.filter((l) => !existentes.has(l.cnpj)).length} empresa(s)</Button>}</>}>
+        {imp && <div className={styles.form}>
+          <p>Use a planilha exportada do sistema anterior (CSV separado por ponto e vírgula). Empresas com CNPJ já cadastrado são puladas, e cada uma importada ganha o seu memorando.</p>
+          {!imp.rodando && !imp.rel && <><input type="file" accept=".csv,text/csv" aria-label="Planilha" onChange={(e) => void lerArquivo(e.target.files?.[0])} />
+            <label className={styles.check}><input type="checkbox" checked={imp.receita} onChange={(e) => setImport({ ...imp, receita: e.target.checked })} /> Consultar cada CNPJ na Receita para trazer atividades, sócios, natureza e situação (leva cerca de 2 segundos por empresa)</label></>}
+          {imp.erro && <Notice tom="erro">{imp.erro}</Notice>}
+          {imp.linhas && !imp.rel && !imp.rodando && <Notice>{imp.linhas.length} linha(s) lidas: {imp.linhas.filter((l) => !existentes.has(l.cnpj)).length} novas, {imp.linhas.filter((l) => existentes.has(l.cnpj)).length} já cadastradas, {imp.linhas.filter((l) => l.inativa).length} inativas (entram como clientes que saíram).</Notice>}
+          {imp.rodando && imp.linhas && <Notice>Importando {imp.feitas + 1} de {imp.linhas.length}: {imp.atual}. Mantenha esta janela aberta.</Notice>}
+          {imp.rel && <><Notice tom={imp.rel.erros.length ? "alerta" : "info"}>{imp.rel.importadas} empresa(s) importadas, {imp.rel.puladas.length} já existiam{imp.rel.semReceita.length ? `, ${imp.rel.semReceita.length} sem resposta da Receita` : ""}{imp.rel.erros.length ? `, ${imp.rel.erros.length} com erro` : ""}.</Notice>
+            {[...imp.rel.erros, ...imp.rel.semReceita.map((x) => `${x}: Receita não respondeu, complete o cadastro`)].map((t) => <small key={t}>{t}</small>)}</>}
+        </div>}
       </Modal>
     </>
   );

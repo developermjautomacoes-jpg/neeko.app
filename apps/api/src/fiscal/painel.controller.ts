@@ -39,6 +39,17 @@ export class PainelController {
       { texto: `${errosN} erro(s) na captura de NFS-e`, n: errosN, rota: "/notas/nfse" }, { texto: `${errosD} erro(s) na captura de NF-e/CT-e`, n: errosD, rota: "/notas/nfe-cte" }, { texto: `${falhas} documento(s) não lidos`, n: falhas, rota: "/notas/nfse" }, { texto: `${ciencias} ciência(s) pendente(s)`, n: ciencias, rota: "/notas/nfe-cte" },
     ].filter((p) => p.n > 0);
     const aptas = certDe.reduce((t, x, i) => t + (x && x.validUntil >= dia && !nfseSt.some((s) => s.companyId === empresas[i].id && s.lastError) && !dfeSt.some((s) => s.companyId === empresas[i].id && s.lastError) ? 1 : 0), 0);
+    // Cadastros que ainda faltam informações para o memorando ficar completo.
+    const memos = await this.prisma.memorandum.findMany({ where: { organizationId: org, status: "ativo", clientStatus: "ativa", companyId: { in: ids } }, select: { id: true, data: true, company: { select: { legalName: true } } } });
+    const incompletos = memos.flatMap((m) => {
+      const x = (m.data ?? {}) as Record<string, any>, falta: string[] = [];
+      if (!x.t_regime) falta.push("regime"); else if (x.t_regime === "Simples Nacional" && !x.t_modalidade) falta.push("Simples puro ou híbrido");
+      if (!Array.isArray(x.atividades) || !x.atividades.length) falta.push("atividades");
+      if (!Array.isArray(x.deps) || !x.deps.some((d: any) => d?.on && d?.resp)) falta.push("responsáveis");
+      if (!x.e_endereco) falta.push("endereço");
+      if (!Array.isArray(x.contatos) || !x.contatos.some((c: any) => c?.nome && (c?.telefone || c?.email))) falta.push("contato");
+      return falta.length ? [{ id: m.id, razao: m.company.legalName, falta }] : [];
+    }).sort((a, b) => b.falta.length - a.falta.length || a.razao.localeCompare(b.razao));
     // Quem usou o sistema nos últimos 15 minutos e não saiu.
     const sessoes = await this.prisma.session.findMany({ where: { organizationId: org, expiresAt: { gt: new Date() }, lastSeenAt: { gte: inicioJanela() } }, distinct: ["userId"], select: { user: { select: { id: true, name: true, avatar: true } } } });
     const online = sessoes.map((x) => x.user).sort((a, b) => a.name.localeCompare(b.name));
@@ -60,6 +71,7 @@ export class PainelController {
         { nome: "Captura de NFS-e", ...estado(!errosN, "Sem erros", `${errosN} com erro`) }, { nome: "Captura de NF-e/CT-e", ...estado(!errosD, "Sem erros", `${errosD} com erro`) }, { nome: "Documentos lidos", ...estado(!falhas, "Sem falhas", `${falhas} com falha`) },
       ] },
       atencao: { total: atencao.length, lista: atencao.slice(0, 8) },
+      cadastros: { total: incompletos.length, lista: incompletos.slice(0, 6) },
       online: online.map((u) => ({ id: u.id, nome: u.name, avatar: u.avatar })),
     };
   }
