@@ -1,0 +1,125 @@
+Sistema Nota Fiscal Eletrônica
+
+Nota Técnica 2020.004
+
+DANFE Simplificado – Etiqueta
+
+
+
+
+Versão 1.10 – Agosto/2024
+Sistema
+Nota Fiscal Eletrônica
+NT 2020.004 – DANFE Simplificado – Etiqueta
+
+
+Sumário
+Controle de Versões........................................................................................................................ 3
+Histórico de Alterações / Cronograma ............................................................................................. 3
+01. Resumo..................................................................................................................................... 4
+02. DANFE Simplificado – Etiqueta ................................................................................................. 5
+  02.1 Tipo e Tamanho do Papel .................................................................................................... 5
+  02.2 Chave de Acesso ................................................................................................................. 5
+  02.3 Padrões de Caracteres (Tipos de Fontes) ............................................................................ 5
+  02.4 Campos Obrigatórios ........................................................................................................... 5
+
+
+
+
+                                                                                                                                  Página 2 / 5
+Sistema
+Nota Fiscal Eletrônica
+NT 2020.004 – DANFE Simplificado – Etiqueta
+
+
+Controle de Versões
+Versão      Publicação              Descrição
+1.00        Agosto/2020             Publicação da NT
+1.10        Agosto/2024             Alteração da NT
+
+
+
+
+Histórico de Alterações / Cronograma
+Versão                        Histórico de atualizações            Implantação   Implantação
+                                                                      Teste       Produção
+  1.00      Publicação dos campos obrigatórios da NF-e no          Imediato      Imediato
+            DANFE Simplificado - Etiqueta.
+  1.10      Remoção da obrigatoriedade do valor total da NF-e no   Imediato      Imediato
+            DANFE Simplificado - Etiqueta.
+
+
+
+
+                                                                                    Página 3 / 5
+Sistema
+Nota Fiscal Eletrônica
+NT 2020.004 – DANFE Simplificado – Etiqueta
+
+
+01. Resumo
+Com o avanço do comércio eletrônico, surgiu a necessidade de simplificar o processo de impressão
+do Documento Auxiliar da Nota Fiscal Eletrônica.
+
+A impressão do DANFE Simplificado – Etiqueta, possível de ser utilizado pelos contribuintes nas
+operações de venda a varejo para consumidor final em comércio eletrônico, venda por telemarketing
+ou processos semelhantes, ocorrerá seguindo os padrões técnicos estabelecidos nesta Nota
+Técnica, atendendo ao disposto no §5º-A da cláusula nona do Ajuste SINIEF 07/05.
+
+
+
+01.1 Histótico de alteração
+Conforme Ajuste SINIEF 07/05, o valor total da NF-e no DANFE Simplificado – Etiqueta poderá ser
+suprimido.
+
+“§ 15-A Poderá ser suprimida a informação do valor total da NF-e no DANFE Simplificado – Etiqueta.”
+
+
+
+
+                                                                                        Página 4 / 5
+Sistema
+Nota Fiscal Eletrônica
+NT 2020.004 – DANFE Simplificado – Etiqueta
+
+
+02. DANFE Simplificado – Etiqueta
+
+
+02.1 Tipo e Tamanho do Papel
+Para a impressão do DANFE Simplificado poderá ser utilizado qualquer tipo de papel com largura
+mínima de 55 milímetros, com exceção de papel jornal, desde que seja garantido o contraste
+necessário para assegurar leitura do código de barras nos equipamentos normais do mercado.
+
+
+02.2 Chave de Acesso
+A chave de acesso e seu respectivo código de barras poderão ser impressos em qualquer sentido,
+no canto superior direito do papel, observadas as demais disposições do Capítulo 6 do Manual de
+Orientação do Contribuinte.
+
+
+
+02.3 Padrões de Caracteres (Tipos de Fontes)
+Todos os caracteres deverão estar impressos em tamanho não inferior a seis (6) pontos, sendo os
+títulos dos campos impressos em negrito e em caixa alta (maiúsculas).
+
+
+02.4 Campos Obrigatórios
+No DANFE Simplificado – Etiqueta deverão estar visíveis e ser impresso no mínimo, além da chave
+de acesso, seu código de barras e do correspondente Protocolo de Autorização de Uso, o conteúdo
+dos seguintes campos:
+
+      a) A descrição “DANFE Simplificado – Etiqueta”;
+      b) Dados do emitente: Nome/Razão Social, Sigla da UF, CNPJ, Inscrição Estadual;
+      c) Dados gerais da NF-e: Tipo de operação, se entrada ou saída, Série e Número da NF-e,
+         Data de emissão;
+      d) Dados do destinatário/remetente: Nome/Razão Social, Sigla da UF, CNPJ/CPF, Inscrição
+         Estadual, quando existir;
+      e) Dados dos totais da NF-e: Valor total da Nota Fiscal.
+      f) Contingência EPEC: Informar o protocolo de autorização do Evento EPEC.
+
+
+
+
+                                                                                     Página 5 / 5
+

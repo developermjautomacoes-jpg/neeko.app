@@ -277,6 +277,14 @@ test("administração faz tudo, menos excluir a proprietária", async () => {
   assert.equal(JSON.stringify((await adm.get("/fiscal/companies")).corpo).includes(A), false, "empresa restrita segue fora"); await prisma.organization.update({ where: { id: org }, data: { cnpj: "" } });
   await prisma.user.delete({ where: { email: "adm@a.test" } });
 });
+test("assistente responde só com as bases cadastradas", async () => {
+  assert.equal((await new Sessao().get("/assistant/topics")).status, 401, "exige login");
+  const t = (await ana.get("/assistant/topics")).corpo.assuntos; assert.equal(t.length, 7);
+  const r = (await ana.post("/assistant/ask", { pergunta: "fator r anexo III" })).corpo.resultados; assert.ok(r.length > 0); assert.equal(r[0].assunto, "Simples Nacional");
+  const f = (await ana.post("/assistant/ask", { pergunta: "fator r", assunto: "especialista-invest-es" })).corpo.resultados; assert.ok(f.every((x: any) => x.assunto === "INVEST-ES e FUNDAP"));
+  assert.deepEqual((await ana.post("/assistant/ask", { pergunta: "qual a receita de bolo de cenoura" })).corpo.resultados, [], "fora das bases não responde");
+  assert.equal((await ana.post("/assistant/ask", { pergunta: "x".repeat(301) })).status, 400);
+});
 test("redefinir senha por código enviado no e-mail", async () => {
   const c = new Sessao(), { hashSenha } = await import("../common/passwords");
   assert.equal((await c.post("/auth/forgot-password", { email: "ana@a.test" })).status, 503, "sem SMTP avisa");

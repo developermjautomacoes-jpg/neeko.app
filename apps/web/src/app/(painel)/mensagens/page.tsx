@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { Forward, Lock, LogOut, Smile, Unlock, UserPlus, Users } from "lucide-react";
 import { Button, IconButton, Input, Loading, Modal, Notice, PageHeader, Select, useToast } from "@neeko/ui";
 import { criarGrupo, encaminharMensagem, enviarMensagem, incluirNoGrupo, lerMensagens, marcarLida, privacidadeGrupo, resumoMensagens, sairDoGrupo, type Mensagem, type ResumoMensagens } from "@/services/conta";
+import { Assistente } from "./Assistente";
 import styles from "./mensagens.module.css";
 
 const EMOJIS = "😀 😂 😊 😍 🤔 😅 😢 😡 👍 👎 👏 🙏 💪 🤝 🎉 ✅ ❌ ⚠️ ❗ ❓ 🔥 ⭐ ❤️ 💡 📌 📎 📅 ⏰ 💰 📄 📊 🚀".split(" ");
@@ -12,7 +13,7 @@ const hora = (d: string) => new Date(d).toLocaleString("pt-BR", { day: "2-digit"
 function Conversas() {
   const avisar = useToast(), pedido = useSearchParams().get("c");
   const [resumo, setResumo] = useState<ResumoMensagens | null>(null);
-  const [conversa, setConversa] = useState(pedido ?? "geral");
+  const [conversa, setConversa] = useState(pedido ?? "assistente");
   const [lista, setLista] = useState<Mensagem[]>([]);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -25,6 +26,7 @@ function Conversas() {
   useEffect(() => { if (pedido) setConversa(pedido); }, [pedido]);
   const atualizar = useCallback(async () => {
     try {
+      if (conversa === "assistente") { setResumo(await resumoMensagens()); return; }
       const m = await lerMensagens(conversa);
       setLista((a) => { if (a.length !== m.length) setTimeout(() => fim.current?.scrollIntoView(), 0); return m; });
       await marcarLida(conversa);
@@ -68,17 +70,18 @@ function Conversas() {
   const item = (id: string, titulo: string, sub: string, n: number) => <button type="button" key={id} className={`${styles.item} ${conversa === id ? styles.atual : ""}`} onClick={() => setConversa(id)}><span><b>{titulo}</b><small>{sub}</small></span>{n > 0 && <i>{n}</i>}</button>;
   const destacar = (t: string) => { const nomes = (resumo?.pessoas ?? []).map((p) => p.nome.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")); return nomes.length ? t.split(new RegExp(`(@(?:${nomes.join("|")}))`, "gi")).map((p, i) => (i % 2 ? <mark key={i}>{p}</mark> : p)) : t; };
   return <>
-    <PageHeader titulo="Mensagens" descricao="Converse com a equipe. Digite @ para marcar uma pessoa." />
+    <PageHeader titulo="Mensagens" descricao="Converse com a equipe ou tire dúvidas com o Assistente Neeko." />
     {erro && <Notice tom="erro">{erro}</Notice>}
     <div className={styles.grade}>
       <aside className={styles.lista}>
+        <button type="button" className={`${styles.item} ${styles.robo} ${conversa === "assistente" ? styles.atual : ""}`} onClick={() => setConversa("assistente")}><img src="/neeko-robo-rosto.png" alt="" width={36} height={36} /><span><b>Assistente Neeko</b><small>Tire dúvidas fiscais</small></span></button>
         {item("geral", "Geral", resumo?.geral.ultima?.texto ?? "Toda a equipe", resumo?.geral.naoLidas ?? 0)}
         <div className={styles.secao}><span>Grupos</span><IconButton dica="Novo grupo" icone={<Users size={15} />} onClick={() => setModal({ tipo: "novo", nome: "", privado: true, pessoas: [] })} /></div>
         {resumo?.grupos.map((g) => item(g.id, `${g.privado ? "🔒 " : ""}${g.nome}`, g.ultima?.texto ?? `${g.participantes.length} participante(s)`, g.participa ? g.naoLidas : 0))}
         <div className={styles.secao}><span>Pessoas</span></div>
         {resumo?.pessoas.map((p) => item(p.id, p.nome, p.ultima?.texto ?? p.cargo, p.naoLidas))}
       </aside>
-      <section className={styles.conversa}>
+      {conversa === "assistente" ? <Assistente /> : <section className={styles.conversa}>
         <div className={styles.cabeca}>
           <div><h2>{nome}</h2>{grupo && <small>{grupo.privado ? "Privado" : "Aberto à equipe"} · {grupo.participantes.join(", ")}</small>}</div>
           <div className={styles.botoes}>
@@ -100,7 +103,7 @@ function Conversas() {
           <textarea ref={campo} aria-label="Mensagem" rows={2} maxLength={2000} placeholder="Escreva uma mensagem" value={texto} onChange={(e) => setTexto(e.target.value)} onKeyDown={tecla} />
           <Button variante="primary" carregando={enviando} onClick={() => void enviar()}>Enviar</Button>
         </div>
-      </section>
+      </section>}
     </div>
     <Modal aberto={!!modal} largura="sm" titulo={modal?.tipo === "incluir" ? "Incluir pessoas" : "Novo grupo"} onFechar={() => setModal(null)} rodape={<><Button onClick={() => setModal(null)}>Voltar</Button><Button variante="primary" onClick={() => void confirmarModal()}>{modal?.tipo === "incluir" ? "Incluir" : "Criar grupo"}</Button></>}>
       {modal && <div className={styles.formModal}>

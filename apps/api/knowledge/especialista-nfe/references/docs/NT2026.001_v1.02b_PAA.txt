@@ -1,0 +1,814 @@
+Nota Fiscal Eletrônica - NF-e
+
+
+Provedor de Assinatura e Autorização de
+Documentos Fiscais Eletrônicos - PAA
+
+
+Nota Técnica 2026.001 - Versão 1.02b
+Julho de 2026
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+
+Sumário
+Introdução ................................................................................................................................................4
+1     Provedor de Assinatura e Autorização ..............................................................................................4
+    1.1       Geração de XML com envio ao Ambiente Centralizado de Autorização ....................................4
+2     Padrão de Certificado Digital para Assinatura Avançada...................................................................5
+    2.1       Chave Privada RSA (PrivateKey) * ...........................................................................................5
+    2.2       Chave Pública RSA (PublicKey) * .............................................................................................5
+3     Assinatura RSA e Geração do DF-e pelo PAA ..................................................................................5
+4     Credenciamento de contribuintes ......................................................................................................6
+5     Série de emissão dos documentos. ...................................................................................................6
+6     Estrutura das informações do PAA no XML da NF-e .........................................................................8
+    6.1       Esquema gráfico do leiaute da NF-e contemplando o PAA. ......................................................8
+    6.2       Esquema gráfico do leiaute do evento de cancelamento da NF-e contemplando o PAA. ..........8
+7     Fluxo simplificado de funcionamento do PAA ....................................................................................9
+8     Serviço: Autorização de Uso da Nota Fiscal (item 4.1 do MOC) ......................................................10
+    8.1       Leiaute da NF-e (Modelo 55 e 65)...........................................................................................10
+      Grupo B. Identificação da Nota Fiscal eletrônica .............................................................................10
+      Grupo GA. Autorização para obter XML ..........................................................................................10
+      Grupo ZG. Informações do PAA ......................................................................................................11
+    8.2       Regras de Validação Gerais – NF-e / NFC-e ..........................................................................11
+      Grupo DA. Autorização - área de dados do lote de NF-e.................................................................11
+      Grupo F. Validação da Assinatura Digital ........................................................................................11
+    8.3       Regras de Validação NF-e ......................................................................................................12
+      Grupo B. Identificação da Nota Fiscal eletrônica .............................................................................12
+      Grupo BA. Documento Fiscal Referenciado ....................................................................................12
+      Grupo C. Identificação do Emitente .................................................................................................13
+      Grupo ZG. Informações do PAA ......................................................................................................13
+9     Serviço: Registro de Evento ............................................................................................................15
+    9.1       Leiaute do Evento - Parte Geral ..............................................................................................15
+    9.2       Regras de Validação Gerais - Evento .....................................................................................16
+    9.3       Regras de Validação Evento ...................................................................................................16
+10         Serviço: Inutilização de Numeração ............................................................................................19
+    10.1      Regras de Validação Inutilização ............................................................................................19
+11         Serviço: Consulta Protocolo (Consulta Situação da NF-e) ..........................................................19
+
+
+
+
+                                                                                                                                        Página 2 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+
+Controle de Versões
+
+ Versão Publicação               Descrição
+
+  1.00     03/2026               Especificações técnicas para o funcionamento do Provedor de
+                                 Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA.
+
+  1.01     05/2026               Controles para Emitente CPF e ajuste em regras de validação
+
+  1.02     06/2026               Alteração da data de implantação em Produção e correções diversas
+
+
+
+Histórico de Alterações / Cronograma
+
+Versão                        Histórico de atualizações                Implantação Implantação
+                                                                          Teste     Produção
+
+  1.00       Versão inicial                                             08/06/2026     03/08/2026
+             Controles para Emitente CPF e ajuste em regras de
+  1.01                                                                  03/08/2026     08/09/2026
+             validação
+             Alteração da data de implantação em Produção.
+                                                                        03/08/2026     05/10/2026
+             Ajuste na RV P09-10.
+  1.02
+             Alteração do código de rejeição das RV ZG01-10, ZG02-
+               10, ZG02-30.
+ 1.02a       Ajuste em documentação.                                        -x-            -x-
+             Correção do código de rejeição das RV P14-10 e P14-
+ 1.02b                                                                      -x-            -x-
+              20.
+
+
+
+
+                                                                                           Página 3 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+
+Introdução
+   Este documento tem como objetivo apresentar as diretrizes técnicas relacionadas ao uso de um
+   Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA, em conformidade
+   com as disposições do Ajuste SINIEF 9/22, que instituiu este modelo em âmbito nacional.
+
+   O Ajuste SINIEF 9/22, celebrado pelo CONFAZ e pela Receita Federal do Brasil, estabelece o
+   arcabouço legal e regulatório para a atuação do PAA, permitindo que a assinatura digital e a solicitação
+   de autorização de documentos fiscais eletrônicos sejam realizadas por meio de um serviço
+   intermediário devidamente habilitado, em nome do emissor do documento. A presente Nota Técnica
+   detalha a implementação deste modelo, em consonância com as normas e os prazos definidos pelo
+   Ajuste e suas posteriores alterações (como os Ajustes SINIEF 45/22, 55/22, 47/23 e 46/25).
+
+   A proposta desse modelo é simplificar os processos envolvidos na emissão de documentos fiscais
+   eletrônicos, reduzindo a complexidade técnica para contribuintes e sistemas emissores, ao mesmo
+   tempo em que mantém os requisitos de segurança, integridade e validade jurídica das informações
+   transmitidas. A utilização de provedores especializados, nos termos do Ajuste SINIEF 9/22, possibilita
+   maior padronização, confiabilidade e eficiência na comunicação com os ambientes de autorização de
+   DF-e, especialmente para públicos como o Microempreendedor Individual (MEI), o Produtor Rural e os
+   optantes pelo Simples Nacional.
+
+   De forma geral, o PAA atua como uma camada de apoio ao emissor, realizando as etapas de
+   assinatura eletrônica e encaminhamento dos documentos para autorização, conforme as regras
+   previamente estabelecidas no Ajuste SINIEF 9/22 e nos manuais técnicos (MOC e MOPAA). Esse
+   modelo contribui para a modernização dos processos fiscais eletrônicos, favorecendo a automação, a
+   escalabilidade das soluções e a melhoria da experiência dos usuários envolvidos.
+
+   É importante salientar que o uso do Provedor de Assinatura e Autorização de Documentos Fiscais
+   Eletrônicos não altera a responsabilidade legal e tributária do emitente em relação às informações
+   constantes no documento fiscal eletrônico emitido, conforme preconiza o inciso III da cláusula quarta
+   do Ajuste SINIEF 9/22. O PAA atua exclusivamente como intermediário técnico, prestando serviços de
+   apoio à assinatura digital e ao encaminhamento do documento para autorização, não assumindo a
+   autoria fiscal nem a responsabilidade pelo conteúdo, veracidade ou adequação tributária das
+   informações declaradas pelo contribuinte.
+
+1 Provedor de Assinatura e Autorização
+   O contribuinte emitente de Documento Fiscal Eletrônico, identificado como “Emitente” nesta
+   especificação, poderá utilizar os serviços de um Provedor de Assinatura e Autorização de Documentos
+   Fiscais Eletrônicos - PAA com a finalidade de realizar comunicações com os sistemas de autorização
+   de uso de documentos fiscais eletrônicos providos pelas administrações tributárias, em nome do
+   contribuinte.
+
+   O ambiente de autorização das Administrações Tributárias através do Portal dos Documentos Fiscais
+   Eletrônicos da SVRS irá permitir a vinculação entre Emitentes que se enquadrarem nesse perfil
+   (devidamente identificados na plataforma gov.br do Governo Federal) com PAA previamente
+   homologados pela Coordenação do ENCAT.
+
+   O Emitente deverá utilizar ferramenta de emissão de documento fiscal fornecida pelo PAA,
+   preferencialmente na internet e com identificação do usuário.
+
+
+1.1 Geração de XML com envio ao Ambiente Centralizado de Autorização
+   O PAA receberá o pedido de emissão no formato que seu software estiver construído e providenciará
+   a geração do XML do documento fiscal eletrônico preenchendo o grupo “infPAA”. Neste grupo será
+   alimentada a tag “SignatureValue” assinando o valor do atributo “Id” do DF-e com a chave criptográfica
+
+
+                                                                                             Página 4 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+   no padrão RSA fornecida pela administração tributária. O DF-e também deverá receber a assinatura
+   digital qualificada com certificado ICP-Brasil do PAA.
+
+   O PAA deverá transmitir o XML do DF-e para o Ambiente Centralizado de Autorização (SVRS) onde
+   será submetido a todas as regras de validação estabelecidas no MOC. O documento poderá ser
+   autorizado ou rejeitado, devendo o PAA guardar o protocolo de autorização e atuar nos casos em que
+   houver rejeição.
+
+
+2 Padrão de Certificado Digital para Assinatura Avançada
+   O certificado digital utilizado para assinatura avançada das mensagens seguirá padrão RSA (com par
+   de chaves) gerados pela Plataforma de Emissão Simplificada - PES para o Emitente que efetuar seu
+   credenciamento e vinculação com o Provedor de Assinatura e Autorização no portal da SEFAZ Virtual
+   RS identificando-se com Usuário e Senha da plataforma gov.br.
+
+   O PAA poderá obter o par de chaves (pública e privada) do usuário diretamente no módulo de
+   administração no portal da Plataforma de Emissão Simplificada, selecionando a opção para obter os
+   dados do cliente (Emitente).
+
+   Os certificados seguirão a especificação OpenSSL e serão gerados de forma única para a relação de
+   cada PAA com o Emitente vinculado no portal. A especificação produz um par de chaves (pública e
+   privada) no formato PEM RSA 1024 bits.
+
+   As chaves são transformadas na estrutura RSA para assinatura digital XML com a seguinte definição:
+
+
+2.1 Chave Privada RSA (PrivateKey) *
+   #         Campo         Ele   Pai      Tipo     Ocor.   Descrição / Observação
+   Priv01    RSAKeyValue   G     Raiz     -        1-1     Grupo Chave Privada RSA
+   Priv02    Modulus       E     Priv01   Base64   1-1     Chave Privada do Emitente no PAA
+   Priv03    Exponent      E     Priv01   C        1-1     Informar “AQAB”
+   Priv04    P             E     Priv01   Base64   1-1
+   Priv05    Q             E     Priv01   Base64   1-1
+   Priv06    DP            E     Priv01   Base64   1-1
+   Priv07    DQ            E     Priv01   Base64   1-1
+   Priv08    InverseQ      E     Priv01   Base64   1-1
+   Priv09    D             E     Priv01   Base64   1-1
+   * Padrão XML
+
+
+2.2 Chave Pública RSA (PublicKey) *
+   #         Campo         Ele   Pai      Tipo     Ocor.   Descrição / Observação
+   Pub01     RSAKeyValue   G     Raiz  -      1-1          Grupo Chave Pública RSA
+   Pub02     Modulus       E     Pub01 Base64 1-1          Chave Pública do Emitente no PAA
+   Pub03     Exponent      E     Pub01 C      1-1          Informar “AQAB”
+   * Padrão XML
+
+
+3 Assinatura RSA e Geração do DF-e pelo PAA
+   O Emitente deverá solicitar o vínculo a um PAA homologado no portal da SEFAZ Virtual RS. O
+   resultado dessa solicitação entregará um par de chaves RSA (chave pública e chave privada) para
+   este Emitente.
+
+
+
+                                                                                         Página 5 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+   Com a chave privada, a aplicação do PAA deverá assinar o valor do atributo “Id” da NFe / Evento
+   (convertido para array de bytes) com padrão de assinatura assimétrica RSA SHA1 originando um
+   “SignatureValue” no formato base64.
+
+   A chave pública deverá ser informada no grupo “RSAKeyValue” no padrão XML Signature para
+   chaves RSA.
+
+   Passos a executar:
+     Ator      Ação
+     Emitente Solicitar o vínculo com o PAA no portal DF-e da SVRS com CPF do responsável
+               pela empresa autenticado na plataforma gov.br
+     PAA /     Obter no portal ou Web Service o par de chaves RSA (chave privada e chave
+     Emitente pública) e a série a ser utilizada pelo PAA para este Emitente.
+     PAA       Utilizar a chave privada para assinar o conteúdo da tag “Id” do DF-e (RSA SHA1
+               base64).
+     PAA       Informar a chave pública no padrão XML Signature no grupo “RSAKeyValue”.
+     PAA       Assina o DF-e com certificado X509 padrão ICP-Brasil
+     PAA       Transmitir o DF-e para o Ambiente Centralizado de Autorização (SVRS)
+
+   A qualquer tempo o Emitente poderá solicitar o término do vínculo e utilização do PAA acessando o
+   Portal da SVRS. A administração tributária e o PAA também poderão comandar o encerramento do
+   vínculo. A perda do vínculo tem efeito imediato a partir do momento da solicitação por qualquer
+   interveniente.
+
+   Observação: O processo de assinatura e envio do pedido de Autorização do DF-e emissão na
+     plataforma de emissão simplificada está disciplinado no Manual de Orientações do PAA – MOPAA
+     disponível em https://dfe-portal.svrs.rs.gov.br/pes.
+
+
+4 Credenciamento de contribuintes
+   Para o credenciamento do Emitente, o PAA Portal da SVRS irá consultar no CCC se o Emitente tem
+   alguma restrição ou se já está credenciado habilitado para emissão de Documento Fiscal Eletrônico.
+
+   Se o Emitente não estiver credenciado habilitado, o Portal do PAA irá orientá-lo para que faça o
+   cadastro na SEFAZ da sua UF de circunscrição. Se houver alguma restrição, o Emitente será
+   informado que há restrição de emissão na sua UF de origem.
+
+   Após a habilitação para emissão de NF-e, estará disponível a utilização de PAA para este Emitente.
+
+   Até o final de 2026, ou assim que operacional e tempestivamente disponíveis, serão utilizadas na
+   solução do PAA, as informações cadastrais disponibilizadas pelo ambiente nacional de dados previsto
+   no Art. 59 da LC 214/2025.
+
+   Até o final de 2026 serão utilizadas na solução do PAA, as informações cadastrais disponibilizadas
+   pelo ambiente nacional de dados previsto no Art. 59 da LC 214/2025.
+
+
+
+5 Série de emissão dos documentos.
+   Para viabilizar a utilização de software emissor próprio e também a emissão via PAA ou até mais de
+   um PAA pelo Emitente, é necessário fazer o controle da utilização da série do documento a fim de
+   evitar duplicidade de documentos com mesma série e número. Deste modo, ao estabelecer o vínculo
+
+
+
+
+                                                                                         Página 6 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+   do PAA, o Portal da SVRS irá atribuir àquele vínculo uma Série específica que será utilizada pelo PAA
+   para emitir os documentos daquele Emitente.
+
+    Emit      Processo           Assinatura        Série Ch Acesso         Numeração
+              Emissão
+  CNPJ      Aplicativo da   e-CNPJ do Emitente 000-889 CNPJ do         Sequencial por CNPJ,
+              Empresa         (procEmi <> 1,2)              Emitente controlado pelo emitente
+  CNPJ   Programa Emissor e-CNPJ do Emitente 000-889 CNPJ do           Sequencial por CNPJ,
+                Fisco         (procEmi <> 1,2)              Emitente controlado pelo emitente
+CNPJ/CPF Site SEFAZ (NFA- e-CNPJ da SEFAZ 890-899 CNPJ da Sequencial pela SEFAZ,
+                  e)             (procEmi=1)                 SEFAZ    independentemente do
+                                                                     emitente (CPF ou CNPJ)
+                          Faixas reservadas a partir da NT 2018.001
+CNPJ/CPF     Site SEFAZ      e-CNPJ da SEFAZ 900-909 CNPJ do           Sequencial por CNPJ,
+                              (procEmi=1), ou               Emitente  controlado pela SEFAZ
+                            e-CNPJ do Emitente
+                                 (procEmi=2)
+  CPF        Site SEFAZ      e-CNPJ da SEFAZ 910-919        CPF do     Sequencial pelo CPF,
+                              (procEmi=1), ou               Emitente  controlado pela SEFAZ
+                             e-CPF do Emitente
+                                 (procEmi=2)
+  CPF       Aplicativo da    e-CPF do Emitente 920-969      CPF do      Sequencial por CPF,
+              Empresa          (procEmi<>1,2)               Emitente controlado pelo emitente
+                                  Faixa reservada para o PAA
+  CNPJ           PAA          e-CNPJ do PAA      970-979    CPF do    Sequencial por CPF do
+  CPF                                                       Emitente emitente, controlado pelo
+                                                                               PAA
+  CNPJ           PAA          e-CNPJ do PAA      980-989 CNPJ do Sequencial por CNPJ do
+                                                            Emitente emitente, controlado pelo
+                                                                               PAA
+
+
+
+
+                                                                                          Página 7 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+
+6 Estrutura das informações do PAA no XML da NF-e
+6.1 Esquema gráfico do leiaute da NF-e contemplando o PAA.
+
+
+
+
+6.2 Esquema gráfico do leiaute do evento de cancelamento da NF-e
+    contemplando o PAA.
+
+
+
+
+                                                                               Página 8 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+
+
+7 Fluxo simplificado de funcionamento do PAA
+
+
+
+
+                                                                               Página 9 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+
+8 Serviço: Autorização de Uso da Nota Fiscal (item 4.1 do MOC)
+8.1 Leiaute da NF-e (Modelo 55 e 65)
+Grupo B. Identificação da Nota Fiscal eletrônica
+ #   ID     Campo             Descrição         Ele Pai Tipo Ocor. Tam.                                           Observação
+ 11 B07 serie        Série do Documento Fiscal   E B01 N      1-1 1 – 3 Série do Documento Fiscal, preencher com zeros na hipótese de a NF-e não possuir série.
+                                                                            Série na faixa:
+                                                                        - [000-889]: Aplicativo do Contribuinte; Emitente=CNPJ; Assinatura pelo e-CNPJ do
+                                                                            contribuinte (procEmi<>1,2);
+                                                                        - [120-999]: Aplicativo NFF; Emitente=CNPJ/CPF; Assinatura pelo e-CNPJ da PROCERGS
+                                                                            (procEmi=3);
+                                                                        - [890-899]: Emissão no site do Fisco (NFA-e - Avulsa); Emitente= CNPJ / CPF; Assinatura
+                                                                            pelo e-CNPJ da SEFAZ (procEmi=1);
+                                                                        - [900-909]: Emissão no site do Fisco (NFA-e); Emitente= CNPJ; Assinatura pelo e-CNPJ da
+                                                                            SEFAZ (procEmi=1), ou Assinatura pelo e-CNPJ do contribuinte (procEmi=2);
+                                                                        - [910-919]: Emissão no site do Fisco (NFA-e); Emitente= CPF; Assinatura pelo e-CNPJ da
+                                                                            SEFAZ (procEmi=1), ou Assinatura pelo e-CPF do contribuinte (procEmi=2);
+                                                                        - [920-969]: Aplicativo do Contribuinte; Emitente=CPF; Assinatura pelo e-CPF do contribuinte
+                                                                            (procEmi<>1,2); (Atualizado NT 2018/001)
+                                                                        - [970-979]: Emissão por Provedor de Assinatura e Autorização – PAA, Emitente CPF
+                                                                        - [980-989]: Emissão por Provedor de Assinatura e Autorização – PAA, Emitente CNPJ
+29a B26 procEmi      Processo de emissão da NF- E B01 N       1-1    1 0=Emissão de NF-e com aplicativo do contribuinte;
+                     e                                                  1=Emissão de NF-e avulsa pelo Fisco;
+                                                                        2=Emissão de NF-e avulsa, pelo contribuinte com seu certificado digital, através do site do
+                                                                            Fisco;
+                                                                        3=Emissão NF-e pelo contribuinte com aplicativo fornecido pelo Fisco;
+                                                                        4=Emissão de NF-e por Provedor de Assinatura e Autorização - PAA.
+
+
+
+Grupo GA. Autorização para obter XML
+  #    ID         Campo                           Descrição                      Ele Pai Tipo Ocor. Tam.                      Observação
+97a.1 GA01 autXML                Pessoas autorizadas a acessar o XML da NF-e      G A01       0-10
+97a.2 GA02 CNPJ                  CNPJ Autorizado                                 CE GA01 N     1-1   14 Informar CNPJ ou CPF. Preencher os zeros não
+                                                                                                         significativos.
+                                                                                                         Observação: No caso de emissão de Nota Fiscal pelo
+                                                                                                             PAA (nSerie=[970-989]), este campo pode ser
+                                                                                                             informado com o CNPJ do PAA.
+97a.3 GA03 CPF                   CPF Autorizado                                  CE GA01 N     1-1   11
+
+
+
+
+                                                                                                                                                    Página 10 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+
+Grupo ZG. Informações do PAA
+  #     ID         Campo                              Descrição                     Ele Pai Tipo Ocor. Tam.                        Observação
+423l   ZG01 infPAA                  Grupo de Informação do Provedor de               G A01        0-1       Uso exclusivo para NF-e gerada por Provedor de
+                                    Assinatura e Autorização                                                Assinatura e Autorização - PAA conforme legislação
+                                                                                                            vigente.
+423l.1 ZG02 CNPJPAA                 CNPJ do Provedor de Assinatura e Autorização     E ZG01 C     1-1   14
+423l.1 ZG03 PAASignature            Assinatura RSA do Emitente para DF-e gerados     G ZG01       1-1       Estrutura simplificada do padrão XMLDSig para a
+                                    por PAA                                                                 PAA
+423l.1 ZG04 SignatureValue          Assinatura digital padrão RSA                    E ZG03 C     1-1       Converter o atributo Id da NFe para array de bytes e
+                                                                                                            assinar com a chave privada do RSA com algoritmo
+                                                                                                            SHA1 gerando um valor no formato base64.
+                                                                                                            Gerar o hash do valor do atributo Id com algoritmo SHA1
+                                                                                                            e assinar com a chave privada RSA, gerando um valor no
+                                                                                                            formato base64.
+423l.1 ZG05 RSAKeyValue             Chave Pública no padrão XML RSA Key              G ZG03       1-1
+423l.1 ZG06 Modulus                                                                  E ZG05 C     1-1
+423l.1 ZG07 Exponent                                                                 E ZG05 C     1-1       Informar “AQAB”
+
+
+
+8.2 Regras de Validação Gerais – NF-e / NFC-e
+Grupo DA. Autorização - área de dados do lote de NF-e
+   #     Regra de Validação                                                                                  Aplic.   Msg Descrição Erro
+GAP03a-5 Se série do PAA (nSerie=[970-989]):                                                                 Obrig.   127 Rejeição: Enviado lote com mais de 1 NF-e
+          - Enviado lote com mais de 1 NF-e
+         Observação: Regra de Validação implementada somente na SVRS.
+
+
+
+Grupo F. Validação da Assinatura Digital
+  #    Regra de Validação                                                                                      Aplic. Msg Descrição Erro
+ F03   Se Certificado de Assinatura com CNPJ e CNPJ do Certificado difere do CNPJ da SEFAZ para a UF:          Obrig. 213 Rejeição: CNPJ-Base do Emitente difere do
+        - CNPJ-Base do Emitente difere do CNPJ-Base do Certificado Digital (NT 2018.001)                                  CNPJ-Base do Certificado Digital
+       Exceção: Para tpEmis = 3-NFF, CNPJ do certificado é somente o da SVRS (NT 2021.002)
+       Exceção 2: Não aplicar essa validação se Autorizador = SVRS e DF-e possuir indicação de uso do Provedor
+          de Assinatura e Autorização (grupo: infPAA preenchido).
+       Observação: Regra de Validação implementada somente na SVRS.
+
+
+
+
+                                                                                                                                                       Página 11 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+
+8.3 Regras de Validação NF-e
+Grupo B. Identificação da Nota Fiscal eletrônica
+Campo Modelo Regra de Validação                                                                            Aplic. Msg Descrição Erro
+B07-10  65   Se modelo = 65 e série do PAA (nSerie=[970-989]):                                             Obrig. 450 Rejeição: Modelo da NF-e diferente de 55
+              - Modelo não permitido para o PAA
+             Observação: Regra de Validação implementada em todos os ambientes autorizadores.
+B26-10 55/65 Se Processo de Emissão pelo Contribuinte (procEmi<>1 e 2) (procEmi=0 ou 3):                   Obrig. 244 Rejeição: Processo de Emissão pelo
+              - Série da NF-e difere da faixa de 0-889 ou 920-969 (NT 2018.001) ou                                    Contribuinte incompatível com a Série da NF
+             Se Processo de Emissão não for PAA (procEmi <> 4):
+              - Série da NF-e na faixa 970-979 - Uso exclusivo do PAA.
+             Observação: Regra de Validação implementada em todos os ambientes autorizadores.
+B26-20 55/65 Se Processo de Emissão pelo Fisco (procEmi=1 ou 2):                                           Obrig. 451 Rejeição: Processo de Emissão pelo Fisco
+              - Série difere da faixa 890-919 (NF Avulsa) (NT 2018.001) ou                                            incompatível com a Série da NF
+             Se Processo de Emissão for PAA (procEmi = 4):
+              - Série da NF-e difere da faixa 970-979
+             Observação: Regra de Validação implementada somente na SVRS.
+B26-22  55   Se processo de Emissão igual a “PAA-Provedor de Assinatura e Autorização” (procEmi=4):        Obrig. 631 Rejeição: Ambiente de autorização não
+              - Ambiente de Autorização <> ”SVRS”                                                                     suporta esta operação
+             Observação: Regra de Validação implementada em todos os ambientes autorizadores
+B26-24  55   Se Processo de Emissão igual a “PAA-Provedor de Assinatura e Autorização” (procEmi = 4):      Obrig. 667 Rejeição: Processo de Emissão pelo PAA
+              - Série da NF-e difere da faixa 970-989 (faixa para uso exclusivo do PAA)                               incompatível com a Série da NF
+             Observação: Regra de Validação implementada somente na SVRS.
+B26-26  55   Se Processo de Emissão igual a “PAA-Provedor de Assinatura e Autorização” (procEmi = 4):      Obrig. 867 Rejeição: Grupo de informações do Provedor
+              - Grupo de informações do Provedor de Assinatura e Autorização (grupo: infPAA) não informado            de Assinatura e Autorização não informado
+             Observação: Regra de Validação implementada somente na SVRS.
+B26-28  55   Se Processo de Emissão difere de “PAA-Provedor de Assinatura e Autorização” (procEmi <> 4):   Obrig. 893 Rejeição: Grupo de informações do Provedor
+              - Grupo de informações do Provedor de Assinatura e Autorização (grupo: infPAA) informado                de Assinatura e Autorização informado
+                indevidamente                                                                                         indevidamente
+             Observação: Regra de Validação implementada em todos os ambientes autorizadores
+
+
+
+Grupo BA. Documento Fiscal Referenciado
+ Campo Modelo Regra de Validação                                                                            Aplic. Msg Descrição Erro
+ BA02-30 55   Se informada uma NF-e referenciada (tag:refNFe, id: BA02):                                    Facult. 552 Rejeição: Chave de Acesso referenciada com
+               - Série = [0-909, 980-989] e CNPJ zerado ou dígito inválido, ou                                          CNPJ/CPF inválido [nOcor:nnn]
+
+
+
+                                                                                                                                                   Página 12 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+ Campo   Modelo Regra de Validação                                                                               Aplic. Msg Descrição Erro
+                 - Série = [910-969] <> [0-909, 980-989] e CPF zerado ou dígito inválido (NT 2018.001)
+                Nota: Caso tpEmis = 3-NFF, considerar o 5º dígito do número da nota (nNF) para determinar se
+                   CNPJ/CPF na Chave de Acesso:
+                    - CNPJ: 5º dígito do nNF = “1”
+                    - CPF: 5º dígito do nNF = “2” (NT 2021.002).
+                Observação: Regra de Validação implementada em todos os ambientes autorizadores.
+BA02a-50   55   Se informada uma NF-e referenciada com código numérico zerado (tag:refNFeSig, id: BA02a):       Facult. 552 Rejeição: Chave de Acesso referenciada com
+                 - Série = [0-909, 980-989] e CNPJ zerado ou dígito inválido, ou                                            CNPJ/CPF inválido [nOcor:nnn]
+                 - Série = [910-969] <> [0-909, 980-989] e CPF zerado ou dígito inválido (NT 2018.001)
+
+
+
+Grupo C. Identificação do Emitente
+Campo Modelo Regra de Validação                                                                      Aplic. Msg    Descrição Erro
+C02-30 55/65 Se informado CNPJ do Emitente:                                                          Obrig. 503    Rejeição: CNPJ do emitente com Série incompatível
+                - Série difere da faixa para emitente CNPJ: faixa [0-909, 980-989] (NT 2018.001)
+              Observação: Regra de Validação implementada em todos os ambientes autorizadores.
+C02a-10 55/65 Se informado CPF do emitente e tpEmis <> 3-NFF (NT 2021.002):                          Obrig 495     Rejeição: CPF do Emitente com Série incompatível
+                - Série difere da faixa para emitente CPF: [890-899, 910-979] (NT 2018.001 / NT
+                  2015.002)
+              Observação: Regra de Validação implementada em todos os ambientes autorizadores.
+C21-20 55/65 Se CRT (emit/CRT) = “3-Regime Normal” ou “2-Simples Nacional, excesso sublimite de Obrig. 1178        Rejeição: Utilização de PAA não permitida para
+              receita bruta”:                                                                               668    contribuinte enquadrado no regime normal
+                - Se emissão por PAA (grupo infPAA informado):
+                  - PAA não disponível para contribuinte do regime normal.
+              Exceção: Essa regra não se aplica ao contribuinte Produtor Rural (CCC, tpIE = “5-IE de
+                  Produtor Rural”).
+              Observação: Regra de Validação implementada somente na SVRS.
+
+
+
+Grupo ZG. Informações do PAA
+Campo Modelo Regra de Validação                                                                                Aplic. Msg Descrição Erro
+ZG01-10 55/65 Se o grupo de informações do Provedor de Assinatura e Autorização estiver informado (grupo:      Obrig. 1179 Rejeição: Ambiente de autorização inválido para
+              infPAA):                                                                                                669 emissão pelo PAA
+                - Ambiente de autorização da NF-e / NFC-e deverá ser o difere da SVRS.                                633
+              Observação: Implementação em todos os ambientes autorizadores de NF-e / NFC-e.
+ZG02-10 55/65 Se o grupo de informações do Provedor de Assinatura e Autorização estiver informado (grupo:      Obrig. 1180 Rejeição: CNPJ do PAA inválido
+
+
+
+                                                                                                                                                          Página 13 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+ Campo    Modelo Regra de Validação                                                                             Aplic. Msg   Descrição Erro
+                 infPAA):                                                                                              670
+                   - CNPJ do PAA inválido deve ser válido (zeros, DV)                                                  634
+                 Observação: Regra de Validação implementada somente na SVRS.
+ZG02-20    55/65 Se o grupo de informações do Provedor de Assinatura e Autorização estiver informado (grupo:    Obrig 1181 Rejeição: Provedor de Assinatura e Autorização
+                 infPAA):                                                                                             671 não existe na base da SEFAZ
+                   - Acessar Cadastro de PAA (Chave: CNPJPAA)
+                     - CNPJ do PAA (tag: CNPJPAA) não existe ou situação inválida
+                 Observação: Regra de Validação implementada somente na SVRS.
+ZG02-30    55/65 Se o grupo de informações do Provedor de Assinatura e Autorização estiver informado (grupo:    Obrig. 1182 Rejeição: Emitente não associado ao PAA
+                 infPAA):                                                                                              672
+                   - Acessar Cadastro de Vínculos do PAA com o Emitente (Chave: CNPJPAA, CNPJ do                       936
+                     Emitente)
+                     - Emitente (tag: emit/CNPJ) não possui vínculo ativo com o PAA
+                 Observação: Regra de Validação implementada somente na SVRS.
+ZG02-34    55/65 Se o grupo de informações do Provedor de Assinatura e Autorização estiver informado (grupo:    Obrig. 872   Rejeição: Série da NF difere da estipulada para
+                 infPAA):                                                                                                    este Emitente no PAA
+                   - Acessar Cadastro de Vínculos do PAA com o Emitente (Chave: CNPJPAA, CNPJ do
+                     Emitente)
+                     - Série da NF difere da Série estipulada para este emitente no PAA
+                 Observação: Regra de Validação implementada somente na SVRS.
+ZG02-36    55/65 Se o grupo de informações do Provedor de Assinatura e Autorização estiver informado (grupo:          895    Rejeição: Chave do Emitente para o PAA
+                 infPAA):                                                                                                    inválida
+                   - Acessar Cadastro de Chaves do PAA com o Emitente (Chave: CNPJPAA, CNPJ do
+                     Emitente, Data de Vigência)
+                     - Chave pública difere da estipulada para este emitente no PAA
+                 Observação: Regra de Validação implementada somente na SVRS.
+ZG02-40    55/65 Se o grupo de informações do Provedor de Assinatura e Autorização estiver informado (grupo:           1183 Rejeição: Emissão por PAA deve ser assinada
+                 infPAA):                                                                                       Obrig. 776 pelo CNPJ do Provedor de Assinatura
+                   - CNPJ-8 do certificado de assinatura difere da SVRS e do CNPJ-8 do PAA (tag: CNPJPAA, id:
+                      ZG02)
+                  Observação: Regra de Validação implementada somente na SVRS.
+ZG04-10     55/65 Se o grupo de informações do Provedor de Assinatura e Autorização estiver informado (grupo:   Obrig. 1184 Rejeição: Emissão por PAA com Assinatura
+                  infPAA):                                                                                             856 RSA inválida
+                    - Validar assinatura RSA (tag:SignatureValue) com a chave pública do emitente (grupo:
+                      RSAKeyValue)
+                  Observação: Regra de Validação implementada somente na SVRS.
+
+
+
+
+                                                                                                                                                           Página 14 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+
+9 Serviço: Registro de Evento
+9.1 Leiaute do Evento - Parte Geral
+#      Campo            Ele    Pai   Tipo   Ocor.   Tam.   Descrição/Observação
+P01    envEvento        Raiz    -      -      -       -    TAG raiz
+P02    versao            A     P01    N      1-1     2v2   Versão do leiaute
+P03    idLote            E     P01    N      1-1    1-15   Identificador de controle do Lote de envio do Evento. Número sequencial único para identificação do Lote, de uso
+                                                           exclusivo do autor do evento. O Web Service não faz qualquer uso deste identificador.
+P04    evento            G     P01    xml    1-20    -     Evento, um lote pode conter até 20 eventos
+P05    versao             A    P04     N      1-1   2v2    Versão do leiaute do evento
+P06    infEvento         G     P04     -      1-1    -     Grupo de informações do registro do Evento
+P07    Id                ID    P06     C      1-1   54     Identificador da TAG a ser assinada, formado por “ID” + tpEvento + Chave da NF-e + nSeqEvento
+P08    cOrgao             E    P06     N      1-1    2     Código do órgão de recepção do Evento, conforme Tabela do IBGE ou: 91=Ambiente Nacional
+                                                           Informar o código da UF para este evento.
+P09 tpAmb                 E     P06    N      1-1    1     Identificação do Ambiente: 1-Produção; 2-Homologação;
+P10 CNPJ                 CE     P06    N      1-1   14     CNPJ do autor do evento
+P11 CPF                  CE     P06    N      1-1   11     CPF do autor do evento
+P12 chNFe                 E     P06    N      1-1   44     Chave de Acesso da NF-e à qual o evento será vinculado
+P13 dhEvento              E     P06    D      1-1    -     Data e hora do evento no formato AAAA-MM-DD-Thh:mm:ssTZD (UTC – Universal Coordinated Time)
+P14 tpEvento              E     P06    N      1-1    6     Código do evento (de acordo com tabelas do item 3.1)
+P15 nSeqEvento            E     P06    N      1-1   1-2    Sequencial do evento para o mesmo tipo de evento. Informar o valor “1” para este evento.
+P16 verEvento             E     P06    N      1-1   2v2    Versão do grupo de detalhe do evento.
+*** Detalhe do Evento (varia conforme o Evento)
+P17 detEvento             G     P06           1-1          Detalhes do evento. Inserir neste local o XML específico do tipo de evento (ex: Cancelamento, Carta
+                                                           Correção, Registro de Passagem), Manifestação do Destinatário, ...
+...    ...               ...   ...    ...     ...    ...   ...
+*** Grupo de Informações do PAA
+P80 infPAA               G    P06            0-1           Uso exclusivo para Evento gerado por Provedor de Assinatura e Autorização - PAA conforme legislação
+                                                           vigente.
+P81    CNPJPAA           E     P80     C     1-1     14    CNPJ do Provedor de Assinatura e Autorização
+P82    PAASignature      G     P80           1-1           Estrutura simplificada do padrão XMLDSig para a PAA.
+                                                           Assinatura RSA do Emitente para DF-e gerados por PAA.
+P83    SignatureValue    E     P82     C     1-1           Gerar o hash do valor do atributo Id com algoritmo SHA1 e assinar com a chave privada RSA, gerando um valor no
+                                                           formato base64
+P84    RSAKeyValue       G     P82           1-1           Chave Pública no padrão XML RSA Key
+P85    Modulus           E     P84     C     1-1
+P86    Exponent          E     P84     C     1-1           Informar “AQAB”
+P91    Signature         G     P04    xml    1-1           Assinatura Digital do documento XML, a assinatura deverá ser aplicada no elemento infEvento
+
+
+
+
+                                                                                                                                                            Página 15 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+
+9.2 Regras de Validação Gerais - Evento
+ Campo    Modelo Regra de Validação                                                                         Aplic.         Msg Descrição Erro
+  F03      55/65 Se Certificado de Assinatura com CNPJ e CNPJ do Certificado difere do CNPJ da SEFAZ para a Obrig.         213 Rejeição: CNPJ-Base do Emitente difere do
+                 UF:                                                                                                           CNPJ-Base do Certificado Digital
+                  - CNPJ-Base do Autor difere do CNPJ-Base do Certificado Digital (NT 2018.001)
+                 Exceção 1: Para tpEmis=3-NFF, CNPJ do certificado é somente o da SVRS (NT 2021.002)
+                 Exceção 2: Não aplicar esta validação se Série do PAA (nSerie=[970-989]) e Autorizador =
+                    SVRS.
+                 Observação: Regra de Validação implementada somente na SVRS.
+
+
+
+9.3 Regras de Validação Evento
+ Campo Modelo Regra de Validação                                                                                  Aplic.   Msg Descrição Erro
+*** Grupo de Informações Genéricas do Evento
+  P09-10   55/65 Tipo do ambiente difere do ambiente do Web Service (*1)                                          Obrig.   252 Rejeição: Ambiente informado diverge do
+                   Para DF-e emitido com PAA ambiente deve ser o da SVRS.                                                      Ambiente de recebimento
+                   Observação: Deve ser implementado em todos os ambientes autorizadores de NF-e / NFC-e.
+  P12-26   55/65 Validação da Chave de Acesso (tag:chNFe):                                                        Obrig.   617 Rejeição: Chave de Acesso inválida (CNPJ/CPF
+                    - CNPJ/CPF zerado ou dígito inválido (*1)                                                                  zerado ou dígito inválido)
+                   Nota 01: Considerar a Série para determinar se CNPJ/CPF na Chave de Acesso.
+                      - CNPJ: Série=[0-909, 980-989], CPF: Série<>[0-909, 980-989]
+                   Nota 02: Caso tpEmis = 3-NFF, considerar o 5º dígito do número da nota (nNF) para determinar
+                       se CNPJ/CPF na Chave de Acesso:
+                       - CNPJ: 5º dígito do nNF = “1”
+                       - CPF: 5º dígito do nNF = “2” (NT 2021.002).
+                   Observação: Implementação em todos os ambientes autorizadores de NF-e / NFC-e.
+  P12-32     65    Validação da Chave de Acesso (tag:chNFe):                                                      Obrig.   450 Rejeição: Modelo da NF-e diferente de 55
+                    - Se modelo = 65 e série do PAA (nSerie=[970-989]):
+                       - Modelo não permitido para o PAA
+                   Observação: Implementação em todos os ambientes autorizadores de NF-e / NFC-e.
+  P12-44   55/65 Validação da Chave de Acesso (tag:chNFe):                                                        Obrig.   574 Rejeição: Autor do evento diverge do emissor da
+                    - CNPJ/CPF do Autor diverge do CNPJ/CPF da Chave de Acesso                                                 NF-e
+                   Nota 01: Considerar a Série para determinar se CNPJ/CPF na Chave de Acesso.
+                      - CNPJ: Série=[0-909, 980-989], CPF: Série<>[0-909, 980-989]
+                   Nota 02: Caso tpEmis = 3-NFF, considerar o 5º dígito do número da nota (nNF) para determinar
+                       se CNPJ/CPF na Chave de Acesso:
+                       - CNPJ: 5º dígito do nNF = “1”
+                       - CPF: 5º dígito do nNF = “2” (NT 2021.002).
+                   Observação: Implementação em todos os ambientes autorizadores de NF-e / NFC-e.
+
+
+
+                                                                                                                                                             Página 16 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+ Campo    Modelo Regra de Validação                                                                             Aplic.   Msg Descrição Erro
+ P14-10      55    Se Série do PAA (nSerie=[970-989]):                                                          Obrig.   669 Rejeição: Ambiente de autorização inválido para
+                    - Se Evento do Emitente (tpEvento igual a 110111-Cancelamento, 110112-Cancelamento por               633 emissão pelo PAA
+                       Substituição, 110110-Carta de Correção):
+                       - Ambiente de Autorização difere de SVRS
+                   Observação: Implementação em todos os ambientes autorizadores de NF-e / NFC-e.
+  P14-20     55    Se Série do PAA (nSerie=[970-989]):                                                          Obrig.   669 Rejeição: Ambiente de autorização inválido para
+                    - Tipo de Evento igual a EPEC (tpEvento = 110140)                                                    633 emissão pelo PAA
+                   Observação: Implementação pelo ambiente de contingência EPEC.
+*** Grupo de Informações conforme o Evento: Evento de Cancelamento por Substituição
+  P31-26   55/65 Se tpEvento=110112, validar a Chave de Acesso Substituta (tag:chNFeRef):                       Obrig.   910 Rejeição: Chave de Acesso NF-e Substituta
+                    - CNPJ/CPF zerado ou dígito inválido                                                                     inválida (CNPJ/CPF)
+                   Nota 01: Considerar a Série para determinar se CNPJ/CPF na Chave de Acesso.
+                      - CNPJ: Série=[0-909, 980-989], CPF: Série<>[0-909, 980-989]
+                   Nota 02: Caso tpEmis = 3-NFF, considerar o 5º dígito do número da nota (nNF) para determinar
+                       se CNPJ/CPF na Chave de Acesso:
+                       - CNPJ: 5º dígito do nNF = “1”
+                       - CPF: 5º dígito do nNF = “2” (NT 2021.002).
+  P31-46   55/65    - Chave de Acesso da NF-e Substituta com CNPJ/CPF divergente da Chave de Acesso da NF- Obrig.        911 Rejeição: Chave de Acesso NF-e Substituta
+                       e a ser cancelada                                                                                     incorreta (CNPJ/CPF)
+                   Nota 01: Considerar a Série para determinar se CNPJ/CPF na Chave de Acesso.
+                      - CNPJ: Série=[0-909, 980-989], CPF: Série<>[0-909, 980-989]
+                   Nota 02: Caso tpEmis = 3-NFF, considerar o 5º dígito do número da nota (nNF) para determinar
+                       se CNPJ/CPF na Chave de Acesso:
+                       - CNPJ: 5º dígito do nNF = “1”
+                       - CPF: 5º dígito do nNF = “2” (NT 2021.002).
+*** Grupo de Informação do PAA
+  P80-10     55    Se Série diferente da série do PAA (nSerie<>[970-989]):                                      Obrig.   893 Rejeição: Grupo de informações do Provedor de
+                    - Grupo infPAA informado indevidamente                                                                   Assinatura e Autorização informado
+                   Observação: Implementação em todos os ambientes autorizadores de NF-e / NFC-e.                            indevidamente
+  P80-20     55    Se Série do PAA (nSerie=[970-989]):                                                          Obrig.   893 Rejeição: Grupo de informações do Provedor de
+                    - Se não for Evento do Emitente (tpEvento difere de 110111-Cancelamento, 110112-                         Assinatura e Autorização informado
+                       Cancelamento por Substituição, 110110-Carta de Correção):                                             indevidamente
+                       - Grupo infPAA informado indevidamente
+                   Observação: Implementação em todos os ambientes autorizadores de NF-e / NFC-e.
+  P80-30     55    Se Série do PAA (nSerie=[970-989]):                                                          Obrig.   867 Rejeição: Grupo de informações do Provedor de
+                    - Se Evento do Emitente (tpEvento igual a 110111-Cancelamento, 110112-Cancelamento por                   Assinatura e Autorização não informado
+                       Substituição, 110110-Carta de Correção):
+                       - Grupo infPAA não informado
+                   Observação: Regra de Validação implementada somente na SVRS.
+  P80-40     55    Se informado grupo infPAA:                                                                   Obrig.   491 Rejeição: O tpEvento informado inválido
+                    - Evento não é do Emitente (tpEvento difere de 110111-Cancelamento, 110112-Cancelamento                  Rejeição: Tipo de Evento inválido para o
+
+
+
+                                                                                                                                                            Página 17 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+ Campo    Modelo Regra de Validação                                                                            Aplic.   Msg Descrição Erro
+                      por Substituição, 110110-Carta de Correção)                                                           ambiente de autorização
+                 Observação: Regra de Validação implementada somente na SVRS.
+  P81-10     55  Se informado grupo infPAA:                                                                    Obrig.   670 Rejeição: CNPJ do PAA inválido
+                    - CNPJ do PAA inválido deve ser válido (zeros, DV)
+                 Observação: Regra de Validação implementada somente na SVRS.
+  P81-20     55  Se informado grupo infPAA:                                                                    Obrig.   671 Rejeição: Provedor de Assinatura e Autorização
+                    - Acessar Cadastro de PAA (Chave: CNPJPAA)                                                              não existe na base da SEFAZ
+                      - CNPJ do PAA (tag: CNPJPAA) não existe ou situação inválida
+                 Observação: Regra de Validação implementada somente na SVRS.
+  P81-30     55  Se informado grupo infPAA:                                                                    Obrig.   672 Rejeição: Emitente não associado ao PAA
+                    - Acessar Cadastro de Vínculos do PAA com o Emitente (Chave: CNPJPAA, CNPJ do
+                      Emitente)
+                      - Emitente (tag: emit/CNPJ) não possui vínculo ativo com o PAA
+                 Observação: Regra de Validação implementada somente na SVRS.
+  P81-40     55  Se informado grupo infPAA:                                                                    Obrig.   895 Rejeição: Chave do Emitente para o PAA
+                    - Acessar Cadastro de Chaves do PAA com o Emitente (Chave: CNPJPAA, CNPJ do                             inválida
+                      Emitente)
+                      - Chave pública difere da estipulada para este emitente no PAA
+                 Observação: Regra de Validação implementada somente na SVRS.
+  P81-50     55  Se informado grupo infPAA:                                                                    Obrig.   776 Rejeição: Emissão por PAA deve ser assinada
+                    - CNPJ-8 do certificado de assinatura difere do CNPJ-8 do PAA (tag: CNPJPAA)                            pelo CNPJ do Provedor de Assinatura
+                 Observação: Regra de Validação implementada somente na SVRS
+  P83-10     55  Se informado grupo infPAA:                                                                    Obrig.   856 Rejeição: Emissão por PAA com Assinatura
+                    - Validar assinatura RSA (tag:SignatureValue) com a chave pública do emitente (grupo:                   RSA inválida
+                      RSAKeyValue)
+                 Observação: Regra de Validação implementada somente na SVRS.
+*** Banco de Dados: NF-e
+ 2P81-10     55  Se Evento para NF-e emitida por PAA (Série=[970-989]):                                        Obrig.   889 Rejeição: Emissão por PAA deve ser assinada
+                    - Se Evento do Emitente (tpEvento igual a 110111-Cancelamento, 110112-Cancelamento por                  pelo CNPJ do Provedor de Assinatura
+                      Substituição, 110110-Carta de Correção):
+                      - CNPJ-8 do Certificado de Assinatura do Evento difere do CNPJ-8 do PAA que emitiu a NF-
+                          e e difere do CNPJ-8 do Emitente da NF-e
+                 Observação: Regra de Validação implementada somente na SVRS.
+
+
+
+
+                                                                                                                                                          Página 18 / 19
+Nota Fiscal Eletrônica - NF-e
+Provedor de Assinatura e Autorização de Documentos Fiscais Eletrônicos - PAA
+NT 2026.001 - PAA
+
+
+
+10 Serviço: Inutilização de Numeração
+10.1 Regras de Validação Inutilização
+ Campo    Modelo Regra de Validação                                                                       Aplic.   Msg Descrição Erro
+  I02d     55/65 Série do Pedido de Inutilização reservada para o PAA                                     Obrig.   266 Rejeição: Série utilizada não permitida no Web
+                  - Série na faixa de 970-989                                                                          Service.
+                 Observação: Implementação em todos os ambientes autorizadores de NF-e / NFC-e.
+
+
+
+11 Serviço: Consulta Protocolo (Consulta Situação da NF-e)
+ Campo    Modelo Regra de Validação                                                                       Aplic.   Msg Descrição Erro
+  J02e     55/65 Chave de Acesso inválida                                                                 Obrig.   617 Rejeição: Chave de Acesso inválida (CNPJ/CPF
+                  - Série = [0-909, 980-989] e CNPJ zerado ou dígito inválido, ou                                      zerado ou dígito inválido)
+                  - Série = [910-969] <> [0-909, 980-989] e CPF zerado ou dígito inválido (NT 2018.001)
+                 Exceção: Não se aplica para NFF (tpEmis = 3-NFF) (NT 2021.002)
+                 Observação: Implementação em todos os ambientes autorizadores de NF-e / NFC-e.
+
+
+
+
+                                                                                                                                                      Página 19 / 19
+

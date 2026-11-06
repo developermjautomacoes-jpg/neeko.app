@@ -1,0 +1,331 @@
+Reforma Tributária do
+Consumo – Valor Líquido do Produto
+
+Nota Técnica 2026.008 - Versão 1.00
+Setembro de 2026
+Nota Fiscal Eletrônica - NF-e
+NF-e / NFC-e – Valor Líquido do Produto
+NT 2026.008
+
+
+Sumário
+Histórico de Alterações / Cronograma ....................................................................................3
+1.      Introdução .......................................................................................................................4
+     Criação de campos para o valor líquido do produto ............................................................4
+     Composição do valor do produto com informações de IBS e CBS ......................................4
+     Criação de campo para informar o ICMS previsto ...............................................................5
+2.      Leiaute da NF-e (Modelo 55 e 65) ...................................................................................6
+     Grupo I. Produtos e Serviços da NF-e ................................................................................6
+     Grupo NB. ICMS Previsto no Pagamento Antecipado.........................................................6
+     Grupo W. Total da NF-e......................................................................................................6
+3.      Regras de Validação .......................................................................................................7
+     Grupo B. Identificação da Nota Fiscal eletrônica.................................................................7
+     Grupo I. Produtos e Serviços da NF-e ................................................................................7
+     Grupo NB. ICMS Previsto no Pagamento Antecipado.........................................................7
+     Grupo UB. Informações dos tributos IBS / CBS e Imposto Seletivo ....................................8
+     Grupo VB. Total do item da NF-e ........................................................................................8
+     Grupo W. Total da NF-e....................................................................................................10
+
+
+
+
+                                                                                                                          Página 2 / 10
+Nota Fiscal Eletrônica - NF-e
+NF-e / NFC-e – Valor Líquido do Produto
+NT 2026.008
+
+
+Histórico de Alterações / Cronograma
+
+ Versão                          Histórico de atualizações                        Implantação   Implantação
+                                                                                 Homologação     Produção
+   1.00   - Criação dos campos que representam os valores líquidos do produto.    05/10/2026    03/11/2026
+          - Criação do campo para informar o ICMS previsto no Pagamento
+              Antecipado.
+          - Regras de validação incluídas: I11c-10, I11c-20, NB01-10, NB01-20,
+              W01a-10, W01a-20.
+          - Regras de validação alteradas: B25-80, VB01-10, VB01-20.
+          - Regras de validação removidas: UB16-10.
+   1.00   - Regra de validação incluída: NB01-30.                                 01/02/2027    01/03/2027
+
+
+
+
+                                                                                                Página 3 / 10
+Nota Fiscal Eletrônica - NF-e
+NF-e / NFC-e – Valor Líquido do Produto
+NT 2026.008
+
+
+1. Introdução
+
+Criação de campos para o valor líquido do produto
+Com o objetivo de ampliar a transparência na formação do preço da operação, foram criados
+os campos Valor Líquido Unitário e Valor Líquido do Produto. Esses campos permitem
+identificar o valor da mercadoria ou do serviço antes da incorporação dos tributos vigentes
+que compõem o preço final, possibilitando distinguir, de forma clara, o valor líquido da
+operação dos valores tributários agregados ao preço.
+
+
+A medida busca preservar a rastreabilidade da formação do valor informado na NF-e,
+especialmente diante da sistemática do IBS e da CBS, cujos valores passam a compor o valor
+do produto ou serviço para fins de representação documental, sem perder a identificação da
+parcela correspondente ao valor líquido da operação.
+
+
+Dessa forma, os novos campos permitem evidenciar tanto o valor líquido unitário quanto o
+valor líquido total do item, proporcionando maior transparência ao contribuinte, ao
+adquirente e às Administrações Tributárias quanto à composição do preço e à participação
+dos tributos no valor final da operação.
+
+
+
+Composição do valor do produto com informações de IBS e CBS
+O IBS e a CBS são tributos calculados por fora, não integrando suas próprias bases de
+cálculo. Para fins de preenchimento da NF-e e da NFC-e, os valores do IBS e da CBS
+incidentes na operação deverão ser acrescidos ao valor do produto ou serviço, compondo
+o valor informado no campo vProd. A inclusão dos valores do IBS e da CBS no campo vProd
+não implica sua inclusão na base de cálculo desses tributos. A base de cálculo do IBS e da
+CBS deverá ser determinada de acordo com a legislação aplicável.
+
+
+Dessa forma, os valores do IBS e da CBS, por já estarem compreendidos no valor do produto
+ou serviço, não deverão ser adicionados novamente na composição do valor total da
+NF-e/NFC-e (vNFTot), evitando duplicidade. Os valores de IBS e CBS permanecem
+destacados nos respectivos grupos tributários, porém são meramente informativos, uma vez
+que já estão compreendidos no vProd.
+
+
+
+
+                                                                                Página 4 / 10
+Nota Fiscal Eletrônica - NF-e
+NF-e / NFC-e – Valor Líquido do Produto
+NT 2026.008
+
+
+
+
+Criação de campo para informar o ICMS previsto
+
+O novo campo “Valor do ICMS Previsto no Pagamento Antecipado” (tag: vICMSPrevisto)
+deverá ser informado quando o documento fiscal emitido for referente a um pagamento
+realizado antes do fornecimento. O objetivo do campo é permitir a correta tributação do IBS e
+da CBS no pagamento antecipado, com a identificação do valor do ICMS que incidirá no
+momento do fornecimento futuro.
+
+
+
+
+                                                                                  Página 5 / 10
+Nota Fiscal Eletrônica - NF-e
+NF-e / NFC-e – Valor Líquido do Produto
+NT 2026.006
+
+
+
+2. Leiaute da NF-e (Modelo 55 e 65)
+
+Grupo I. Produtos e Serviços da NF-e
+#       ID Campo                Descrição                                  Ele Pai Tipo Ocor.        Tam. Observação
+110     I11 vProd               Valor Total Bruto dos Produtos ou           E I01 N      1-1         13v2 O valor do ICMS faz parte do Valor Total Bruto, exceto nas notas de
+                                Serviços.                                                                   importação (NT 2020.005)
+                                                                                                            Observação: A partir de 2027, os valores de IBS, CBS e IS
+                                                                                                                compõem o Valor Total Bruto, exceto nas notas de importação.
+110.01 I11a         -x-         Sequência XML                                  G I01          0-1           Observação: Futuramente essa sequência será obrigatória.
+110.02 I11b vUnComLiq           Valor Líquido Unitário do Produto ou           E I11a    N    1-1   11v0-10 Valor unitário de comercialização do produto ou serviço, sem a
+                                Serviço (sem tributos)                                                      inclusão de tributos.
+110.03 I11c vProdLiq            Valor Líquido do Produto ou Serviço (sem       E I11a    N    1-1    13v2 Valor líquido do produto ou serviço, sem a inclusão de tributos.
+                                tributos)
+
+Grupo NB. ICMS Previsto no Pagamento Antecipado
+#       ID   Campo                    Descrição                           Ele           Pai
+                                                                                          Tipo Ocor. Tam. Observação
+245b.01 NB01 ICMSPrevistoPagtoAntecip Grupo do ICMS Previsto no Pagamento CG            N01     1-1       Grupo utilizado exclusivamente em cenários específicos de
+                                      Antecipado                                                          pagamento antecipado para auxiliar na correta tributação do
+                                                                                                          IBS e da CBS:
+                                                                                                            - tpNFDebito = 06-Pagamento antecipado;
+                                                                                                            - tpOperGov = 4-Recebimento do pagamento com
+                                                                                                              fornecimento posterior.
+245b.02 NB02 vICMSPrevisto            Valor do ICMS Previsto                     E   NB01 N     1-1 13v2 Valor do ICMS que incidirá no momento do fornecimento
+                                                                                                          futuro.
+                                                                                                          Observação 1: Em cenários onde não haverá valor de ICMS
+                                                                                                              devido no fornecimento, informar 0.
+
+
+Grupo W. Total da NF-e
+#       ID   Campo              Descrição                                        Ele Pai Tipo Ocor. Tam. Observação
+326a    W01a vProdLiqTot        Valor Total Líquido dos Produtos ou Serviços      E W01 N      0-1 13v2 Soma dos valores líquidos dos produtos ou serviços, sem a
+                                (sem tributos)                                                           inclusão de tributos.
+
+
+
+
+                                                                                                                                                                    Página 6 / 10
+Nota Fiscal Eletrônica - NF-e
+NF-e / NFC-e – Valor Líquido do Produto
+NT 2026.008
+
+
+3. Regras de Validação
+Grupo B. Identificação da Nota Fiscal eletrônica
+ Campo        Modelo                                    Regra de Validação                                          Aplic. Msg                    Descrição Erro
+ B25-80         55   Se finalidade da NF-e igual a crédito ou débito (tag: finNFe=5 ou 6) ou tpOperGov=2-           Obrig. 1001 Rejeição: NF-e com finalidade de débito ou crédito
+                        Recebimento do pagamento:                                                                               somente para IBS/CBS
+                      - Informado ICMS (tag: ICMS), ISSQN (tag: ISSQN), IPI (tag: IPI), II (tag: II), PIS (tag:
+                        PIS), PIS ST (tag: PISST), COFINS (tag: COFINS), COFINS ST (tag: COFINSST),
+                        ICMS UF Destino (tag: ICMSUFDest) ou Imposto Devolvido (tag: impostoDevol).
+                     Exceção 1: a regra acima não se aplica para:
+                      - tpNFCredito=03-Retorno por Recusa Total na Entrega ou Por Não Localização do
+                        Destinatário na Tentativa de Entrega;
+                      - tpNFCredito=04-Redução de valores;
+                      - tpNFCredito=06-Retorno por recusa parcial na entrega;
+                      - tpNFDebito=07-Perda em estoque;
+                     Exceção 2: tpNFDebito=”06-Pagamento Antecipado” permite a informação do PIS,
+                        PISST, COFINS e COFINSST em NF-e com data de emissão em 2026.
+                     Exceção 3: tpNFDebito=”06-Pagamento Antecipado” permite a informação do IPI.
+                     Exceção 4: tpNFDebito=”06-Pagamento Antecipado” permite a informação do grupo
+                        ICMS/ICMSPrevistoPagtoAntecip (id: NB01).
+
+
+Grupo I. Produtos e Serviços da NF-e
+ Campo Modelo                                    Regra de Validação                                               Aplic. Msg                          Descrição Erro
+I11c-10 55/65 Se vProdLiq (id:I11c) não informado:                                                                Obrig. 1278 Rejeição: Valor Líquido do Produto não informado [nItem: 999]
+               - vProdLiq (id:I11c) não informado
+              Observação: Implementação futura.
+I11c-20 55/65 Se informado vProdLiq (id:I11c) e NF-e Normal (tag: finNFe=1):                                      Obrig. 1279 Rejeição: Valor Líquido do Produto difere do calculado [nItem:
+               - vProdLiq (id:I11c) difere de vUnComLiq (id:I11b) * qCom (id:I10)                                             999]
+              Observação: Aceitar uma tolerância de 0,01 a mais ou a menos.
+
+
+Grupo NB. ICMS Previsto no Pagamento Antecipado
+ Campo Modelo                                  Regra de Validação                                  Aplic. Msg                        Descrição Erro
+NB01-10  65   Se grupo ICMSPrevistoPagtoAntecip (id:NB01) informado:                               Obrig. 1280 Rejeição: Grupo do ICMS Previsto no Pagamento Antecipado
+                - Modelo igual a 65                                                                            informado indevidamente [nItem: 999]
+NB01-20  55   Se tpNFDebito diferente de “06-Pagamento Antecipado” (tag: tpNFDebito <> 06) e       Obrig. 1280 Rejeição: Grupo do ICMS Previsto no Pagamento Antecipado
+              tpOperGov diferente de “4-Recebimento do pagamento com fornecimento posterior” (tag:             informado indevidamente [nItem: 999]
+              tpOperGov <> 4):
+                - Grupo ICMSPrevistoPagtoAntecip (id:NB01) informado indevidamente
+
+
+
+                                                                                                                                                                                Página 7 / 10
+Nota Fiscal Eletrônica - NF-e
+NF-e / NFC-e – Valor Líquido do Produto
+NT 2026.008
+
+ Campo Modelo                                 Regra de Validação                                    Aplic. Msg                        Descrição Erro
+NB01-30  55   Se tpNFDebito igual a “06-Pagamento Antecipado” (tag: tpNFDebito = 06) ou tpOperGov Obrig. 1281 Rejeição: Grupo do ICMS Previsto no Pagamento Antecipado
+              igual a “4-Recebimento do pagamento com fornecimento posterior” (tag: tpOperGov = 4):            não informado [nItem: 999]
+                - Grupo ICMSPrevistoPagtoAntecip (id:NB01) não informado
+              Observação 1: Implantação em homologação em 01/02/2027.
+              Observação 2: Implantação em produção em 01/03/2027.
+
+
+Grupo UB. Informações dos tributos IBS / CBS e Imposto Seletivo
+ Campo        Modelo                                   Regra de Validação                                    Aplic. Msg                     Descrição Erro
+ UB16-10       55/65 Valor da Base de cálculo do IBS e CBS (gIBSCBS/vBC) deve ser igual ao somatório de:     Obrig. 1104 Rejeição: Valor da Base de cálculo do IBS e CBS
+                        (+) vProd                                                                                        difere do somatório dos valores que a compõem
+                        (+) vServ                                                                                        [nItem: 999]
+                        (+) vFrete
+                        (+) vSeg
+                        (+) vOutro
+                        (+) vII
+                        (-) vDesc
+                        (-) vPIS
+                        (-) vCOFINS
+                        (-) vICMS
+                        (-) vICMSUFDest
+                        (-) vFCP
+                        (-) vFCPUFDest
+                        (-) vICMSMono
+                        (-) vISSQN
+                        (+) vIS
+                     Exceção 1: Não subtrair o valor do PIS por Substituição Tributária (PIST/vPIS) quando
+                        compor o valor total da NF-e (se indSomaPISST=1);
+                     Exceção 2: Não subtrair o valor do COFINS por Substituição Tributária
+                        (COFINSST/vCOFINS) quando compor o valor total da NF-e (se
+                        indSomaCOFINSST=1).
+                     Nota: Implementação Futura, aguardando orientação normativa.
+                     Observação: Regra removida.
+
+
+Grupo VB. Total do item da NF-e
+Campo Modelo                                      Regra de Validação                                  Aplic. Msg                      Descrição Erro
+VB01-10 55/65 Se vItem informado:                                                                     Obrig. 1105 Rejeição: Valor total do Item (vItem) difere do
+               Se não é operação de Faturamento Direto para veículos novos (tpOp = nulo ou tpOp <> 2,             somatório dos valores que o compõem [nItem: 999]
+                 id:J02):
+               - Valor total do Item (vItem) deve ser igual ao somatório:
+
+
+                                                                                                                                                                     Página 8 / 10
+Nota Fiscal Eletrônica - NF-e
+NF-e / NFC-e – Valor Líquido do Produto
+NT 2026.008
+
+ Campo    Modelo                                       Regra de Validação                                 Aplic. Msg                    Descrição Erro
+                      (+) vProd (contém vIBS, vCBS e vIS)
+                      (-) vDesc
+                      (-) vICMSDeson, se indDeduzDeson=1
+                      (+) vICMSST
+                      (+) vICMSMonoReten
+                      (+) vFCPST
+                      (+) vFrete
+                      (+) vSeg
+                      (+) vOutro
+                      (+) vII
+                      (+) vIPI
+                      (+) vIPIDevol
+                      (+) vServ
+                      (+) vPIS (id: R06, campo: PISST/vPIS), se indSomaPISST=1
+                      (+) vCofins (id: T06, campo: COFINSST/vCOFINS), se indSomaCOFINSST =1 (NT
+                           2020.005)
+                      (+) vIBS
+                      (+) vCBS
+                      (+) vIS
+                      (+) vTotIBSMonoItem
+                      (+) vTotCBSMonoItem
+                   Exceção 1: Em 2025 e 2026 não somar vIBS, vCBS, vIS, vTotIBSMonoItem,
+                      vTotCBSMonoItem.
+                   Observação: Implementação Futura.
+VB01-20       55   Se vItem informado:                                                                    Obrig. 1105 Rejeição: Valor total do Item (vItem) difere do
+                    Se informada operação de Faturamento Direto para veículos novos (tpOp = 2, id:J02):               somatório dos valores que o compõem [nItem: 999]
+                    - Valor total do Item (vItem) deve ser igual ao somatório:
+                      (+) vProd (contém vIBS, vCBS e vIS)
+                      (-) vDesc
+                      (-) vICMSDeson, se indDeduzDeson=1
+                      (+) vFrete
+                      (+) vSeg
+                      (+) vOutro
+                      (+) vII
+                      (+) vIPI
+                      (+) vServ
+                      (+) vPIS (id: R06, campo: PISST/vPIS), se indSomaPISST=1
+                      (+) vCofins (id: T06, campo: COFINSST/vCOFINS), se indSomaCOFINSST =1 (NT
+                           2020.005)
+                      (+) vIBS
+                      (+) vCBS
+
+
+                                                                                                                                                                 Página 9 / 10
+Nota Fiscal Eletrônica - NF-e
+NF-e / NFC-e – Valor Líquido do Produto
+NT 2026.008
+
+ Campo    Modelo                                     Regra de Validação                             Aplic. Msg                      Descrição Erro
+                        (+) vIS
+                     Exceção 1: Em 2025 e 2026, não somar vIBS, vCBS, vIS
+                     Observação: Implementação Futura.
+
+Grupo W. Total da NF-e
+Campo Modelo                                    Regra de Validação                                 Aplic. Msg                      Descrição Erro
+W01a-10 55/65 Se informado vProdLiq (id:I11c) em um dos itens:                                     Obrig. 1282 Rejeição: Total Líquido não informado
+               - vProdLiqTot (id:W01a) não informado
+W01a-20       55/65 Se informado vProdLiqTot (id:W01a):                                            Obrig. 1283 Rejeição: Total Líquido difere do somatório dos itens
+                     - vProdLiqTot (id:W01a) difere do somatório do vProdLiq (id:I11c) dos itens
+
+
+
+
+                                                                                                                                                              Página 10 / 10
+

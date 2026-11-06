@@ -1,0 +1,106 @@
+Alteração de Regra de Validação de
+CFOP
+
+Nota Técnica 2026.009 - Versão 1.00
+Setembro de 2026
+Nota Fiscal Eletrônica - NF-e
+Alteração de Regra de Validação de CFOP
+NT 2026.009
+
+
+
+
+Sumário
+1. Introdução ................................................................................................................................... 4
+2. Regras de Validação ................................................................................................................... 5
+   2.1. Grupo I. Produtos e Serviços da NF-e .................................................................................. 5
+
+
+
+
+                                                                                                                                  Página 2 / 5
+Nota Fiscal Eletrônica - NF-e
+Alteração de Regra de Validação de CFOP
+NT 2026.009
+
+
+
+
+Controle de Versões
+
+ Versão       Publicação                Descrição
+
+1.00          09/2026                  Alteração da regra de validação I08-140.
+
+
+
+
+Histórico de Alterações / Cronograma
+
+  Versão                              Histórico de atualizações                            Implantação      Implantação
+                                                                                              Teste          Produção
+
+                 Alteração da regra de validação I08-140, ampliando a aceitação dos CFOP
+   1.00                                                                                    Até 17/09/2026   Até 17/09/2026
+                 1.949 e 2.949 para as situações previstas na regra.
+
+
+
+
+                                                                                                            Página 3 / 5
+Nota Fiscal Eletrônica - NF-e
+Alteração de Regra de Validação de CFOP
+NT 2026.009
+
+
+
+
+1. Introdução
+Esta Nota Técnica altera a regra de validação I08-140 da Nota Fiscal Eletrônica (NF-e), modelo 55,
+para permitir a utilização dos CFOP 1.949 e 2.949 em todas as situações abrangidas pela própria
+regra.
+
+A alteração é pontual e não modifica o leiaute da NF-e nem os schemas XML. A disponibilização
+imediata da correção nos ambientes autorizadores é necessária porque nem todos os CFOPs de
+saída existentes possuem CFOPs de devolução correspondentes. Por essa razão, esta Nota
+Técnica trata exclusivamente da alteração da referida regra de validação, de modo a permitir a
+utilização dos CFOPs 1.949 e 2.949 nas situações nela previstas.
+
+As datas de implantação nos ambientes de homologação e de produção estão indicadas no
+Histórico de Alterações / Cronograma.
+
+
+
+
+                                                                                       Página 4 / 5
+Nota Fiscal Eletrônica - NF-e
+Alteração de Regra de Validação de CFOP
+NT 2026.009
+
+
+
+
+2. Regras de Validação
+2.1. Grupo I. Produtos e Serviços da NF-e
+ Campo        Modelo                                   Regra de Validação                                     Aplic. Msg                    Descrição Erro
+ I08-140        55   Para NF-e com as finalidades abaixo, somente serão aceitos CFOPs de devolução de         Obrig. 327 Rejeição: CFOP inválido para Nota Fiscal de devolução
+                        mercadoria:                                                                                      ou de retorno de mercadoria [nItem: 999]
+                      - Devolução de mercadoria (tag: finNFe = 4);
+                      - ou Nota de Crédito (tag: finNFe=5) do tipo “03=Retorno por Recusa Total na Entrega
+                        ou Por Não Localização do Destinatário na Tentativa de Entrega” (tag:
+                        tpNFCredito=03);
+                      - ou Nota de Crédito (tag: finNFe=5) do tipo “06=Retorno por Recusa Parcial na Entrega”
+                        (tag: tpNFCredito=06);
+                     Observação 1: Vide relação de CFOP de devolução de mercadoria na tabela de apoio
+                        publicada no Portal da NF-e (Tabela CFOP, indDevol=1).
+                     Exceção 1: Aceitar os CFOP 1.949 e 2.949. na devolução de venda. Para estes CFOP
+                        verificar a condição:
+                          - Devolução de mercadoria (tag: finNFe = 4) (NT 2015.002);
+                     Exceção 2: Aceitar os CFOP 5.949 e 6.949 na devolução simbólica de gás natural (NCM
+                        27112100) nos termos do Ajuste SINIEF nº 22/21 (NT 2021.004)
+
+
+
+
+                                                                                                                                                                 Página 5 / 5
+

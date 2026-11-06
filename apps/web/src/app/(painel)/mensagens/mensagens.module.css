@@ -38,3 +38,18 @@
 .emojis button:hover { background: var(--color-surface-2); }
 .formModal { display: flex; flex-direction: column; gap: var(--space-2); }
 .formModal label { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
+
+.robo img { flex: none; object-fit: contain; }
+.robo { justify-content: flex-start; }
+.boasVindas { display: flex; align-items: center; gap: var(--space-4); }
+.boasVindas img { flex: none; width: 110px; height: auto; }
+.boasVindas p { margin: 0 0 var(--space-2); }
+.assuntos { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0 0; }
+.assuntos button { padding: 6px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-pill); background: var(--color-surface); color: var(--color-text); font-size: var(--text-sm); cursor: pointer; }
+.assuntos button[aria-pressed="true"] { border-color: var(--color-brand); background: var(--color-brand-soft); font-weight: 600; }
+.resposta { align-self: stretch; max-width: 100%; }
+.resultado { margin-top: var(--space-2); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); }
+.resultado small { color: var(--color-brand-text); font-weight: 600; }
+.resultado b { display: block; margin: 2px 0 4px; }
+.resultado p { margin: 0; font-size: var(--text-sm); white-space: pre-wrap; overflow-wrap: anywhere; }
+.aviso { margin: var(--space-2) 0 0; color: var(--color-text-muted); font-size: var(--text-xs); }

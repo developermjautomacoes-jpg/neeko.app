@@ -1,0 +1,1132 @@
+Operações de vendas presenciais e não presenciais
+com impressão do DANFE Simplificado Tipo 2
+
+Nota Técnica 2026.002 Versão 1.11
+Setembro de 2026
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+
+Sumário
+
+1.     Introdução ................................................................................................................................ 4
+2.     Autorização de Uso com Alerta ................................................................................................ 4
+     2.1 Visão Geral da Autorização com Alerta ................................................................................. 4
+     2.2 Processamento das Regras nas Aplicações Autorizadoras ................................................... 5
+     2.3 Web Services - NfeAutorizacao, NFeRetAutorizacao e NFeConsultaProtocolo ..................... 5
+3.     Leiaute da NF-e (Modelo 55 e 65) ........................................................................................... 7
+4.     Regras de Validação................................................................................................................ 8
+       B. Identificação da NF-e........................................................................................................... 8
+       BA. Documento Fiscal Referenciado ....................................................................................... 9
+       C. Identificação do Emitente .................................................................................................. 11
+       E. Identificação do Destinatário.............................................................................................. 11
+       F. Local da Retirada............................................................................................................... 11
+       G. Local da Entrega ............................................................................................................... 11
+       I. Produtos e Serviços ............................................................................................................ 11
+       J. Item / Veículos Novos ........................................................................................................ 12
+       K. Item / Medicamentos ......................................................................................................... 13
+       L. Item / Armamentos............................................................................................................. 13
+       LA. Item / Combustível ........................................................................................................... 13
+       LB. Item / Papel Imune .......................................................................................................... 15
+       N. Item / Tributo: ICMS .......................................................................................................... 15
+       NA. Item / ICMS para a UF de Destino .................................................................................. 17
+       O. Item / Tributo: IPI............................................................................................................... 17
+       P. Item / Tributo: II ................................................................................................................. 17
+       R. Item / Tributo: PIS ST ........................................................................................................ 17
+       T. Item / Tributo: COFINS ST ................................................................................................. 18
+       UA. Item / Devolução de Tributos .......................................................................................... 18
+       VC. Referenciamento de item de outro Documento Fiscal Eletrônico - DF-e ......................... 18
+       W. Total da NF-e ................................................................................................................... 18
+       X. Transporte da NF-e ........................................................................................................... 19
+       Y. Dados de Cobrança ........................................................................................................... 19
+       ZB. Informação de Compra .................................................................................................... 19
+       ZC. Informações do Registro de Aquisição de Cana .............................................................. 20
+       ZX. Informações Suplementares da Nota Fiscal .................................................................... 20
+       Banco de Dados: Destinatário ............................................................................................... 24
+
+
+
+
+                                                                                                                                Página 2 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+
+Controle de Versões
+
+ Versão        Publicação               Descrição
+
+ 1.00          05/2026                  Publicação da NT
+
+ 1.10          07/2026                  Ajustes diversos
+
+ 1.10a         08/2026                  Melhoria no entendimento da RV BA10-20
+
+ 1.11          09/2026                  Alteração da data de implantação das RV I08-180, BA02-35, VC02-40 em Produção
+
+
+
+
+Histórico de Alterações / Cronograma
+
+  Versão                              Histórico de atualizações                              Implantação     Implantação
+                                                                                                Teste         Produção
+              - Alteração da regra W16-40 que permite que cada UF defina o valor limite
+   1.00                                                                                      01/06/2026       15/06/2026
+                   para emissão de NFC-e (mod. 65) sem identificação do destinatário. Será
+                   criada tabela com os limites por UF. Na ausência de definição, mantém-
+                   se o limite de R$ 10.000,00
+              - Criação da regra BA02-35 que rejeita a NF-e de saída (tpNF = 1) que faça
+   1.00                                                                                      01/07/2026       03/08/2026
+                   referência ao modelo 65 (NFC-e) ou ao modelo 59 (CF-e).
+              - Atualização de domínio em campos da NF-e/NFC-e (schema) e de regras
+                   de validação para emissão da NF-e com DANFE Simplificado Tipo 2:
+                   B09-40, B09-60, B10-10, B11-10, B11A-10, B22-10, B25-20, B25A-10,
+                   B25B-20, B25B-30, BA01-10, C18-10, D01-20, F01-10, G01-10, I04-10,
+                   I08-150, I17B-10, J01-10, K01-10, K01-20, L01-10, LA11-10, LA17-20,
+                   LA18-10, LA18-20, LB01-10, N12-30, N12-34, N12-40, N12-44, N12-
+                   50, N12-60, N12A-20, N12A-30, N12a-34, N12a-40, N12a-44, N12a-81,
+                   N12a-91, NA01-10, O01-10, P01-10, R01-10, T01-10, UA01-20, VC02-
+                   40, VC02-50, W16-30, W16-40, W16-50, W16-60, X02-10, X11-10, X18-
+                   10, X22-10, X25a-10, X25b-10, Y01-10, ZB01-10, ZC01-10, ZX01-10,
+                   ZX02-10, ZX02-20, ZX02-220, ZX02-224, ZX02-228, ZX02-232, ZX02-
+                   236, ZX02-240, ZX02-244, ZX02-260, ZX02-268, ZX02-272, ZX02-276,
+                   ZX02-324, ZX02-326, ZX02-328, ZX02-330, ZX02-334, ZX02-338.
+              - Estrutura de autorização com alertas e regra de validação 5E17-65.
+   1.00                                                                                      01/09/2026       05/10/2026
+              - Obrigatoriedade para todas as UFs das regras I08-180 e I08-186.
+              - Criação da regra BA02-35 e VC02-40 que rejeita NF-e de saída (tpNF = 1)
+   1.10                                                                                      01/09/2026       05/10/2026
+                   que faça referência ao modelo 65 (NFC-e), ao modelo 59 (CF-e) ou ao
+                   modelo 55 (NF-e) com DANFE Simplificado Tipo 2 (tag:tpImp=6).
+              - Alteração da regra BA03-10, que passa a vedar o referenciamento de NF
+                 Modelo 1 e NF Modelo 2 (tag:refNF).
+              - Alteração da regra BA10-10, que passa a vedar o referenciamento de NF
+                   de Produtor (tag: refNFP).
+              - Alteração da regra BA20-30, que passa a vedar o referenciamento de Cu-
+                   pom Fiscal (tag: refECF).
+              - Ajustes diversos, regras: BA10-20, BA10-30, BA10-40, BA10-50, VC02-
+                   04, W16-40, W16-50, W16-60.
+              - Regras removidas: BA05-10, BA06-10, BA12-10, BA13-10, BA14-10,
+                   BA15-10, BA20-10, BA20-20, I08-184, I08-186, VC02-50.
+              - Alteração da regra BA10-20
+  1.10a                                                                                      01/09/2026       05/10/2026
+              - Alteração da data de implantação das RV I08-180, BA02-35, VC02-40 em
+   1.11                                                                                          -x-          14/12/2026
+                   Produção, de 05/10/2026 para 14/12/2026.
+
+
+                                                                                                           Página 3 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+
+1. Introdução
+Com a publicação dos Ajustes SINIEF nº 32/25 e nº 13/26, o Conselho Nacional de Política
+Fazendária (CONFAZ) promoveu alterações no modelo de emissão de documentos fiscais
+eletrônicos aplicáveis às operações presenciais e não presenciais. Tais alterações impactam
+diretamente a utilização da Nota Fiscal de Consumidor Eletrônica (NFC-e) e da Nota Fiscal
+Eletrônica (NF-e).
+
+Fica o DANFE Simplificado Tipo 2 disponível para o contribuinte que opte ou necessite emitir uma
+NF-e modelo 55 em uma operação que normalmente seria acobertada por NFC-e.
+
+Nesse contexto, esta Nota Técnica contempla, entre outros aspectos:
+   • a possibilidade de utilização da NF-e em operações presenciais e não presenciais, com a
+      utilização do Documento Auxiliar da Nota Fiscal Eletrônica - DANFE Simplificado Tipo 2, em
+      operações que normalmente seriam acobertadas por NFC-e;
+   • a possibilidade de impressão do DANFE Simplificado Tipo 2 na NF-e, nas condições
+      especificadas no Ajustes SINIEF nº 13/26;
+   • a previsão de autorização de documentos fiscais eletrônicos com alerta na NFC-e, modelo
+      65, nos casos em que o destinatário identificado por CNPJ apresente situação irregular no
+      momento da emissão;
+   • a vedação de emissão de NF-e de saída, que faça referência a uma NFC-e ou a um CF-e,
+      modelo 59, excetuando-se a emissão de NF-e complementar;
+   • a regulamentação da emissão em contingência off-line para NF-e com Tipo de Emissão
+      “9=Contingência off-line da NFC-e e da NF-e com DANFE Simplificado Tipo 2”, com posterior
+      transmissão para autorização.
+
+2. Autorização de Uso com Alerta
+2.1 Visão Geral da Autorização com Alerta
+Esta Nota Técnica implementa a possibilidade de autorizar a NF-e com mensagem de alerta para
+o emitente e/ou para o destinatário. A nota será autorizada normalmente, e o alerta será retornado
+em campo específico do protocolo de autorização, conforme apresentado nesta seção.
+
+O objetivo é avisar tanto emitente quanto destinatário que nesta NF-e existe uma inconsistência que
+deve ser verificada, sem que esta inconsistência seja motivo suficiente para provocar uma rejeição.
+
+Atualmente, a aplicação das regras de validação da NF-e pode resultar nos seguintes códigos de
+processamento (cStat):
+
+              CÓDIGO EFEITO     RESULTADO DO PROCESSAMENTO DA SOLICITAÇÃO
+                100 Autorização Autorizado o uso da NF-e
+                150 Autorização Autorizado o uso da NF-e, autorização fora de prazo
+               XXXX Rejeição    Rejeição: [mensagem correspondente ao código da rejeição]
+
+A modificação introduzida por esta Nota Técnica cria um novo resultado de processamento,
+inicialmente somente para a NFC-e: “Autorizado o uso da NF-e, com alerta” (cStat = 120).
+
+As regras de validação que geram alertas estão identificadas nesta Nota Técnica com o efeito
+“Alerta”. Com esta alteração, os possíveis resultados da validação da NF-e passam a ser:
+
+              CÓDIGO EFEITO     RESULTADO DO PROCESSAMENTO DA SOLICITAÇÃO
+                100 Autorização Autorizado o uso da NF-e
+                120 Autorização Autorizado o uso da NF-e, com alerta
+                150 Autorização Autorizado o uso da NF-e, autorização fora de prazo
+               XXXX Rejeição    Rejeição: [mensagem correspondente ao código da rejeição]
+
+
+
+                                                                                            Página 4 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+
+Desta forma, o processamento das regras de validação resultará em um dos seguintes resultados:
+   • Autorização de uso - a NF-e será armazenada no banco de dados;
+   • Autorização de uso com alerta(s) - a NF-e será armazenada no banco de dados, não
+       necessitando ser corrigida e novamente transmitida para solucionar a origem do alerta;
+   • Rejeição - a NF-e será descartada, não sendo armazenada no banco de dados, podendo
+       ser corrigida e novamente transmitida.
+
+Caso o documento seja autorizado fora de prazo e contenha alertas, será retornado o código “120
+- Autorizado o uso da NF-e, com alerta”.
+
+2.2 Processamento das Regras nas Aplicações Autorizadoras
+   As SEFAZ Autorizadoras processam as regras de validação descritas no Manual de Orientação
+   do Contribuinte da NF-e / NFC-e (MOC). As regras de validação identificadas como “Alerta”
+   registram a ocorrência do alerta, mas não interrompem o processamento da NF-e (regra de
+   validação “não fatal”).
+      • A regra de validação que tenha como efeito um alerta provoca o armazenamento do código
+         correspondente à regra não atendida, até um limite de 5 (cinco) códigos de alerta. Ou
+         seja, somente serão retornados os primeiros 5 alertas identificados;
+      • O não atendimento de alguma regra de validação que tenha como efeito uma rejeição in-
+         terromperá o processamento das demais regras, retornando a rejeição e os códigos de
+         alerta identificados até o momento;
+      • Ao final do processamento das regras de validação será montada a mensagem de retorno
+         do Web Service -com a autorização de uso da NF-e ou com o código de rejeição, contendo,
+         se houver, os códigos de alerta conforme o resultado das validações efetuadas.
+
+
+2.3 Web Services - NfeAutorizacao, NFeRetAutorizacao e
+    NFeConsultaProtocolo
+
+   Atualmente já existe a possibilidade da Sefaz retornar uma mensagem para o contribuinte, no
+   grupo PR13, na estrutura XML do protNFe (Dados do Protocolo de recebimento da NF-e). As
+   informações resultantes das aplicações das regras de validação serão colocadas nos campos
+   da mensagem de retorno, conforme detalhado abaixo:
+
+                 Natureza da mensagem      Elemento pai          Código          Motivo
+                 Rejeição               PR03 (infProt)         PR11 (cStat)   PR12 (xMotivo)
+                 Alerta                 PR13 (Sequência XML)   PR14 (cMsg)    PR15 (xMsg)
+
+  #         Campo        Ele   Pai Tipo Ocor.     Tam.                  Descrição/Observação
+ PR01 protNFe            Raiz   -    -    -         -  TAG raiz do Protocolo de recebimento da NFe
+ PR02 versao              A   PR01  N    1-1       2v2 Versão do leiaute das informações de Protocolo.
+ PR03 infProt             G PR01     -   1-1        -  Informações do Protocolo de resposta.
+                                                       TAG a ser assinada
+ PR04 Id                  ID   PR03     C   0-1     -  Identificador da TAG a ser assinada, somente precisa
+                                                       ser informado se a UF assinar a resposta.
+                                                       Em caso de assinatura da resposta pela SEFAZ preen-
+                                                       cher o campo com o Número do Protocolo, precedido
+                                                       com o literal “ID”
+ PR05 tpAmb               E    PR03     N   1-1     1  Identificação do Ambiente:
+                                                       1 - Produção/2 - Homologação
+ PR06 verAplic            E    PR03     C   1-1   1-20 Versão do Aplicativo que processou o Lote.
+                                                       A versão deve ser iniciada com a sigla da UF nos casos
+                                                       de WS próprio ou a sigla SVAN ou SVRS nos demais
+                                                       casos.
+ PR07 chNFe               E    PR03     N   1-1    44 Chave de Acesso da NF-e (vide item 5.4)
+
+
+
+
+                                                                                               Página 5 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+  #       Campo        Ele    Pai Tipo Ocor.    Tam.                   Descrição/Observação
+ PR08 dhRecbto          E    PR03  D    1-1        -   Preenchido com a data e hora do processamento (infor-
+                                                       mado também no caso de rejeição).
+                                                       Formato: “AAAA-MM-DDThh:mm:ssTZD” (UTC - Uni-
+                                                       versal Coordinated Time).
+ PR09 nProt             E    PR03   N     0-1   15, 17 Número do Protocolo da NF-e
+ PR10 digVal            E    PR03   C     0-1     28 Digest Value da NF-e processada
+                                                       Utilizado para conferir a integridade da NFe original.
+ PR11 cStat            E     PR03   N     1-1    3-4 Código do status da resposta para a NF-e
+ PR12 xMotivo          E     PR03   C     1-1   1-255 Descrição literal do status da resposta para a NF-e.
+ PR13 Sequência XML    G     PR03         0-5          Grupo de informações para envio de mensagens do
+                                                       interesse da SEFAZ (Criado na NT 2018.005)
+ PR14 cMsg              E    PR13   N     0-1    1-4 Código da Mensagem. (Criado na NT 2018.005)
+
+
+ PR15 xMsg              E    PR13   C     1-1   1-255 Mensagem da SEFAZ para o emissor. (Criado na NT
+                                                      2018.005)
+ PR90 Signature        G     PR01   xml   0-1     -   Assinatura XML do grupo identificado pelo atributo
+                                                      “Id”.
+                                                      A decisão de assinar a mensagem fica a critério da
+                                                      UF interessada.
+
+
+
+
+                                                                                             Página 6 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+
+
+
+3. Leiaute da NF-e (Modelo 55 e 65)
+   #      ID         Campo                Descrição               Ele   Pai   Tipo   Ocor.   Tam.                                Observação
+   5     B01   ide           Informações de identificação da       G    A01     -     1-1      -
+                             NF-e
+  25     B21   tpImp         Formato de Impressão do DANFE        E     B01    N      1-1     1     0=Sem geração de DANFE;
+                                                                                                    1=DANFE normal, Retrato;
+                                                                                                    2=DANFE normal, Paisagem;
+                                                                                                    3=DANFE Simplificado;
+                                                                                                    4=DANFE NFC-e;
+                                                                                                    5=DANFE NFC-e em mensagem eletrônica (o envio de mensagem
+                                                                                                       eletrônica pode ser feita de forma simultânea com a impressão do
+                                                                                                       DANFE; usar o tpImp=5 quando esta for a única forma de
+                                                                                                       disponibilização do DANFE);
+                                                                                                    6=DANFE Simplificado Tipo 2 (nas condições do Ajuste SINIEF 13/26).
+  26     B22   tpEmis        Tipo de Emissão da NF-e              E     B01    N      1-1     1     1=Emissão normal (não em contingência);
+                                                                                                    2=Contingência FS-IA, com impressão do DANFE em Formulário de
+                                                                                                       Segurança - Impressor Autônomo;
+                                                                                                    3= Regime Especial NFF (NT 2021.002)Contingência SCAN (Sistema de
+                                                                                                       Contingência do Ambiente Nacional); *Desativado * NT 2015/002
+                                                                                                    4=Contingência EPEC (Evento Prévio da Emissão em Contingência);
+                                                                                                    5=Contingência FS-DA, com impressão do DANFE em Formulário de
+                                                                                                       Segurança - Documento Auxiliar;
+                                                                                                    6=Contingência SVC-AN (SEFAZ Virtual de Contingência do AN);
+                                                                                                    7=Contingência SVC-RS (SEFAZ Virtual de Contingência do RS);
+                                                                                                    9=Contingência off-line da NFC-e e da NF-e com DANFE Simplificado
+                                                                                                       Tipo 2.
+                                                                                                    Observação: Para a NFC-e somente é válida a opção de contingência:
+                                                                                                       9-Contingência Off-Line e, a critério da UF, opção 4-Contingência
+                                                                                                       EPEC. (NT 2015/002)
+ 29.4   B25b   indPres       Indicador de presença do comprador   E     B01    N      1-1     1     0=Não se aplica (por exemplo, Nota Fiscal complementar ou de ajuste);
+                             no estabelecimento comercial no                                        1=Operação presencial;
+                             momento da operação                                                    2=Operação não presencial, pela Internet;
+                                                                                                    3=Operação não presencial, Teleatendimento;
+                                                                                                    4=Operações não presenciais com NFC-e e NFe com DANFE
+                                                                                                       Simplificado Tipo 2 (com entrega);
+                                                                                                    5=Operação presencial, fora do estabelecimento; (incluído NT 2016/002)
+                                                                                                    9=Operação não presencial, outros.
+
+
+
+
+                                                                                                                                                        Página 7 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+
+4. Regras de Validação
+Validações específicas do Web Service - NFeAutorizacao
+
+B. Identificação da NF-e
+    #         Modelo                                    Regra de Validação                               Aplic.   Msg   Efeito                      Descrição Erro
+  B09-20        55     Independentemente do Tipo de Emissão:                                             Obrig.   228    Rej.    Rejeição: Data de Emissão muito atrasada
+                          - Aceita NF-e com atraso de até 7 dias, retornando cStat=”100-Autorizado Uso
+                            da NF-e”;
+                          - Aceita NF-e com atraso superior a 7 dias, retornando cStat=”150-Autorizado
+                            Uso da NF-e, autorização fora de prazo”;
+                       Exceção 01: A critério da UF, após 30 dias (ou outro limite definido pela
+                            SEFAZ) somente será aceita NF-e emitida em contingência (tpEmis=2, 4, 5,
+                            9).
+  B09-40      55/65    Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):                     Obrig.   704    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                         - Se Tipo de Emissão=1-Normal (ou 6-SVC-AN, 7-SVC-RS):                                                  Tipo 2 com Data-Hora de emissão atrasada
+                            - Data-Hora de Emissão com atraso superior a 5 minutos em relação ao
+                                horário de recepção na SEFAZ.
+                       Exceção 1: A critério da UF, a rejeição acima pode ser efetuada para qualquer
+                            Tipo de Emissão.
+                       Exceção 2: A critério da UF, pode ser aceita a NFC-e ou NF-e com DANFE
+                            Simplificado Tipo 2 (tag:tpImp=6) e com Data de Emissão muito atrasada,
+                            desde que tenha sido emitida em contingência (tpEmis=4, 9). A NFC-e ou
+                            NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) transmitida para a
+                            SEFAZ Autorizadora após o prazo de 24 horas deve retornar cStat="150-
+                            Autorizado Uso da NF-e, autorização fora de prazo".
+                       Observação 1: A emissão da NFC-e ou NF-e com DANFE Simplificado Tipo 2
+                            (tag:tpImp=6) deve ocorrer de forma on-line, real-time, com uma tolerância
+                            de até 5 minutos, devido ao sincronismo de horário do servidor da Empresa
+                            e o servidor da SEFAZ Autorizadora.
+  B10-10      55/65    Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):                     Obrig.   705    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                          - Data de entrada/saída informada indevidamente.                                                       Tipo 2 com data de entrada/saída
+  B11-10      55/65    Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):                     Obrig.   706    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                          - Não é permitida operação de entrada (tag:tpNF=0)                                                     Tipo 2 para operação de entrada
+ B11a-10      55/65    Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):                     Obrig.   707    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                          - Não é permitida operação interestadual ou com o exterior (tag:idDest<>1)                             Tipo 2 para operação interestadual ou com o exterior
+  B22-10        55     Se NF-e com contingência off-line (tag:tpEmis=9) e tipo de impressão difere de    Obrig    711    Rej.    Rejeição: NF-e com contingência off-line em operação
+                       DANFE Simplificado Tipo 2 (tag:tpImp <> 6)                                                                não permitida
+  B25-20      55/65    Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):                     Obrig    715    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                          - Não é permitida finalidade diferente finalidade diferente de “1-Normal”                              Tipo 2 com finalidade inválida
+                            (tag:finNFe <> 1)
+
+
+
+                                                                                                                                                                 Página 8 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+    #         Modelo                                 Regra de Validação                                Aplic.    Msg   Efeito                     Descrição Erro
+ B25a-10       55/65   Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):                   Obrig     716    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                        - Operação não destinada a Consumidor Final (tag:indFinal=0)                                            Tipo 2 em operação não destinada a consumidor final
+ B25b-20      55/65    Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):                   Obrig.    717    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                        - Indicador de presença difere de:                                                                      Tipo 2 em operação não permitida
+                           - “1-Operação presencial”
+                           - “4-Operações não presenciais com NFC-e e NF-e com DANFE
+                               Simplificado Tipo 2”
+                           - “5-Operação presencial, fora do estabelecimento”
+                       Observação: tag:indPres<>1, 4 e 5.
+
+BA. Documento Fiscal Referenciado
+    #         Modelo                                  Regra de Validação                               Aplic.    Msg   Efeito                      Descrição Erro
+ BA01-10       55/65   NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) não pode refe-        Obrig.    708    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                       renciar outros documentos (tag:NFref)                                                                    Tipo 2 não pode referenciar documento fiscal
+ BA02-35        55     Se informada uma NF-e referenciada (tag:refNFe):                                Obrig.    679    Rej.    Rejeição: Chave de Acesso referenciada com Modelo
+                         - Se NF-e de Saída (tpNF=1):                                                                           inválido [nOcor:nnn]
+                           - Se Finalidade diferente de “2-NFe Complementar” (tag:finNFe<>2) e
+                           diferente de “4-NFe de Devolução” (tag:finNFe<>4):
+                              - Modelo da NF-e referenciada não pode ser:
+                                - NFC-e, modelo 65;
+                                - CF-e, modelo 59;
+                                - NF-e, modelo 55, com DANFE Simplificado Tipo 2 (tag:tpImp=6).
+                       Observação: Implantação em Produção em 14/12/2026.
+ BA03-10        55     Se informada NF Modelo 1 ou NF Modelo 2 referenciada (tag:refNF):               Obrig.    681    Rej.    Rejeição: Proibido informar NF referenciada [nOcor:
+                         - Verificar duplicidade de Nota Fiscal Modelo 1 ou 2 referenciada (mesmo                               nnn]
+                           CNPJ, Modelo, Série, Número) (NT 2016.002)
+                         - Proibido informar NF referenciada (tag: refNF)
+ BA05-10        55     Se informada NF Modelo 1 referenciada (tag:refNF):                              Facult.   317    Rej.    Rejeição: NF modelo 1 referenciada com data de
+                       - NF modelo 1 referenciada emitida há mais de 20 anos da data atual ou com                               emissão inválida [nOcor:nnn]
+                       data de emissão superior ao Ano-Mês atual (NT 2015.002)
+ BA06-10        55     Se informada NF Modelo 1 referenciada (tag:refNF):                              Facult.   548    Rej.    Rejeição: NF modelo 1 referenciada com data de
+                       - CNPJ com zeros, nulo ou DV inválido                                                                    emissão inválida [nOcor:nnn]
+ BA10-10        55     Se informada NF de Produtor referenciada (tag:refNFP):                          Obrig.    682    Rej.    Rejeição: Proibido referenciar NF de Produtor [nOcor:
+                         - Verificar duplicidade de Nota Fiscal de Produtor referenciada (mesma IE,                             999]
+                           Modelo, Série, Número) (NT 2013/003) (NT 2015.002)
+                         - Proibido referenciar NF de Produtor (tag:refNFP)
+ BA10-20        55     Contranota de Produtor sem Nota Fiscal referenciada:                            Facult.   318    Rej.    Rejeição: Contranota de Produtor sem Nota Fiscal
+                         - não informada NF de Produtor referenciada (tag:refNFP);                                              referenciada
+                         - e Não informada Nota Fiscal referenciada (tag:refNFe).
+                       Observação 1: A Contranota de Produtor é identificada como uma Nota Fiscal
+                           de entrada (tag:tpNF=0) com finalidade de emissão normal (tag:finNFe=1) e
+                           remetente da mesma UF com IE de Produtor Rural.
+
+
+                                                                                                                                                                 Página 9 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+                    Observação 2: A utilização e controle da Contranota de Produtor é opcional, a
+                        critério da UF.
+ BA10-30      55    Contranota de Produtor não pode referenciar somente Nota Fiscal de entrada:       Facult.   319    Rej.   Rejeição: Contranota de Produtor não pode
+                      - não informada NF de Produtor referenciada (tag:refNFP);                                               referenciar somente Nota Fiscal de entrada
+                      - e Não informada Nota Fiscal referenciada (tag:refNFe) de saída
+                        (tag:tpNF=1).
+                    Observação 1: Identificação de Contranota de Produtor conforme observação
+                        da validação anterior.
+                    Observação 2: A utilização e controle da Contranota de Produtor é opcional, a
+                        critério da UF. (NT 2015.002)
+ BA10-40      55    Contranota de Produtor referencia somente Nota Fiscal de outro emitente. Não      Facult.   320    Rej.   Rejeição: Contranota de Produtor referencia somente
+                    existe nenhuma das ocorrências abaixo:                                                                    NF de outro emitente
+                      - IE da NF de Produtor referenciada (tag:refNFP/IE) idêntica à IE do Emitente
+                        (emit/IE) ou do Remente (dest/IE);
+                      - IE do emitente da NF referenciada (tag:emit/IE) idêntica à IE do Emitente
+                        (emit/IE) ou do Remente (dest/IE).
+                    Observação 1: Identificação de Contranota de Produtor conforme observação
+                        da validação anterior.
+                    Observação 2: A utilização e controle da Contranota de Produtor é opcional, a
+                        critério da UF. (NT 2015.002)
+                    Observação 3: A critério da UF, a validação da IE do emitente da NF
+                        referenciada (tag:emit/IE) pode ser substituída por:
+                           - CNPJ-8 do emitente da NF referenciada (tag:emit/CNPJ) idêntico ao
+                             CNPJ-8 do Emitente (tag: emit/CNPJ) ou do Remetente (tag:
+                             dest/CNPJ). (NT 2019.001)
+ BA10-50      55    Contranota de Produtor só pode referenciar NF-e (tag: refNFe) ou NF de            Facult.   922    Rej.   Rejeição: Contranota de Produtor só pode referenciar
+                    Produtor Modelo 4 (tag: refNFP).                                                                          NF-e ou NF de Produtor Modelo 4
+                    Observação 1: Identificação de Contranota de Produtor conforme observação
+                        da validação anterior.
+                    Observação 2: Regra opcional, a critério da UF. (NT2019.001)
+ BA12-10      55    Se informada NF de Produtor referenciada (tag:refNFP):                            Facult.   322    Rej.   Rejeição: NF de produtor referenciada com data de
+                      - NF de produtor referenciada emitida a mais de 20 anos da data atual ou com                            emissão inválida [nOcor:nnn]
+                        data de emissão superior ao Ano-Mês atual (NT 2015.002)
+ BA13-10      55    Se informada NF de Produtor referenciada (tag:refNFP):                            Facult.   549    Rej.   Rejeição: CNPJ da NF referenciada de produtor
+                      - CNPJ com zeros, nulo ou DV inválido                                                                   inválido [nOcor: 999]
+ BA14-10      55    Se informada NF de Produtor referenciada (tag:refNFP):                            Facult.   550    Rej.   Rejeição: CPF da NF referenciada de produtor
+                      - CPF com zeros, nulo, 111..., 222, ..., ou DV inválido (NT 2012/003)                                   inválido [nOcor: 999]
+ BA15-10      55    Se informada NF de Produtor referenciada (tag:refNFP):                            Facult.   551    Rej.   Rejeição: IE da NF referenciada de produtor inválido
+                      - IE com zeros, nulo ou DV inválido para a UF
+   ...        ...                                            ...                                        ...      ...    ...                             ...
+ BA20-10      55    Se informado Cupom Fiscal referenciado (tag:refECF):                              Facult.   684    Rej.   Rejeição: Duplicidade de Cupom Fiscal referenciado
+                    - Verificar duplicidade de Cupom Fiscal referenciado (mesmo Modelo, Número                                (Modelo, Número de Ordem e COO) [nOcor: 999]
+                    de Ordem e COO) (NT 2013/003)
+
+
+
+                                                                                                                                                              Página 10 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+ BA20-20         55     Informado Cupom Fiscal referenciado (tag: refECF) ou informado NF modelo 1     Facult.     923       Rej.      Rejeição: Referenciado documento de operação
+                        ou 2 referenciada (tag: refNF) em NF-e de operação interestadual ou com o                                      interna em operação interestadual. [nOcor: 999]
+                        exterior (tag: idDest<>1) (NT 2019.001)
+ BA20-30         55     Se Informado Cupom Fiscal referenciado (tag: refECF) em UF que não permite      Obrig.     924       Rej.      Rejeição: Proibido referenciar Cupom Fisca [nOcor:
+                        essa referência.:                                                                                              999]
+                          - Proibido referenciar Cupom Fiscal (tag: refECF)
+                        Observação: Regra de validação opcional, a critério da UF. (NT 2019.001)
+
+C. Identificação do Emitente
+   #          Modelo                                 Regra de Validação                              Aplic.      Msg     Efeito                        Descrição Erro
+ C18-10        55/65   Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):                 Obrig.      718      Rej.      Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                        - IE de Substituto Tributário (tag:emit/IEST) informada indevidamente                                       Tipo 2 não deve informar IE de Substituto Tributário
+
+E. Identificação do Destinatário
+   #          Modelo                                  Regra de Validação                              Aplic.     Msg      Efeito                         Descrição Erro
+ E01-20        55/65   Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) em operação       Obrig.     787       Rej.      Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                       não presencial (indPres=4):                                                                                   Tipo 2 (tag:tpImp=6) em operação não presencial sem
+                         - Identificação do destinatário (tag:infNFe/dest) não informada                                             a identificação do destinatário
+
+F. Local da Retirada
+   #          Modelo                                   Regra de Validação                             Aplic.     Msg      Efeito                        Descrição Erro
+ F01-10        55/65   Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):                  Obrig.     669       Rej.      Rejeição: Local de retirada informado indevidamente
+                        - Local de retirada (tag:retirada) informado indevidamente
+
+G. Local da Entrega
+   #          Modelo                                Regra de Validação                               Aplic.    Msg       Efeito                        Descrição Erro
+ G01-10        55/65   Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):                 Obrig.    670        Rej.      Rejeição: Local de entrega informado indevidamente
+                        - Local de entrega (tag:entrega) informado indevidamente
+                       Observação: Implementação futura.
+
+I. Produtos e Serviços
+     #        Modelo                                 Regra de Validação                              Aplic.    Msg       Efeito                       Descrição Erro
+  I04-10       55/65   Se documento for NFC-e (mod=65) ou NF-e com DANFE Simplificado Tipo 2         Obrig.    373        Rej.      Rejeição: Descrição do primeiro item diferente de
+                       (tag:tpImp=6):                                                                                               NOTA FISCAL EMITIDA EM AMBIENTE DE
+                         - Se ambiente de homologação (tag:tpAmb=2, id:B24):                                                        HOMOLOGACAO - SEM VALOR FISCAL [nItem:nnn]
+                           - Descrição do primeiro item da Nota Fiscal (tag:xProd) deve ser
+                               informada como “NOTA FISCAL EMITIDA EM AMBIENTE DE
+                               HOMOLOGACAO - SEM VALOR FISCAL"
+
+
+
+                                                                                                                                                                       Página 11 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+    #         Modelo                                Regra de Validação                                Aplic.   Msg   Efeito                     Descrição Erro
+ I08-150       55/65   NFC-e (mod=65) ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6)             Obrig.   725    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                       com CFOP inválido. Aceitar unicamente os CFOP:                                                         Tipo 2 com CFOP inválido[nItem:nnn]
+                        - 5.101: Venda de produção do estabelecimento;
+                        - 5.102: Venda de mercadoria de terceiros;
+                        - 5.103: Venda de produção do estabelecimento efetuada fora do
+                           estabelecimento;
+                        - 5.104: Venda de mercadoria adquirida ou recebida de terceiros, efetuada
+                           fora do estabelecimento;
+                        - 5.115: Venda de mercadoria de terceiros, recebida anteriormente em
+                           consignação mercantil;
+                        - 5.405: Venda de mercadoria de terceiros, sujeita a ST, como contribuinte
+                           substituído;
+                        - 5.656: Venda de combustível ou lubrificante de terceiros, destinados a
+                           consumidor final;
+                        - 5.667: Venda de combustível ou lubrificante a consumidor ou usuário final
+                           estabelecido em outra Unidade da Federação;
+                        - 5.910: Remessa em bonificação, doação ou brinde;
+                        - 5.933: Prestação de serviço tributado pelo ISSQN (Nota Fiscal conjugada);
+                           (NT 2013/005 v 1.20) (NT 2015.002)
+                       Observação 1: Para a UF do RS, poderá ser permitido o uso do CFOP 5.949
+                           com CSOSN=900 ou CST=90.
+                       Observação 2: Para a UF do SP, poderá ser permitido o uso do CFOP 5.949
+                           com CSOSN=900 ou CST=40.
+ I08-180        55     NF-e (mod=55) com lançamento relativo a Cupom Fiscal (CFOP=5.929 ou            Obrig.   375    Rej.    Rejeição: NF-e com lançamento relativo a Cupom
+                       CFOP=6.929) e existe NFC-e referenciada (tag:refNFe com modelo 65)                                     Fiscal referencia uma NFC-e [nItem:nnn]
+                       Observação: Regra de Validação obrigatória em produção a partir de
+                           05/10/2026 14/12/2026.
+ I08-186        55     NF-e (mod=55) com lançamento relativo a Documento Fiscal de Varejo             Obrig.   953    Rej.    Rejeição: Informado ECF referenciado para CFOP
+                       (CFOP=5.929 ou CFOP 6.929) com ECF referenciado (tag: refECF)                                          5.929 em UF que não permite essa referência
+                       Observação: Regra de Validação obrigatória em produção a partir de
+                           05/10/2026.
+ I17b-10      55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com indicador        Obrig.   774    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                       de item não participante do total (tag:indTot=0)                                                       Tipo 2 (tag:tpImp=6) com indicador de item não
+                                                                                                                              participante do total [nItem: 999]
+
+J. Item / Veículos Novos
+   #       Modelo                                  Regra de Validação                                 Aplic.   Msg   Efeito                     Descrição Erro
+ J01-10     55/65      NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com grupo de         Obrig.   736    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                       Veículos novos (tag:veicProd)                                                                          Tipo 2 com grupo de Veículos novos
+
+
+
+
+                                                                                                                                                               Página 12 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+
+K. Item / Medicamentos
+   #          Modelo                                  Regra de Validação                             Aplic.    Msg   Efeito                    Descrição Erro
+ K01-10         55      Informado NCM de medicamento é obrigatório o preenchimento do Grupo de       Facul.    840    Rej.    Rejeição: NCM de medicamento e não informado o
+                        Medicamento (tag: med). (NT 2021.004)                                                                 grupo de medicamento (med) [nItem:nnn]
+                        Exceção: Regra de validação não se aplica a NF-e com DANFE Simplificado
+                            Tipo 2 (tag:tpImp=6)
+                        Observação 1: Regra de validação a critério da UF.
+                        Observação 2: Os medicamentos são classificados nos NCMs que começam
+                            com 3001, 3002, 3003, 3004, 3005 e 3006.
+                        Observação 3: Para os medicamentos que não possuam código de Produto
+                            da ANVISA, o campo cProdANVISA do Grupo de Medicamentos deverá
+                            ser preenchido com o literal “ISENTO”.
+                        Observação 4: Implementação futura.
+ K01-20         55      Se informado Grupo de Medicamentos (tag:med):                                Obrig     873    Rej     Rejeição: Operação com medicamentos e não
+                          - Obrigatório preenchimento do grupo rastro (id: I80) (NT 2016.002)                                 informado os campos de rastreabilidade [nItem: 999]
+                        Exceção 1: Regra de Validação não se aplica para NF-e de devolução (finNfe
+                            = 4).
+                        Exceção 2: Regra de Validação não se aplica para NF-e de venda não
+                            presencial (indPres = 2 ou 3).
+                        Exceção 3: Regra de Validação não se aplica para CFOP de venda para
+                            entrega futura (CFOPs 5922 e 6922) ou CFOP de Venda à Ordem (5118,
+                            6118, 5119, 6119, 5120 e 6120) (NT 2021.004).
+                        Exceção 4: Regra de validação não se aplica para NF-e de entrada (tpNF=0).
+                        Exceção 5: Regra de validação não se aplica a NF-e com DANFE
+                            Simplificado Tipo 2 (tag:tpImp=6).
+
+L. Item / Armamentos
+   #          Modelo                            Regra de Validação                                   Aplic.    Msg   Efeito                     Descrição Erro
+ L01-10        55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com grupo de       Obrig.    738    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                        Armamentos (tag:arma)                                                                                 Tipo 2 com grupo de Armamentos
+
+LA. Item / Combustível
+    #          Modelo                               Regra de Validação                               Aplic.    Msg   Efeito                    Descrição Erro
+ LA11-10        55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) sem a             Facult.   378    Rej. Rejeição: Grupo de Combustível sem a informação de
+                         informação do grupo de Encerrante na venda de combustível para                                     Encerrante [nItem: nnn]
+                         consumidor final.
+                         Observação: Regra de validação opcional a critério da UF.
+                         Exceção 1: A regra de validação se aplica somente para os códigos de
+                             produtos ANP (cProdANP) abaixo:
+                           - 810101002 - ETANOL HIDRATADO ADITIVADO
+                           - 810101001 - ETANOL HIDRATADO COMUM
+                           - 220101005 - GÁS NATURAL VEICULAR
+
+                                                                                                                                                                Página 13 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+    #         Modelo                                 Regra de Validação                               Aplic.   Msg   Efeito                     Descrição Erro
+                         - 220101006 - GÁS NATURAL VEICULAR PADRÃO
+                         - 320103001 - GASOLINA AUTOMOTIVA PADRÃO
+                         - 320102002 - GASOLINA C ADITIVADA
+                         - 320102001 - GASOLINA C COMUM
+                         - 320102003 - GASOLINA C PREMIUM
+                         - 820101033 - ÓLEO DIESEL B S10 - ADITIVADO
+                         - 820101034 - ÓLEO DIESEL B S10 - COMUM
+                         - 420106001 - ÓLEO DIESEL B S10 AMD 10
+                         - 820101011 - ÓLEO DIESEL B S1800 Não Rodoviário- Aditivado
+                         - 820101003 - ÓLEO DIESEL B S1800 Não Rodoviário - Comum
+                         - 820101013 - ÓLEO DIESEL B S500 - ADITIVADO
+                         - 820101012 - ÓLEO DIESEL B S500 - COMUM
+                         - 420106002 - ÓLEO DIESEL B S500 AMD 10
+                         - 420301004 - OLEO DIESEL DE REFERÊNCIA S300
+                       Exceção 2: A regra de validação não se aplica, em produção, para Nota
+                           Fiscal com Data de Emissão anterior a 01/01/2016. (NT 2015.002)
+ LA17-20        55     Se produto (tag: cProdANP) existe na Tabela de Combustíveis Sujeitos à         Obrig.   908    Rej.    Rejeição: Obrigatório o preenchimento do índice de
+                       Tributação Monofásica (coluna "Código ANP") e coluna ("Percentual do                                   mistura do Biocombustível. [nItem:999]
+                       Biocombustível) igual a 1:
+                         - Obrigatório o preenchimento do índice de mistura do Biocombustível (tag:
+                           pBio)
+                       Exceção 1: Regra de validação não se aplica quando:
+                         - NF-e Complementar (tag:finNFe =2) ou NF-e de Devolução (tag:finfe=4).
+                       Exceção 2: Regra de validação não se aplica quando campo (tag:indFinal)
+                           igual a 1.
+                       Exceção 3: Regra de validação não se aplica quando CFOP 5.922 ou 6.922.
+                       Exceção 4: Regra de validação não se aplica a NF-e com DANFE
+                           Simplificado Tipo 2 (tag:tpImp=6)
+                       Observação 1: Tabela de Combustíveis Sujeitos à Tributação Monofásica
+                           publicada na aba “Documentos”, opção “Diversos” do Portal Nacional da
+                           Nota Fiscal Eletrônica.
+                       Observação 2: Regra implantada até 25/09/2023 em homologação e em
+                           30/10/2023 em produção.
+ LA18-10        55     Se produto (tag: cProdANP) está presente na Tabela de Combustíveis             Obrig.   909    Rej.    Rejeição: Obrigatório o preenchimento do grupo de
+                       Sujeitos à Tributação Monofásica (coluna "Código ANP") e coluna ("Origem                               UF de origem do combustível [nItem:999]
+                       do Combustível") igual a 1:
+                         - Obrigatória informação de pelo menos uma ocorrência do grupo de origem
+                           do combustível (id: LA18)
+                       Exceção 1: Regra de Validação não se aplica quando o campo (tag: indFinal)
+                           igual a 1.
+                       Exceção 2: Regra de validação não se aplica quando: NF-e Complementar
+                           (tag:finNFe =2) ou NF-e de Devolução (tag:finfe=4).
+                       Exceção 3: Regra de validação não se aplica quando CFOP 5.922 ou 6.922.
+
+
+                                                                                                                                                                 Página 14 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+    #         Modelo                                 Regra de Validação                             Aplic.   Msg    Efeito                     Descrição Erro
+                       Exceção 4: Regra de validação não se aplica a NF-e com DANFE
+                           Simplificado Tipo 2 (tag:tpImp=6)
+                       Observação 1: Tabela de Combustíveis Sujeitos à Tributação Monofásica
+                           publicada na aba “Documentos”, opção “Diversos” do Portal Nacional da
+                           Nota Fiscal Eletrônica.
+                       Observação 2: Regra implementada em 04/08/2025 em homologação, e
+                           01/10/2025 em produção.
+ LA18-20        55     Se preenchido o campo Percentual de Gás Natural Nacional - GLGNn para o      Obrig.    909    Rej.    Rejeição: Obrigatório o preenchimento do grupo de
+                       produto GLP (tag: pGNn) ou o campo Percentual de Gás Natural Importado -                              UF de origem
+                       GLGNi para o produto GLP (tag: pGNi) com valor diferente de “0”:
+                         - Obrigatória informação de pelo menos uma ocorrência do grupo de origem
+                           do combustível (id: LA18)
+                       Exceção 1: Regra de Validação não se aplica quando o campo (tag:
+                           indFinal) igual a 1.
+                       Exceção 2: Regra de validação não se aplica quando:
+                         - NF-e Complementar (tag:finNFe =2) ou NF-e de Devolução (tag:finfe=4).
+                       Exceção 3: Regra de validação não se aplica quando CFOP 5.922 ou 6.922.
+                       Exceção 4: Regra de validação não se aplica a NF-e com DANFE
+                           Simplificado Tipo 2 (tag:tpImp=6).
+                       Observação 1: Tabela de Combustíveis Sujeitos à Tributação Monofásica
+                           publicada na aba “Documentos”, opção “Diversos” do Portal Nacional da
+                           Nota Fiscal Eletrônica.
+                       Observação 2: Regra válida a partir de 03/07/2023 em homologação e
+                           04/09/2023 em produção.
+
+LB. Item / Papel Imune
+    #         Modelo                            Regra de Validação                                  Aplic.   Msg    Efeito                     Descrição Erro
+ LB01-10       55/65   Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):                Obrig.   348     Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                        - Grupo RECOPI - Papel Imune (tag:nRECOPI) informado indevidamente                                   Tipo 2 com grupo RECOPI
+
+N. Item / Tributo: ICMS
+    #         Modelo                              Regra de Validação                                Aplic.   Msg    Efeito                     Descrição Erro
+  N12-30       55/65   Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):                Obrig.   766     Rej.    Rejeição: Item com CST indevido [nItem:nnn]
+                        - CST diferente da relação abaixo:
+                          - 00-Tributada integralmente;
+                          - 20-Com redução da Base de Cálculo;
+                          - 40-Isenta;
+                          - 41-Não tributada;
+                          - 60-ICMS cobrado anteriormente por substituição tributária;
+                          - 61- Tributação monofásica sobre combustíveis cobrada anteriormente;
+                       Exceção 1: Aceitar CST=90-Outros, a critério da UF.
+
+
+                                                                                                                                                                Página 15 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+     #        Modelo                                Regra de Validação                              Aplic.   Msg   Efeito                     Descrição Erro
+                       Exceção 2: A regra de validação não se aplica, em produção, para Nota
+                            Fiscal com Data de Emissão anterior a 01/04/2016. (NT 2015.002)
+  N12-34      55/65    Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):                Obrig.   381    Rej.    Rejeição: Grupo de tributação ICMS90, informando
+                          - CST=90 e informando dados do ICMS-ST (tag: ICMS90/modBCST) (NT                                  dados do ICMS-ST [nItem:nnn]
+                            2015.002)
+  N12-40      55/65    Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com             Obrig.   382    Rej.    Rejeição: CFOP não permitido para o CST informado
+                       CST=00, 20, 40, 41 ou 90:                                                                            [nItem:nnn]
+                          - CFOP difere de 5.101, 5.102, 5.103, 5.104, 5.115, 5.910 (NT 2015.002)
+                       Observação 1: Para a UF do RS, poderá ser permitido o uso do CST 90
+                            com o CFOP 5.949.
+                       Observação 2: Para a UF do CE, poderá ser permitido o uso do CST 90
+                            com o CFOP 5.405.
+                       Observação 3: Para a UF do SP, poderá ser permitido o uso do CST 40
+                            com o CFOP 5.949.
+  N12-44      55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com CST=60         Obrig.   382    Rej.    Rejeição: CFOP não permitido para o CST informado
+                       (ICMS cobrado anteriormente por ST) e CFOP diferente de 5.405, 5.656,                                [nItem:nnn]
+                       5.667, 5.910 (NT 2015.002)
+  N12-50      55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com Partilha       Obrig.   741    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                       de ICMS entre UF (tag:ICMS/ICMSPart)                                                                 Tipo 2 com Partilha de ICMS entre UF
+  N12-60      55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com repasse        Obrig.   740    Rej.    Rejeição: Item com Repasse de ICMS retido por
+                       de ICMS-ST retido anteriormente em operação interestadual com repasse                                Substituto Tributário [nItem: nnn]
+                       pelo SubstitutoTributário (tag: ICMS/ICMSST) (NT 2015.002)
+ N12a-20      55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com CSOSN          Obrig.   383    Rej.    Rejeição: Item com CSOSN indevido [nItem: nnn]
+                       diferente da relação abaixo:
+                         - 102-Tributação SN sem permissão de crédito;
+                         - 103-Tributação SN, com isenção para faixa de receita bruta;
+                         - 300-Imune;- 400-Não tributada pelo Simples Nacional;
+                         - 500-ICMS cobrado anteriormente por substituição tributária ou por
+                            antecipação;
+                       Exceção 1: Aceitar CSOSN=900-Outros, a critério da UF.Exceção 2:A regra
+                            de validação não se aplica, em produção, para Nota Fiscal com Data de
+                            Emissão anterior a 01/04/2016. (NT 2015.002)
+ N12a-30      55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com CSOSN          Obrig.   384    Rej.    Rejeição: CSOSN não permitido para a UF [nItem:
+                       103 ou 400 não permitidos para a UF.                                                                 nnn]
+                       Observação: Regra de validação opcional a critério da UF.
+                       Exceção: A regra de validação não se aplica, em produção, para Nota Fiscal
+                            com Data de Emissão anterior a 01/04/2016. (NT 2015.002)
+ N12a-34      55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com                Obrig.   385    Rej.    Rejeição: Grupo de tributação ICMSSN900,
+                       CSOSN=900, informando dados do ICMS-ST (tag: ICMSSN900/modBCST)                                      informando dados do ICMS-ST [nItem: nnn]
+                       (NT 2015.002)
+ N12a-40      55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com CSOSN          Obrig.   386    Rej.    Rejeição: CFOP não permitido para o CSOSN
+                       = 102, 103, 300, 400 ou 900                                                                          informado [nItem: nnn]
+
+
+
+                                                                                                                                                               Página 16 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+     #         Modelo                               Regra de Validação                          Aplic.   Msg   Efeito                     Descrição Erro
+                          - CFOP diferente de 5.101, 5.102, 5.103, 5.104, 5.115, 5.910 (NT
+                            2015.002)
+                         Observação 1: Para a UF do RS, poderá ser permitido o uso do CST 90
+                            com o CFOP 5.949.
+                         Observação 2: Para a UF do CE, poderá ser permitido o uso do CSOSN
+                            900 com o CFOP 5.405.
+                         Observação 3: Para a UF do SP, poderá ser permitido o uso do CSOSN
+                            900 com o CFOP 5.949.
+ N12a-44       55/65     NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com          Obrig.   386    Rej.    Rejeição: CFOP não permitido para o CSOSN
+                         CSOSN=500 (ICMS cobrado anteriormente):                                                        informado [nItem: nnn]
+                          - CFOP difere de 5.405, 5.656, 5.667, 5.910 (NT 2015.002)
+ N12a-81       55/65     Se informado CRT (id:C21) igual 4 e idDest<>3:                         Obrig.   782    Rej.    Rejeição: CSOSN inválido para emitente MEI (CRT=4)
+                          - Se NFC-e (mod=65) ou NF-e com DANFE Simplificado Tipo 2                                     [nItem:nnn]
+                            (tag:tpImp=6) aceitar somente o CSOSN (id:N12a) 102 e 300
+ N12a-91       55/65     Se informado CRT (id:C21) igual 4 e idDest<>3                          Obrig.   337    Rej.    Rejeição: CFOP inválido para emitente MEI (CRT=4)
+                          - Se NFC-e (mod=65) ou NF-e com DANFE Simplificado Tipo 2                                     [nItem:nnn]
+                            (tag:tpImp=6) aceitar somente o CFOP 5102
+
+NA. Item / ICMS para a UF de Destino
+    #          Modelo                              Regra de Validação                           Aplic.   Msg   Efeito                     Descrição Erro
+ NA01-10        55/65    Informado grupo “ICMSUFDest" para a NFC-e (NT 2015.003) ou NF-e com    Obrig.   807    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                         DANFE Simplificado Tipo 2 (tag:tpImp=6)                                                        Tipo 2 com grupo de ICMS para a UF do destinatário
+
+O. Item / Tributo: IPI
+   #          Modelo                                  Regra de Validação                        Aplic.   Msg   Efeito                     Descrição Erro
+ O01-10        55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com o grupo   Obrig.   742    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                        de tributação pelo IPI (id:O01)                                                                 Tipo 2 com grupo do IPI
+
+P. Item / Tributo: II
+   #          Modelo                                   Regra de Validação                       Aplic.   Msg   Efeito                     Descrição Erro
+ P01-10        55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com o grupo   Obrig.   743    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                        de tributação pelo II (id:P01)                                                                  Tipo 2 com grupo do II
+
+R. Item / Tributo: PIS ST
+   #          Modelo                                 Regra de Validação                         Aplic.   Msg   Efeito                     Descrição Erro
+ R01-10        55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com o grupo   Obrig.   746    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                        de tributação pelo PIS-ST (id:R01)                                                              Tipo 2 com grupo do PIS-ST
+
+
+
+
+                                                                                                                                                           Página 17 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+
+T. Item / Tributo: COFINS ST
+  #        Modelo                                 Regra de Validação                                   Aplic.   Msg    Efeito                     Descrição Erro
+T01-10      55/65      NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com o grupo de        Obrig    749     Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                       tributação pela COFINS-ST (id:T01)                                                                       Tipo 2 com grupo da COFINS-ST
+
+UA. Item / Devolução de Tributos
+   #          Modelo                               Regra de Validação                                  Aplic.   Msg    Efeito                      Descrição Erro
+UA01-20        55/65    Se informado o grupo de devolução de tributos (tag: impostoDevol):             Obrig.   390     Rej.    Rejeição: Nota Fiscal com grupo de devolução de
+                         - NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com grupo                                  Tributos [nItem: nnn]
+                           de devolução de tributos (NT 2015.002)
+
+VC. Referenciamento de item de outro Documento Fiscal Eletrônico - DF-e
+    #         Modelo                                   Regra de Validação                          Aplic.        Msg    Efeito                    Descrição Erro
+ VC02-04       55/65     Se item possui DFe referenciado (tag: DFeReferenciado/chaveAcesso)        Obrig.        708    Rej.   Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                          - NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) não pode                                 Tipo 2 não pode referenciar documento fiscal
+                            referenciar outros documentos.
+ VC02-40        55       Se item possui DFe referenciado (tag: DFeReferenciado/chaveAcesso):       Obrig.        679    Rej.    Rejeição: Chave de Acesso referenciada com Modelo
+                          - Se NF-e de Saída (tpNF=1):                                                                          inválido [nItem:nnn]
+                             - Se Finalidade diferente de “2-NFe Complementar” (tag: finNFe<>2) e
+                            diferente de “4-NFe de Devolução” (tag:finNFe<>4):
+                               - Modelo do DFe referenciado não pode ser:
+                                 - NFC-e, modelo 65;
+                                 - CF-e, modelo 59;
+                                 - NF-e, modelo 55, com DANFE Simplificado Tipo 2 (tag:tpImp=6).
+                         Exceção: Não se aplica para:
+                          - Nota de Débito do tipo “03=Débitos de notas fiscais não processadas na
+                                 apuração” (tpNFDebito=03);
+                          - Nota de Débito do tipo “04=Multa e juros” (tpNFDebito=04).
+                         Observação: Implantação em Produção em 14/12/2026.
+ VC02-50        55       Se NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6)                       Obrig.        708    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                          - DFe Referenciado informado indevidamente                                                            Tipo 2 não pode referenciar documento fiscal
+                         Observação: Essa validação passou a ser realizada pela RV VC02-04.
+
+W. Total da NF-e
+   #          Modelo                                  Regra de Validação                               Aplic.   Msg    Efeito                      Descrição Erro
+ W16-30        55/65    Valor total da NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6)       Obrig.   780     Rej.    Rejeição: Total da NFC-e ou NF-e com DANFE
+                        é superior ao valor limite estabelecido pela SEFAZ (valor parametrizável por                            Simplificado Tipo 2 superior ao valor limite
+                        UF)                                                                                                     estabelecido pela SEFAZ [Limite]
+                        Observação: O valor máximo default para a NFC-e/NF-e com DANFE
+                           Simplificado Tipo 2 (tag:tpImp=6) é de R$200.000,00.
+
+
+                                                                                                                                                                  Página 18 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+   #          Modelo                                Regra de Validação                             Aplic.    Msg   Efeito                       Descrição Erro
+ W16-40        55/65    Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com valor     Obrig     750    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                        total superior a R$ 10.000,00 ou outro valor definido pela UF:                                      Tipo 2 com valor total superior ao permitido para
+                          - Código do Destinatário não informado (tag:dest/CNPJ, dest/CPF ou                                destinatário não identificado (Código) [Limite]
+                            dest/idEstrang). (NT 2015.002)
+ W16-50        55/65    Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com valor     Facult.   751    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                        total superior a R$ 10.000,00:                                                                      Tipo 2 com valor total superior ao permitido para
+                          - Nome do Destinatário não informado (tag:dest/xNome)                                             destinatário não identificado (Nome) [Limite]
+                        Observação: Regra de Validação opcional, a critério da UF. (NT 2015.002)
+ W16-60        55/65    Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com valor     Obrig     752    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                        total superior a R$ 10.000,00:                                                                      Tipo 2 com valor total superior ao permitido para
+                          - Endereço do Destinatário não informado (tag:dest/enderDest)                                     destinatário não identificado (Endereço) [Limite]
+                        Observação: Regra de Validação opcional, a critério da UF. (NT 2015.002)
+
+X. Transporte da NF-e
+    #         Modelo                                  Regra de Validação                           Aplic.    Msg   Efeito                      Descrição Erro
+  X02-10       55/65     NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com Frete e     Obrig.    753    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                         não é entrega a domicílio (tag:modFrete<>9 e indPres<>4)                                           Tipo 2 (tag:tpImp=6) com Frete
+  X11-10       55/65     NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com dados de    Obrig.    755    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                         Retenção do ICMS no Transporte (tag:retTransp)                                                     Tipo 2 com dados de Retenção do ICMS no
+                                                                                                                            Transporte
+  X18-10       55/65     NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com dados do    Obrig.    756    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                         veículo de Transporte (tag:veicTransp)                                                             Tipo 2 com dados do veículo de Transporte
+  X22-10       55/65     NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com dados de    Obrig.    757    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                         Reboque do veículo de Transporte (tag:reboque)                                                     Tipo 2 com dados de Reboque do veículo de
+                                                                                                                            Transporte
+ X25a-10       55/65     NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com dados do    Obrig.    758    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                         Vagão de Transporte (tag:vagao)                                                                    Tipo 2 com dados do Vagão de Transporte
+ X25b-10       55/65     NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com dados da    Obrig.    759    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                         Balsa de Transporte (tag:balsa)                                                                    Tipo 2 com dados da Balsa de Transporte
+
+Y. Dados de Cobrança
+   #          Modelo                                Regra de Validação                             Aplic.    Msg   Efeito                     Descrição Erro
+ Y01-10        55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com dados de     Obrig.    760    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                        cobrança (Fatura, Duplicata) (tag:cobr)                                                             Tipo 2 com dados de cobrança (Fatura, Duplicata)
+
+ZB. Informação de Compra
+    #          Modelo    Regra de Validação                                                        Aplic.    Msg   Efeito   Descrição Erro
+ ZB01-10        55/65    NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com dados de    Obrig.    762    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                         compras (Empenho, Pedido, Contrato) (tag:compra)                                                   Tipo 2 com dados de compras (Empenho, Pedido,
+                                                                                                                            Contrato)
+
+
+                                                                                                                                                              Página 19 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+
+
+
+ZC. Informações do Registro de Aquisição de Cana
+    #         Modelo                              Regra de Validação                                Aplic.   Msg   Efeito                     Descrição Erro
+ ZC01-10       55/65   NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6) com dados          Obrig.   763    Rej.    Rejeição: NFC-e ou NF-e com DANFE Simplificado
+                       de aquisição de Cana (tag:cana)                                                                      Tipo 2 com dados de aquisição de Cana
+
+
+ZX. Informações Suplementares da Nota Fiscal
+     #        Modelo                                Regra de Validação                              Aplic.   Msg   Efeito                      Descrição Erro
+  ZX02-10      55/65    Se NFC-e ou NF-e com DANFE Simplificado Tipo 2 (tag:tpImp=6):               Obrig.   394    Rej.    Rejeição: Nota Fiscal sem a informação do QR-Code
+                         - Não informado o campo de QR-Code.
+                        Exceção 1: A regra de validação não se aplica, em produção, para Nota
+                           Fiscal com Data de Emissão anterior a 01/04/2016. Não sendo
+                           informado o QR-Code não se aplicam as demais validações
+                           relacionadas com este campo. (NT 2015.002)
+                        Exceção 2: Não se aplica para NFF (tpEmis = 3-NFF). (NT 2021.002)
+  ZX02-20      55/65    Se qrCode informado:                                                        Obrig.   395     Rej.   Rejeição: Endereço do site da UF da Consulta via QR-
+                         - Endereço do site da UF para a Consulta via QR-Code difere do previsto.                           Code diverge do previsto
+                        Nota: O uso diferenciado de maiúsculas ou minúsculas não deve ser
+                           considerado na validação.
+                        Observação 1: Regra de Validação opcional até 01/11/2016, a critério da
+                           UF.
+                        Observação 2: Para consultar as URLs por UF utilizadas no QR Code,
+                           acesse: http://nfce.encat.org/desenvolvedor/qrcode/" (NT 2015.002)
+                        Observação 3: Para NF-e, modelo 55, a URL de consulta do qrCode será a
+                           mesma URL da NFC-e, modelo 65.
+ ZX02-220       55      Se qrCode informado:                                                        Obrig.   672     Rej.   Rejeição: NF-e com DANFE Simplificado Tipo 2 com
+                         - QR Code diferente de versão 3                                                                    versão de qrCode não permitida
+ ZX02-224      55/65    Se qrCode informado:                                                        Obrig.   396     Rej.   Rejeição: Parâmetro do QR-Code inexistente: [Param:
+                         - Se QR Code versão “2 ou 3”:                                                                      xxx)]
+                             - Parâmetro Chave de Acesso não informado no QR-Code.
+                        Nota: O Schema XML faz esta verificação.
+                        Observação: Para NFC-e/NF-e ONLINE ou OFFLINE é o 1º parâmetro da
+                           URL do QR Code.
+                        Obs. 1: Para NF-e, modelo 55, somente é aceito contingência offline
+                           (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-228      55/65    Se qrCode informado:                                                        Obrig.   397     Rej.   Rejeição: Parâmetro do QR-Code divergente da Nota
+                         - Se QR Code versão “2 ou 3”:                                                                      Fiscal [Param: xxx)].
+                           - Parâmetro Chave de Acesso no QR-Code diverge da Chave de Acesso
+                           da Nota Fiscal
+                        Observação: Para NFC-e/NF-e ONLINE ou OFFLINE é o 1º parâmetro da
+                           URL do QR Code.
+
+                                                                                                                                                             Página 20 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+     #        Modelo                               Regra de Validação                              Aplic.   Msg   Efeito                     Descrição Erro
+                       Obs. 1: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-232     55/65    Se qrCode informado:                                                        Obrig.   396    Rej.    Rejeição: Parâmetro do QR-Code inexistente: [Param:
+                        - Se QR Code versão “2 ou 3”:                                                                      xxx)]
+                          - Parâmetro Versão não informado no QR-Code.
+                       Nota: O Schema XML faz esta verificação.
+                       Observação: Para NFC-e/NF-e ONLINE ou OFFLINE é o 2º parâmetro da
+                          URL do QR Code.
+                       Obs. 1: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-236     55/65    Se qrCode informado:                                                        Obrig.   398    Rej.    Rejeição: Parâmetro Versão informada no QR-Code
+                        - Se QR Code versão “2 ou 3”:                                                                      diverge do previsto [Param: xxx].
+                          - Parâmetro Versão informada no QR-Code diverge do previsto (“2 ou 3”)
+                       Observação: Para NFC-e/NF-e ONLINE ou OFFLINE é o 2º parâmetro da
+                          URL do QR Code.
+                       Obs. 1: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-240     55/65    Se qrCode informado:                                                        Obrig.   396    Rej.    Rejeição: Parâmetro do QR-Code inexistente: [Param:
+                        - Se QR Code versão “2 ou 3”:                                                                      xxx]
+                          - Parâmetro Tipo de Ambiente não informado no QR-Code.
+                       Nota: O Schema XML faz esta verificação.
+                       Observação: Para NFC-e/NF-e ONLINE ou OFFLINE é o 3º parâmetro da
+                          URL do QR Code.
+                       Obs. 1: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-244     55/65    Se qrCode informado:                                                        Obrig.   397    Rej.    Rejeição: Parâmetro do QR-Code divergente da Nota
+                        - Se QR Code versão “2 ou 3”:                                                                      Fiscal: [Param: xxx]
+                          - Parâmetro Tipo de Ambiente do QR-Code diverge do Tipo de Ambiente
+                            da Nota Fiscal (tag:tpAmb, id:B24)
+                       Observação: Para NFC-e/NF-e ONLINE ou OFFLINE é o 3º parâmetro da
+                          URL do QR Code.
+                       Obs. 1: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-260     55/65    Se qrCode informado:                                                        Obrig.   396    Rej.    Rejeição: Parâmetro do QR-Code inexistente: [Param:
+                        - Se QR Code versão “2 ou 3”:                                                                      xxx]
+                          - Se NFC-e/NF-e é de contingência off-line (tpEmis=9):
+                             - Parâmetro Dia da Data de Emissão não informado no QR-Code.
+                       Nota: O Schema XML faz esta verificação
+                       Obs. 1: Para NFC-e ONLINE esse parâmetro não existe.
+                       Obs. 2: Para a NFC-e OFFLINE é o 4º parâmetro da URL do QR Code (NT
+                          2017.002)
+                       Obs. 3: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+
+
+                                                                                                                                                           Página 21 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+    #         Modelo                                Regra de Validação                            Aplic.   Msg   Efeito                       Descrição Erro
+ ZX02-268      55/65   Se qrCode informado:                                                       Obrig.   397    Rej.    Rejeição: Parâmetro do QR-Code divergente da Nota
+                        - Se QR Code versão “2 ou 3":                                                                     Fiscal: [Param: xxx]
+                          - Se NFC-e/NF-e é de contingência off-line (tpEmis=9):
+                             - Parâmetro Dia da Data de Emissão no QR-Code diverge do Dia Data
+                               de Emissão da Nota Fiscal (tag:dhEmi, id:B09)
+                       Obs. 1: Para NFC-e/NFe ONLINE esse parâmetro não existe.
+                       Obs. 2: Para a NFC-e/NFe OFFLINE é o 4º parâmetro da URL do QR Code
+                          (NT 2017.002)
+                       Obs. 3: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-272     55/65    Se qrCode informado:                                                       Obrig.   396    Rej.    Rejeição: Parâmetro do QR-Code inexistente: [Param:
+                        - Se QR Code versão “2 ou 3":                                                                     xxx]
+                          - Se NFC-e/NF-e é de contingência off-line (tpEmis=9):
+                             - Parâmetro Valor da Nota Fiscal não informado no QR-Code.
+                       Nota: O Schema XML faz esta verificação
+                       Obs. 1: Para NFC-e/NFe ONLINE esse parâmetro não existe.
+                       Obs. 2: Para a NFC-e/NFe OFFLINE é o 5º parâmetro da URL do QR Code
+                          (NT 2017.002)
+                       Obs. 3: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-276     55/65    Se qrCode informado:                                                       Obrig.   397    Rej.    Rejeição: Parâmetro do QR-Code divergente da Nota
+                        - Se QR Code versão “2 ou 3":                                                                     Fiscal: [Param: xxx]
+                          - Se NFC-e/NF-e é de contingência off-line (tpEmis=9):
+                             - Parâmetro Valor da Nota Fiscal no QR-Code diverge do Valor Total
+                               da Nota Fiscal (tag:vNF, id:W16)
+                       Obs. 1: Para NFC-e/NFe ONLINE esse parâmetro não existe.
+                       Obs. 2: Para a NFC-e/NFe OFFLINE é o 5º parâmetro da URL do QR Code
+                          (NT 2017.002)
+                       Obs. 3: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-324     55/65    Se qrCode informado:                                                       Obrig.   396    Rej.    Rejeição: Parâmetro do QR-Code inexistente: [Param:
+                        - Se QR Code versão “3”:                                                                          xxx]
+                          - Se NFC-e/NF-e é de contingência off-line (tpEmis=9):
+                             - Parâmetro Tipo de Identificação do Destinatário não informado no
+                            QR-Code.
+                       Nota: O Schema XML faz esta verificação
+                       Obs. 1: Para NFC-e/NFe ONLINE esse parâmetro não existe.
+                       Obs. 2: Para a NFC-e/NFe OFFLINE é o 6º parâmetro da URL do QR Code
+                          (NT 2025.001)
+                       Obs. 3: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-326     55/65    Se qrCode informado:                                                       Obrig.   396    Rej.    Rejeição: Parâmetro do QR-Code inexistente: [Param:
+                        - Se QR Code versão “3”:                                                                          xxx]
+                          - Se NFC-e/NF-e é de contingência off-line (tpEmis=9):
+
+                                                                                                                                                          Página 22 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+     #        Modelo                                Regra de Validação                              Aplic.   Msg   Efeito                     Descrição Erro
+                             - Parâmetro Identificação do Destinatário não informado no QR-Code.
+                       Nota: O Schema XML faz esta verificação
+                       Obs. 1: Para NFC-e/NFe ONLINE esse parâmetro não existe.
+                       Obs. 2: Para a NFC-e/NFe OFFLINE é o 7º parâmetro da URL do QR Code
+                          (NT 2025.001)
+                       Obs. 3: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-328     55/65    Se qrCode informado:                                                         Obrig.   397    Rej.    Rejeição: Parâmetro do QR-Code divergente da Nota
+                        - Se QR Code versão “3”:                                                                            Fiscal (idDest)
+                          - Se NFC-e/NF-e é de contingência off-line (tpEmis=9):
+                             - Parâmetro Identificação do Destinatário do QR-Code diverge da
+                               Identificação do Destinatário da NFC-e.
+                       Obs. 1: Para NFC-e/NFe ONLINE esse parâmetro não existe.
+                       Obs. 2: Para NFC-e/NFe OFFLINE, considerar 6º e 7º parâmetros da URL
+                          do QR Code (NT 2025.001).
+                       Obs. 3: Se a identificação do Destinatário não for informada na NFC-e/NFe,
+                          não deve ser informada no QR Code, e vice-versa.
+                       Obs. 4: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-330     55/65    Se qrCode informado:                                                         Obrig.   445    Rej.    Rejeição: Parâmetro assinatura não deve ser
+                        - Se QR Code versão “3”:                                                                            informado no qrCode
+                          - Se NFC-e/NF-e não é de contingência off-line (tpEmis<>9):
+                             - Parâmetro “assinatura” não deve ser informado no qrCode. (NT
+                               2025.001)
+                       Obs. 1: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-334     55/65    Se qrCode informado:                                                         Obrig.   474    Rej.    Rejeição: Parâmetro assinatura deve ser informado no
+                        - Se QR Code versão “3”:                                                                            qrCode
+                          - Se NFC-e/NF-e é de contingência (tpEmis=9):
+                             - Parâmetro “assinatura” deve ser informado no qrCode. (NT
+                               2025.001)
+                       Obs. 1: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+ ZX02-338     55/65    Se qrCode informado:                                                         Obrig.   583    Rej.    Rejeição: Valor da assinatura do qrCode difere do
+                        - Se QR Code versão “3”:                                                                            valor calculado
+                          - Se NFC-e/NF-e é de contingência (tpEmis=9):
+                             - Valor da assinatura difere do valor calculado. (NT 2025.001)
+                       Obs. 1: Para NF-e, modelo 55, somente é aceito contingência offline
+                          (tpEmis=9) para o DANFE Simplificado Tipo 2 (tag:tpImp=6)
+
+
+
+
+                                                                                                                                                              Página 23 / 24
+Nota Fiscal Eletrônica - NF-e
+NFCe/NFe - Emissão Offline, Autorização com Alerta e DANFE Simplificado Tipo 2
+NT 2026.002
+
+
+Banco de Dados: Destinatário
+ Campo        Modelo                             Regra de Validação                               Aplic.   Msg   Efeito                       Descrição Erro
+ 5E17-65        65     - Destinatário em situação irregular perante o Fisco, vedada operação na   Obrig.   172   Alerta   Alerta: Situação do CNPJ destinatário inabilitado no
+                         UF (CCC.cSitCNPJ=3-Vedado) ou Destinatário bloqueado na UF                                       momento da autorização
+                         (CCC.cSitCNPJ=2-Bloqueado)
+
+
+
+
+                                                                                                                                                              Página 24 / 24
+

@@ -1,0 +1,354 @@
+Projeto Nota Fiscal Eletrônica
+
+
+
+Nota Técnica 2016.003
+
+Nova Tabela de NCM e Tabelas de Unidades de
+Medidas Tributáveis no Comércio Exterior - Utrib
+
+Versão 3.70 - Janeiro 2024
+Nota Fiscal Eletrônica
+NT 2016.003
+
+
+
+
+Controle de Versões
+Versão    Publicação     Descrição
+
+3.70      Janeiro/2024   Informa nova tabela de NCM com efeitos a partir de 01/04/2024
+
+
+
+
+                                                                                         Página 2 / 11
+Nota Fiscal Eletrônica
+NT 2016.003
+
+
+
+
+Histórico de Alterações / Cronograma
+Versão                        Histórico de atualizações                    Implantação Teste   Implantação
+                                                                                                Produção
+3.70     Informa nova tabela de NCM com efeitos a partir de                                    01/04/2024
+                                                                             15/03/2024
+         01/04/2024
+3.62     Informa nova tabela de NCM com efeitos a partir de                                    01/11/2023
+                                                                             01/11/2023        01/01/2024
+         01/11/2023 (alterada pela Res. Gecex 529/2023)
+3.61     Corrige as datas que constaram no texto explicativo da versão                         01/11/2023
+                                                                             15/10/2023
+         3.60
+3.60     Informa nova tabela de NCM com efeitos a partir de                                    01/11/2023
+                                                                             15/10/2023
+         01/11/2023
+3.50     Informa nova tabela de NCM com efeitos a partir de                                    01/04/2023
+                                                                             15/03/2023
+         01/04/2023
+3.40     Informa nova tabela de NCM com efeitos a partir de                                    01/01/2023
+                                                                             15/12/2022
+         01/01/2023(Resoluções Gecex nº 412 e 413/2022)
+3.30     Informa nova tabela de NCM com efeitos a partir de                                    01/01/2023
+                                                                             15/12/2022
+         01/01/2023(Resolução Gecex nº 390/22 - revogada)
+3.20     Informa nova tabela de NCM com efeitos a partir de                                    01/09/2022
+                                                                             15/08/2022
+         01/09/2022
+3.10     Informa nova tabela de NCM com efeitos a partir de                                    01/07/2022
+                                                                             01/06/2022
+         01/07/2022
+3.00     Informa nova tabela de NCM com efeitos a partir de                                    01/04/2022
+                                                                             14/03/2022
+         01/04/2022
+2.10     Altera tabela de NCM para incluir e excluir códigos de NCM          01/10/2021        01/10/2021
+
+2.00     Altera tabela de NCM para incluir e excluir códigos de NCM          01/07/2021        01/07/2021
+
+1.90     Altera tabela de NCM para incluir e excluir códigos de NCM          15/03/2021        01/04/2021
+
+1.81     Retifica tabela de NCM que entrará em vigor a partir de                               01/01/2021
+                                                                             31/10/2020
+         01/01/2021
+1.80     Altera tabela de NCM para incluir e excluir códigos de NCM          31/10/2020        01/01/2021
+
+1.70     Altera tabela de NCM para incluir e excluir códigos de NCM,                           01/07/2020
+                                                                             22/06/2020
+         nos termos da Resolução GMC nº 55/2019
+1.60                                                                         01/12/2019        01/01/2020
+         Alterou tabela de NCM para incluir 49 códigos e excluir outros
+         19, nos termos das Resoluções Camex nº 4, de 24 de outubro
+         de 2019 e Resoluções GMC nº 7/2019 e 32/2019.
+1.50     Altera tabela de NCM nos termos da Resolução Camex nº 58 e
+                                                                             14/12/2018        01/01/2019
+         71 de 2018
+1.40     Incluiu 12 novos códigos NCM e excluir 01, nos termos da            14/06/2018        01/07/2018
+         Resolução Camex nº 11/2018.
+1.30     Alterou a tabela de NCM para incluir 20 novos códigos e excluir     28/12/2017        02/01/2017
+         04, nos termos da Resolução Camex nº 54/2017, publicada no
+         DOU de 07/07/2017
+
+
+
+
+                                                                                                 Página 3 / 11
+Nota Fiscal Eletrônica
+NT 2016.003
+
+
+
+1     Resumo
+     A Resolução Gecex nº 547, de 15 de dezembro de 2023, alterou a tabela de NCM com vigência a partir
+     de 01/04/2024.
+
+2     Objetivo
+     Divulgar a publicação da Nova “Tabela de NCM e respectiva Utrib – Vigência a partir de 01-04-2024”,
+     no Portal Nacional da NF-e <www.nfe.fazenda.gov.br>, aba “Documentos”, opção “Diversos”.
+
+    Os 57 (cinquenta e sete) códigos incluídos na tabela de NCM publicada no Portal Nacional da NF-e estão
+    realçados em verde com a informação de início de vigência em 01/04/2024. Os 17 (dezessete) códigos
+    excluídos da tabela de NCM publicada no Portal Nacional da NF-e estão realçados em vermelho com a
+    informação de fim de vigência em 31/03/2024.
+
+
+3     Prazo de implantação
+
+              •   Ambiente de Homologação (ambiente de testes das empresas): 15/03/2024
+              •   Ambiente de Produção: 01/04/2024
+Nota Fiscal Eletrônica
+NT 2016.003
+
+
+
+
+4     Tabela de códigos de NCM incluídos e excluídos
+
+Resolu-         NCM excluído          DESCRIÇÃO               NCM incluído                  DESCRIÇÃO
+ção
+
+                                                               0207.14.11                      Peitos
+
+                                                               0207.14.12              Coxas com sobrecoxas
+                                                               0207.14.13                      Asas
+                                                               0207.14.19                     Outros
+                                                                             Peitos, coxas e sobrecoxas, formando uma só
+                                                               0207.14.21
+                                                                                                  peça
+                                 -- Pedaços e miudezas,        0207.14.22                      Peitos
+                 0207.14.00
+                                      congelados               0207.14.23              Coxas com sobrecoxas
+                                                               0207.14.24          Carne mecanicamente separada
+                                                               0207.14.29                     Outros
+547/2023
+                                                               0207.14.31                     Fígados
+                                                               0207.14.32                     Moelas
+                                                               0207.14.33                    Corações
+                                                               0207.14.34                   Pés e patas
+                                                               0207.14.39                     Outras
+
+                                 -- Que contenham bifeni-
+                               las policloradas (PCB), ter-                  Que contenham bifenilas policloradas (PCB)
+                 2710.91.00     fenilas policloradas (PCT)     2710.91.10     numa concentração igual ou superior a 50
+                               ou bifenilas polibromadas                                     mg/kg
+                                           (PBB)
+Nota Fiscal Eletrônica
+NT 2016.003
+
+
+
+
+                                                                          Outros, que contenham terfenilas policloradas
+                                                                          (PCT) ou bifenilas polibromadas (PBB), mesmo
+                                                             2710.91.20
+                                                                          que também contenham bifenilas policloradas
+                                                                           (PCB) numa concentração inferior a 50 mg/kg
+
+
+                                                             2710.91.90                      Outros
+                                                                          Com um teor de MnO igual ou superior a 91 %,
+                                                             2820.10.10
+                 2820.10.00      - Dióxido de manganês                         em peso (manganês eletrolítico)
+                                                             2820.10.90                      Outros
+                                                                          Anidro, com teor de ZnCl2 igual ou superior a
+                                                             2827.39.31
+                                                                                        09%, em peso
+                 2827.39.98            De zinco
+                                                             2827.39.39                      Outros
+                                                             2843.90.40           Tricloreto de rutênio, em pó
+
+                              Dialogenetos de N,Ndialqui-
+                 2929.90.21   lfosforoamidatos, com gru-     2929.90.31      Dicloreto de N,N-dimetilfosfooamídico
+                                  pos alquila de C a C3
+
+                              N,Ndialquilfosforoamidatos
+                 2929.90.22   de dialquila, com grupos al-   2929.90.39                      Outros
+                                     quila de C a C3
+
+                                                                          N,Ndialquilfosforoamidatos de dialquila, com
+                 2929.90.29             Outros               2929.90.40
+                                                                                     grupos alquila de C a C3
+Nota Fiscal Eletrônica
+NT 2016.003
+
+
+
+
+                                                                          Fosfonamidofluoridatos de N-(1-(dialquila (de
+                                                                           até C10 , incluindo cicloalquila)amino))alquili-
+                                                             2929.90.50
+                                                                          deno (H ou de até C10 , incluindo cicloalquila) e
+                                                                          sais alquilados ou protonados destes produtos
+
+
+
+
+                                                                            Fosforamidofluoridatos de O-alquila (H ou de
+                                                                            até C10 , incluindo cicloalquila) N-(1-(dialquila
+                                                                          (de até C10 , incluindo cicloalquila)amino))alqui-
+                                                             2929.90.60
+                                                                           lideno (H ou de até C10 , incluindo cicloalquila)
+                                                                           e sais alquilados ou protonados destes produ-
+                                                                                                   tos
+
+
+
+
+                              Outros compostos que con-
+                              tenham um átomo de fós-        2931.49.31               Metilfosfinato de butila
+                 2931.49.30    foro ligado a um grupo al-
+                              quila (de C1 a C3 ), sem ou-
+                                tros átomos de carbono
+
+
+                                                             2931.49.32        Metilfosfonato de bis(1-metilpentila)
+Nota Fiscal Eletrônica
+NT 2016.003
+
+
+
+                         2931.49.39                        Outros
+
+
+
+
+                                      Fosfonamidofluoridatos de P-alquila (de até C10
+                                       , incluindo cicloalquila) N-(1-(dialquila (de até
+                         2931.59.95    C10 , incluindo cicloalquila)amino))alquilideno
+                                       (H ou de até C10 , incluindo cicloalquila) e sais
+                                          alquilados ou protonados destes produtos
+
+
+
+
+                                       (Bis(dietilamina)metileno)fosfonamidofluori-
+                         2931.59.96
+                                                       dato de metila
+
+
+
+                                       Outros compostos que contenham um átomo
+                         2931.59.98   de fósforo ligado a um grupo alquila (de C1 a C3
+                                           ) mas sem outros átomos de carbono
+
+
+
+
+                                       Dibrometo de 1-[N,N-dialquila (de até C10 ) -N-
+                                      (nhidroxialquil (de até C10 ))amônio]-n-[N-(3-di-
+                         2933.39.36
+                                       metilcarbamoxi-alfapicolinil)-N,N-dialquil (de
+                                             até C10 ) amônio]decano (n=1-8)
+Nota Fiscal Eletrônica
+NT 2016.003
+
+
+
+
+                                                                       Dibrometo de 1-[N,N-dialquila (de até C10 ) -N-
+                                                                       (n-(ciano, acetoxi)alquil (de até C10 ))amônio]-
+                                                          2933.39.41
+                                                                       n-[N-(3-dimetilcarbamoxi-alfapicolinil)-N,N-di-
+                                                                         alquil (de até C10 ) amônio]decano (n=1-8)
+
+
+
+
+                                                                        Dibrometo de 1,n-bis[N-(3-dimetilcarbamoxi-
+                                                          2933.39.42   alfa-picolil)-N,N-dialquila (de até C10 ) amônio]-
+                                                                                alcano-(2,(n-1)-diona)(n=2-12)
+
+                                                          2939.80.10                      Saxitoxina
+                 2939.80.00           Outros
+                                                          2939.80.90                       Outros
+                 3002.49.93         Saxitoxina
+
+                                                                       À base de gadobenato de dimeglumina, de ga-
+                                                                       dobutrol, de gadopentetato de dimeglumina,
+                                                          3824.99.61
+                                                                        de gadoterato de meglumina, de gadoteridol
+                                                                                ou de gadoxetato dissódico
+
+                                                          3824.99.62         À base de hexafluoreto de enxofre
+                                                          3824.99.69                      Outros
+                                                          3907.29.91             Poliacetal poliéter (PAPE)
+                 3907.29.90           Outros
+                                                          3907.29.99                      Outros
+
+                                                                        De seção transversal interna redonda de diâ-
+                              -- De polímeros de propi-   3917.22.10
+                 3917.22.00                                              metro inferior a 6 mm e externa hexagonal
+                                        leno
+                                                          3917.22.90                        Outros
+Nota Fiscal Eletrônica
+NT 2016.003
+
+
+
+
+                              Em tiras ou rolos de largura                  Recobertos de pasta eletrolítica à base de
+                              não superior a 15 cm ou em     4811.90.11   amido modificado, de peso igual ou superior a
+                 4811.90.10   folhas em que nenhum lado                      75 g/m², mas não superior a 120 g/m²
+                                exceda 360 mm, quando
+                                     não dobradas
+                                                             4811.90.19                      Outros
+                                                                                  De liga de cobreniquelsilício,
+                                                             7409.40.11
+                 7409.40.10            Em rolos                                           galvanizadas
+                                                             7409.40.19                      Outras
+                                                                          Outras máquinas, de capacidade não superior
+                                                             8450.20.20
+                                                                                            a 18 kg
+
+
+                                                                           Outros, de largura e comprimento não supe-
+                                                                           rior a 50 mm e altura não superior a 25 mm,
+                                                             8504.31.93    próprios para montagem por inserção (PTH -
+                                                                          Pin Through Hole) ou montagem em superfície
+                                                                                  (SMD -Surface Mounted Device)
+
+
+
+                                                                          Do tipo utilizado em aparelhos de diagnóstico
+                                                             8505.90.11
+                 8505.90.10           Eletroimâs                             de imagem por ressonância magnética
+
+                                                             8505.90.19                      Outros
+                                                                          Revestido de cobre (CCA - Copper Clad Alumi-
+                                                             8544.19.11
+                 8544.19.10          De aluminio                                              num)
+                                                             8544.19.19                      Outros
+Nota Fiscal Eletrônica
+NT 2016.003
+
+
+
+
+                                                        Comutadores (switches) optomecânicos, do
+                                                      tipo utilizado em redes ópticas de transmissão
+                 9002.90.00   - Outros   9002.90.10
+                                                       de dados, próprios para montagem por inser-
+                                                                 ção (PTH -Pin Through Hole)
+
+                                         9002.90.90                      Outros
+
